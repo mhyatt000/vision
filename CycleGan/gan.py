@@ -32,8 +32,10 @@ class ResBlock(nn.Module):
 
 
 class Generator(nn.Module):
+
     def __init__(self, f=64, blocks=6):
         super(Generator, self).__init__()
+
         layers = [
             nn.ReflectionPad2d(3),
             nn.Conv2d(3, f, 7, 1, 0),
@@ -46,10 +48,11 @@ class Generator(nn.Module):
             norm(4 * f),
             nn.ReLU(True),
         ]
-        for i in range(int(blocks)):
+
+        for i in range(blocks):
             layers.append(ResBlock(4 * f))
-        layers.extend(
-            [
+
+        layers += [
                 nn.ConvTranspose2d(4 * f, 4 * 2 * f, 3, 1, 1),
                 nn.PixelShuffle(2),
                 norm(2 * f),
@@ -62,7 +65,7 @@ class Generator(nn.Module):
                 nn.Conv2d(f, 3, 7, 1, 0),
                 nn.Tanh(),
             ]
-        )
+
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
