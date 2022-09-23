@@ -43,14 +43,16 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
 def imsave(Xh, size=(20, 10), filename="Xh"):
     """saves fake images to current dir"""
 
-    Xh = Xh.detach().cpu()
-    fix, ax = plt.subplots(figsize=size)
-    plt.imshow(
-        vutils.make_grid(Xh, nrow=int(len(Xh) ** 0.5), padding=2, normalize=True).permute(1, 2, 0)
-    )
-    plt.axis("off")
-    plt.savefig(filename)
-    plt.clf()
+    args = get_args()
+    if args.save:
+        Xh = Xh.detach().cpu()
+        fix, ax = plt.subplots(figsize=size)
+        plt.imshow(
+            vutils.make_grid(Xh, nrow=int(len(Xh) ** 0.5), padding=2, normalize=True).permute(1, 2, 0)
+        )
+        plt.axis("off")
+        plt.savefig(args.save + '/' + filename)
+        plt.clf()
 
 
 def train(netD, netG, data_iter, num_epochs, lr, latent_dim, device="cpu", *, args=get_args()):
