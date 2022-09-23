@@ -1,4 +1,5 @@
 # Matt stuff
+.venv
 *.mp4
 *.png
 *.jpg
