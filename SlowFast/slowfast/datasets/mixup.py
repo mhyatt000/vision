@@ -7,6 +7,7 @@ published under an Apache License 2.0.
 
 COMMENT FROM ORIGINAL:
 Mixup and Cutmix
+
 Papers:
 mixup: Beyond Empirical Risk Minimization (https://arxiv.org/abs/1710.09412)
 CutMix: Regularization Strategy to Train Strong Classifiers with Localizable Features (https://arxiv.org/abs/1905.04899) # NOQA
@@ -20,16 +21,7 @@ import torch
 
 
 def convert_to_one_hot(targets, num_classes, on_value=1.0, off_value=0.0):
-    """
-    This function converts target class indices to one-hot vectors, given the
-    number of classes.
-    Args:
-        targets (loader): Class labels.
-        num_classes (int): Total number of classes.
-        on_value (float): Target Value for ground truth class.
-        off_value (float): Target Value for other classes.This value is used for
-            label smoothing.
-    """
+    """ converts target class indices to one-hot vectors, given the number of classes.  """
 
     targets = targets.long().view(-1, 1)
     return torch.full(
@@ -38,46 +30,35 @@ def convert_to_one_hot(targets, num_classes, on_value=1.0, off_value=0.0):
 
 
 def mixup_target(target, num_classes, lam=1.0, smoothing=0.0):
-    """
-    This function converts target class indices to one-hot vectors, given the
-    number of classes.
+    """ converts target class indices to one-hot vectors, given the number of classes.
     Args:
         targets (loader): Class labels.
         num_classes (int): Total number of classes.
         lam (float): lamba value for mixup/cutmix.
         smoothing (float): Label smoothing value.
     """
+
     off_value = smoothing / num_classes
     on_value = 1.0 - smoothing + off_value
-    target1 = convert_to_one_hot(
-        target,
-        num_classes,
-        on_value=on_value,
-        off_value=off_value,
-    )
-    target2 = convert_to_one_hot(
-        target.flip(0),
-        num_classes,
-        on_value=on_value,
-        off_value=off_value,
-    )
+    target1 = convert_to_one_hot( target, num_classes, on_value=on_value, off_value=off_value)
+    target2 = convert_to_one_hot( target.flip(0), num_classes, on_value=on_value, off_value=off_value)
     return target1 * lam + target2 * (1.0 - lam)
 
 
 def rand_bbox(img_shape, lam, margin=0.0, count=None):
-    """
-    Generates a random square bbox based on lambda value.
-
+    """ Generates a random square bbox based on lambda value.
     Args:
         img_shape (tuple): Image shape as tuple
         lam (float): Cutmix lambda value
         margin (float): Percentage of bbox dimension to enforce as margin (reduce amount of box outside image)
         count (int): Number of bbox to generate
     """
+
     ratio = np.sqrt(1 - lam)
     img_h, img_w = img_shape[-2:]
     cut_h, cut_w = int(img_h * ratio), int(img_w * ratio)
     margin_y, margin_x = int(margin * cut_h), int(margin * cut_w)
+
     cy = np.random.randint(0 + margin_y, img_h - margin_y, size=count)
     cx = np.random.randint(0 + margin_x, img_w - margin_x, size=count)
     yl = np.clip(cy - cut_h // 2, 0, img_h)
@@ -88,9 +69,7 @@ def rand_bbox(img_shape, lam, margin=0.0, count=None):
 
 
 def get_cutmix_bbox(img_shape, lam, correct_lam=True, count=None):
-    """
-    Generates the box coordinates for cutmix.
-
+    """ Generates the box coordinates for cutmix.
     Args:
         img_shape (tuple): Image shape as tuple
         lam (float): Cutmix lambda value
@@ -114,8 +93,7 @@ class MixUp:
         Features (https://arxiv.org/abs/1905.04899)
     """
 
-    def __init__(
-        self,
+    def __init__( self,
         mixup_alpha=1.0,
         cutmix_alpha=0.0,
         mix_prob=1.0,
@@ -137,6 +115,7 @@ class MixUp:
                 tensor. If label_smoothing is not used, set it to 0.
             num_classes (int): Number of classes for target.
         """
+
         self.mixup_alpha = mixup_alpha
         self.cutmix_alpha = cutmix_alpha
         self.mix_prob = mix_prob
@@ -188,7 +167,6 @@ class MixUp:
             lam = 1.0
         else:
             raise NotImplementedError
-        target = mixup_target(
-            target, self.num_classes, lam, self.label_smoothing
-        )
+
+        target = mixup_target( target, self.num_classes, lam, self.label_smoothing)
         return x, target

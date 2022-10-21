@@ -1,0 +1,37 @@
+MODEL: 
+
+  # from GLIP defaults
+  RPN_ONLY: False
+  BOX_ON: True
+  MASK_ON: False
+  KEYPOINT_ON: False
+  DEVICE: "cuda"
+
+  RPN_ARCHITECTURE: "RPN"
+  DEBUG: False
+  ONNX: False
+
+  # other
+  RPN_ARCHITECTURE: "VLDYHEAD"
+
+  BACKBONE:
+    BODY: "VIDEO-SWIN"
+
+  VSWIN:
+    DROP_PATH_RATE: 0.4 # IS THAT TOO HIGH??
+
+  LM:
+    FREEZE: False
+    MODEL_TYPE: "bert-base-uncased"
+
+  DYHEAD: 
+    CHANNELS: 256
+    NUM_CONVS: 8
+    USE_GN: True
+    USE_DYRELU: True
+    USE_DFCONV: True
+    USE_DYFUSE: True
+    TOPK: 9
+    SCORE_AGG: "MEAN"
+    LOG_SCALE: 0.0
+

@@ -3,43 +3,32 @@
 
 """Train a video classification model."""
 
-import math
 import numpy as np
-import pprint
-import torch
 from fvcore.nn.precise_bn import get_bn_modules, update_bn_stats
+import torch
 
+from slowfast.datasets import loader
+from slowfast.datasets.mixup import MixUp
+from slowfast.models import build_model
+from slowfast.models.contrastive import contrastive_forward, contrastive_parameter_surgery
 import slowfast.models.losses as losses
 import slowfast.models.optimizer as optim
 import slowfast.utils.checkpoint as cu
 import slowfast.utils.distributed as du
 import slowfast.utils.logging as logging
+from slowfast.utils.meters import AVAMeter, EpochTimer, TrainMeter, ValMeter
 import slowfast.utils.metrics as metrics
 import slowfast.utils.misc as misc
-import slowfast.visualization.tensorboard_vis as tb
-from slowfast.datasets import loader
-from slowfast.datasets.mixup import MixUp
-from slowfast.models import build_model
-from slowfast.models.contrastive import (
-    contrastive_forward,
-    contrastive_parameter_surgery,
-)
-from slowfast.utils.meters import AVAMeter, EpochTimer, TrainMeter, ValMeter
 from slowfast.utils.multigrid import MultigridSchedule
+import slowfast.visualization.tensorboard_vis as tb
+
+import math
+import pprint
 
 logger = logging.get_logger(__name__)
 
 
-def train_epoch(
-    train_loader,
-    model,
-    optimizer,
-    scaler,
-    train_meter,
-    cur_epoch,
-    cfg,
-    writer=None,
-):
+def train_epoch( train_loader, model, optimizer, scaler, train_meter, cur_epoch, cfg, writer=None):
     """
     Perform the video training for one epoch.
     Args:
@@ -54,6 +43,7 @@ def train_epoch(
         writer (TensorboardWriter, optional): TensorboardWriter object
             to writer Tensorboard log.
     """
+
     # Enable train mode.
     model.train()
     train_meter.iter_tic()
@@ -284,9 +274,7 @@ def train_epoch(
 
 
 @torch.no_grad()
-def eval_epoch(
-    val_loader, model, val_meter, cur_epoch, cfg, train_loader, writer
-):
+def eval_epoch( val_loader, model, val_meter, cur_epoch, cfg, train_loader, writer):
     """
     Evaluate the model on the val set.
     Args:
@@ -702,29 +690,11 @@ def train(cfg):
             f"{epoch_timer.avg_epoch_time()/len(train_loader):.2f}s in average."
         )
 
-        is_checkp_epoch = (
-            cu.is_checkpoint_epoch(
-                cfg,
-                cur_epoch,
-                None if multigrid is None else multigrid.schedule,
-            )
-            or cur_epoch == cfg.SOLVER.MAX_EPOCH - 1
-        )
-        is_eval_epoch = (
-            misc.is_eval_epoch(
-                cfg,
-                cur_epoch,
-                None if multigrid is None else multigrid.schedule,
-            )
-            and not cfg.MASK.ENABLE
-        )
+        is_checkp_epoch = ( cu.is_checkpoint_epoch( cfg, cur_epoch, None if multigrid is None else multigrid.schedule) or cur_epoch == cfg.SOLVER.MAX_EPOCH - 1)
+        is_eval_epoch = ( misc.is_eval_epoch( cfg, cur_epoch, None if multigrid is None else multigrid.schedule,) and not cfg.MASK.ENABLE)
 
         # Compute precise BN stats.
-        if (
-            (is_checkp_epoch or is_eval_epoch)
-            and cfg.BN.USE_PRECISE_STATS
-            and len(get_bn_modules(model)) > 0
-        ):
+        if ( (is_checkp_epoch or is_eval_epoch) and cfg.BN.USE_PRECISE_STATS and len(get_bn_modules(model)) > 0):
             calculate_and_update_precise_bn(
                 precise_bn_loader,
                 model,
@@ -735,25 +705,12 @@ def train(cfg):
 
         # Save a checkpoint.
         if is_checkp_epoch:
-            cu.save_checkpoint(
-                cfg.OUTPUT_DIR,
-                model,
-                optimizer,
-                cur_epoch,
-                cfg,
-                scaler if cfg.TRAIN.MIXED_PRECISION else None,
-            )
+            cu.save_checkpoint( cfg.OUTPUT_DIR, model, optimizer, cur_epoch, cfg, scaler if cfg.TRAIN.MIXED_PRECISION else None)
+
         # Evaluate the model on validation set.
         if is_eval_epoch:
-            eval_epoch(
-                val_loader,
-                model,
-                val_meter,
-                cur_epoch,
-                cfg,
-                train_loader,
-                writer,
-            )
+            eval_epoch( val_loader, model, val_meter, cur_epoch, cfg, train_loader, writer)
+
     if start_epoch == cfg.SOLVER.MAX_EPOCH: # eval if we loaded the final checkpoint
         eval_epoch(val_loader, model, val_meter, start_epoch, cfg, train_loader, writer)
     if writer is not None:

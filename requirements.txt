@@ -1,1 +1,9 @@
 torch
+torchvision
+pytorch-lightning
+einops
+matplotlib
+pillow
+numpy
+tqdm
+

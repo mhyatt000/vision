@@ -13,12 +13,12 @@ from visualization import visualize
 
 
 def main():
-    """
-    Main function to spawn the train and test process.
-    """
+    """ Main function to spawn the train and test process.  """
+
     args = parse_args()
-    print("config files: {}".format(args.cfg_files))
+    print(f"config files: {args.cfg_files}")
     for path_to_config in args.cfg_files:
+        """ config files are like individual jobs """
         cfg = load_config(args, path_to_config)
         cfg = assert_and_infer_cfg(cfg)
 
