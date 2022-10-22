@@ -7,17 +7,17 @@ from torch import nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from transformers.modeling_utils import apply_chunking_to_forward
+# from transformers.models.bert import modeling_bert as hfbert
 from transformers.models.bert.modeling_bert import (BertAttention, BertConfig,
                                                     BertIntermediate,
                                                     BertOutput,
                                                     BertPreTrainedModel)
 
-from general.engine.inference import \
-    create_positive_map_label_to_token_from_positive_map
-from general.layers import (DYReLU, FrozenBatchNorm2d, ModulatedDeformConv,
+# from general.engine.inference import  create_positive_map_label_to_token_from_positive_map
+from general.models.layers import (DYReLU, FrozenBatchNorm2d, ModulatedDeformConv,
                             NaiveSyncBatchNorm2d, Scale, SELayer)
-from general.modeling.backbone.fbnet import *
-from general.modeling.language_backbone.clip_model import (DropPath, LayerNorm,
+from general.models.backbone.fbnet import *
+from general.models.lm.clip_model import (DropPath, LayerNorm,
                                                            QuickGELU)
 from general.structures.boxlist_ops import cat_boxlist
 from general.utils.fuse_helper import (AttentionT2I, BertLMPredictionHead,
@@ -30,6 +30,17 @@ from ..utils import cat, concat_box_prediction_layers, permute_and_flatten
 from .anchor_generator import make_anchor_generator_complex
 from .inference import make_atss_postprocessor
 from .loss import make_atss_loss_evaluator
+
+
+
+def create_positive_map_label_to_token_from_positive_map(positive_map, plus=0):
+
+    positive_map_label_to_token = {}
+    for i in range(len(positive_map)):
+        positive_map_label_to_token[i + plus] = torch.nonzero(positive_map[i], as_tuple=True)[
+            0
+        ].tolist()
+    return positive_map_label_to_token
 
 
 class h_sigmoid(nn.Module):

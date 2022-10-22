@@ -12,12 +12,12 @@ class MLP(nn.Module):
         out_dim = out_dim or in_dim
         h_dim = h_dim or in_dim
 
-        self.mlp = nn.Sequential([
+        self.mlp = nn.Sequential(
             nn.Linear(in_dim, h_dim),
             activation(),
             nn.Linear(h_dim, out_dim),
             nn.Dropout(drop),
-        ])
+        )
 
     def forward(self, x):
         return self.mlp(x)

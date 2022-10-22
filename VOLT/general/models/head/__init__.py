@@ -67,7 +67,7 @@ class ROIHeads(torch.nn.ModuleDict):
         return x, detections, losses
 
 
-def build_heads(cfg):
+def build_head(cfg):
     """
     individually create the heads, that will be combined together
     """

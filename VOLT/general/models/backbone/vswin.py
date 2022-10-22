@@ -1,22 +1,24 @@
-""" copied from Video Swin Transformer repo """
+""" borrowed from official Video Swin Transformer repo """
 
+from functools import lru_cache, reduce
+from operator import mul
+
+from einops import rearrange
+from mmaction.utils import get_root_logger
+from mmcv.runner import load_checkpoint
+import numpy as np
+from timm.models.layers import DropPath, trunc_normal_
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-import numpy as np
-from timm.models.layers import DropPath, trunc_normal_
-
-from mmcv.runner import load_checkpoint
-from mmaction.utils import get_root_logger
-# from ..builder import BACKBONES
-
-from functools import reduce, lru_cache
-from operator import mul
-from einops import rearrange
-
 
 from ..layers.mlp import MLP
+
+# from ..builder import BACKBONES
+
+
+
 
 
 """ general info

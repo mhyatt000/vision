@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import transformers
 
 from .backbone import build_backbone
-from .heads import build_heads
+from .head import build_head
 from .lm import build_lm, build_tokenizer
 from .rpn import build_rpn
 
@@ -73,7 +73,7 @@ class VLRCNN(nn.Module):
 
         pass
 
-    def forward(self, images, targets=Nonw, captions=None):
+    def forward(self, images, targets=None, captions=None):
         """docstring"""
 
     def _forward_language_parallel(

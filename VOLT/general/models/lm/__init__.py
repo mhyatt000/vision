@@ -1,13 +1,11 @@
 from . import bert_model, clip_model
 from .clip_model import CLIPTransformer
 from .hfpt_tokenizer import HFPTTokenizer
-from .simple_tokenizer import SimpleTokenizer
+
+# from .simple_tokenizer import SimpleTokenizer
 
 # from .hfpt_tokenizer import HFPTTokenizer
 # from . import word_utils
-
-
-LM_ARCH = {"bert-base-uncased": build_bert, "clip": build_clip}
 
 
 def build_bert(cfg):
@@ -24,6 +22,8 @@ def build_clip(cfg):
 
 def build_lm(cfg):
     """returns a language model"""
+
+    LM_ARCH = {"bert-base-uncased": build_bert, "clip": build_clip}
     return LM_ARCH[cfg.MODEL.LANGUAGE_BACKBONE.MODEL_TYPE](cfg)
 
 

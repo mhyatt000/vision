@@ -2,6 +2,7 @@ from .vswin import SwinTransformer3D as VSWIN
 
 from . import vswin
 from . import resnet
+from . import fbnet
 
 
 def build_backbone(cfg):
