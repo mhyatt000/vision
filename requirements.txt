@@ -1,9 +1,7 @@
-torch
-torchvision
-pytorch-lightning
+-r requirements/build.txt
+-r requirements/optional.txt
+-r requirements/runtime.txt
+-r requirements/tests.txt
+mmaction2
 einops
-matplotlib
-pillow
-numpy
-tqdm
-
+nomkl
