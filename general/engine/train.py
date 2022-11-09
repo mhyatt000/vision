@@ -29,8 +29,8 @@ def train_iter(model, loader, trainer):
     conv.to(cfg.DEVICE)
     for X, Y in tqdm(loader):
 
-        X.to(cfg.DEVICE)
-        Y.to(cfg.DEVICE)
+        X = X.to(cfg.DEVICE)
+        Y = Y.to(cfg.DEVICE)
 
         output = model(X)[-1]
         Yh = conv(output).view((-1,5))
