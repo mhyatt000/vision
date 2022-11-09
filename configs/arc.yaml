@@ -47,7 +47,7 @@ SOLVER:
   MAX_EPOCH: 20
 
 LOSS:
-  BODY: "CE" # "AAM" # additive angular margin
+  BODY: "PFC" # "AAM" # additive angular margin
 
   AAM:
     S: 0
