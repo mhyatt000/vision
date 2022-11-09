@@ -41,7 +41,7 @@ def train_iter(model, loader, trainer):
         trainer.optimizer.step()
         # trainer.scheduler.step()
 
-        acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y.tolist(), Yh.tolist())]) / len(Y.tolist())
+        acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
         t.set_description(f'loss: {"%.4f" % loss} | acc: {acc}')
         t.update()
 
