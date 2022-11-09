@@ -19,7 +19,7 @@ def make_optimizer(model):
 class Trainer:
     """manages and abstracts options from the training loop"""
 
-    def __init__(self, model):
+    def __init__(self):
 
         """what is ema"""
 
