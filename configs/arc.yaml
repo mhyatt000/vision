@@ -40,7 +40,7 @@ MODEL:
     # OUT_FEATURES: 
 
 LOADER:
-  BS: 256
+  BS: 64
   SHUFFLE: True
 
 SOLVER:
