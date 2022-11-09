@@ -39,8 +39,8 @@ def train_iter(model, loader, trainer):
         trainer.optimizer.step()
         trainer.scheduler.step()
 
-        acc = sum([y==yh for y,yh in zip(Y,Yh)])
-        t.set_description(f'loss: {loss} | acc: {acc}')
+        acc = sum([y==yh for y,yh in zip(Y.tolist(),Yh.tolist())])
+        t.set_description(f'loss: {"%f.4" % loss} | acc: {acc}')
         t.update()
 
 def do_train(model, loader, trainer):
