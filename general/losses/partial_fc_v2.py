@@ -46,9 +46,10 @@ class PartialFC_V2(torch.nn.Module):
         """
         super(PartialFC_V2, self).__init__()
 
-        assert (
-            distributed.is_initialized()
-        ), "must initialize distributed before create this"
+        # assert (
+            # distributed.is_initialized()
+        # ), "must initialize distributed before create this"
+
         self.rank = distributed.get_rank()
         self.world_size = distributed.get_world_size()
 
