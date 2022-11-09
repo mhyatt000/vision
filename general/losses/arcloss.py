@@ -95,11 +95,11 @@ class ArcFace(torch.nn.Module):
 
 
 class CosFace(torch.nn.Module):
-    def __init__(self, s=64.0, m=0.40):
+    def __init__(self, s=64.0, margin=0.40):
         super(CosFace, self).__init__()
 
         self.s = s
-        self.margin = m
+        self.margin = margin
 
     def forward(self, logits, labels):
         index = torch.where(labels != -1)[0]
