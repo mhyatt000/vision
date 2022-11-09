@@ -1,6 +1,6 @@
-DEVICE: 'cuda'
+DEVICE: 'cuda' 
 MODEL: 
-  DEVICE: 'cuda' # 'cpu'
+  DEVICE:  'cuda'
   BODY: "SWINT"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
@@ -53,6 +53,12 @@ LOSS:
     S: 0
     M: (0.0, 0.0, 0.0)
     INTER_THRESH: 0
+
+  PFC:
+    EMBED_DIM: 512
+    NC: 5
+    SAMPLE_RATE: 1.0
+    FP16: True
 
 OPTIM:
   BODY: "ADAM"

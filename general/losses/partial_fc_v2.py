@@ -5,6 +5,10 @@ import torch
 from torch import distributed
 from torch.nn.functional import linear, normalize
 
+from general.config import cfg
+
+from . import arcloss
+
 
 class PartialFC_V2(torch.nn.Module):
     """ https://arxiv.org/abs/2203.15565
@@ -27,23 +31,18 @@ class PartialFC_V2(torch.nn.Module):
 
     _version = 2
 
-    def __init__(
+    def __init__( 
         self,
-        margin_loss: Callable,
-        embedding_size,
-        num_classes,
+        margin_loss: Callable = arcloss.CombinedMarginLoss,
+        embedding_size = cfg.LOSS.PFC.EMBED_DIM,
+        num_classes = cfg.LOSS.PFC.NC,
         sample_rate = 1.0,
         fp16 = False,
     ):
         """
-        Paramenters:
-        -----------
-        embedding_size: int
-            The dimension of embedding, required
-        num_classes: int
-            Total number of classes, required
-        sample_rate: float
-            The rate of negative centers participating in the calculation, default is 1.0.
+        embedding_size: The dimension of embedding, required
+        num_classes: Total number of classes, required
+        sample_rate: The rate of negative centers participating in the calculation, default is 1.0.
         """
         super(PartialFC_V2, self).__init__()
 
@@ -80,16 +79,15 @@ class PartialFC_V2(torch.nn.Module):
             raise
 
     def sample(self, labels, index_positive):
-        """
-            This functions will change the value of labels
-            Parameters:
-            -----------
-            labels: torch.Tensor
-                pass
-            index_positive: torch.Tensor
-                pass
-            optimizer: torch.optim.Optimizer
-                pass
+        """ This functions will change the value of labels
+        Parameters:
+        -----------
+        labels: torch.Tensor
+            pass
+        index_positive: torch.Tensor
+            pass
+        optimizer: torch.optim.Optimizer
+            pass
         """
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).cuda()
@@ -106,23 +104,18 @@ class PartialFC_V2(torch.nn.Module):
 
         return self.weight[self.weight_index]
 
-    def forward(
-        self,
-        local_embeddings: torch.Tensor,
-        local_labels: torch.Tensor,
-    ):
+    def forward( self, local_embeddings, local_labels):
         """
         Parameters:
         ----------
-        local_embeddings: torch.Tensor
-            feature embeddings on each GPU(Rank).
-        local_labels: torch.Tensor
-            labels on each GPU(Rank).
+        local_embeddings: feature embeddings on each GPU(Rank).
+        local_labels: labels on each GPU(Rank).
+
         Returns:
         -------
-        loss: torch.Tensor
-            pass
+        loss: 
         """
+
         local_labels.squeeze_()
         local_labels = local_labels.long()
 

@@ -59,9 +59,12 @@ def do_train(model, loader, trainer):
         print("Iter per epoch ", len(loader) // cfg.SOLVER.MAX_EPOCH)
 
     print("begin training loop")
+
+    # t = tqdm(total=len(loader))
     for epoch in range(cfg.SOLVER.MAX_EPOCH):
-        print(f"epoch {epoch}")
         train_iter(model, loader, trainer)
+        # t.set_description(f'epoch: {epoch}')
+        # t.update()
 
 
 def sandbox():
