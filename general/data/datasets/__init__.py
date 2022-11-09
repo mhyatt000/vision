@@ -1,4 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+from .western_blot import WBLOT
+"""
 from .background import Background
 from .caption import CaptionTSV
 from .coco import COCODataset
@@ -35,3 +37,4 @@ __all__ = [
     "PseudoData",
     "PhrasecutDetection",
 ]
+"""

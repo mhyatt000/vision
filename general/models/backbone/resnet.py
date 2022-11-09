@@ -21,7 +21,8 @@ Custom implementations may be written in user code and hooked in via the
 from collections import namedtuple
 
 from general.config import cfg
-from general.models.layers import Conv2d, DFConv2d, FrozenBatchNorm2d, NaiveSyncBatchNorm2d, SELayer
+from general.models.layers import (Conv2d, DFConv2d, FrozenBatchNorm2d,
+                                   NaiveSyncBatchNorm2d, SELayer)
 from general.models.layers.util import group_norm
 from general.utils.registry import Registry
 import torch

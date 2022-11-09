@@ -16,12 +16,13 @@ import torchvision
 from torchvision.io import read_image
 
 from general.config import cfg
+import torchvision.transforms.functional as F
 
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
 
-    def __init__( self, root="western_blots", transform=None, target_transform=None):
+    def __init__(self, root="western_blots", transform=None, target_transform=None):
         super(WBLOT, self).__init__()
 
         # init folders
@@ -39,13 +40,12 @@ class WBLOT(Dataset):
 
         # init labels
         self.data = []
-        for i,df in enumerate(self.datafolders):
-            self.data += [(img,i) for img in os.listdir(df)]
+        for i, df in enumerate(self.datafolders):
+            self.data += [(img, i) for img in os.listdir(df)]
 
         # init transforms
         self.transform = transform
         self.target_transform = target_transform
-
 
     def __len__(self):
         return len(self.data)
@@ -53,8 +53,9 @@ class WBLOT(Dataset):
     def __getitem__(self, idx):
 
         x, label = self.data[idx]
-        img_path = join(self.datafolders[label],x)
-        image = read_image(img_path)
+        img_path = join(self.datafolders[label], x)
+        image = read_image(img_path).float()
+        label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
 
         if self.transform:
             image = self.transform(image)

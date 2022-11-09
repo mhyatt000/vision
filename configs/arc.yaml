@@ -1,0 +1,54 @@
+MODEL: 
+  DEVICE: 'cpu'
+  BODY: "SWINT"
+
+  RESNET: "ResNet50Conv5ROIFeatureExtractor"
+
+  VIT: 
+    SIZE: 'B' # B,  L, H
+
+    IMAGE_SIZE: 256
+    PATCH: 16
+    NCLASSES: 5
+    FE: True # is feature extractor
+
+    # DIM:
+    # LAYERS:
+    # HEADS:
+    # MLP_DIM:
+
+    # DROPOUT:
+    # EMB_DROPOUT:
+    # POOL:
+    # CHANNELS: 
+    # DIM_HEAD: 
+
+  SWINT:
+    EMBED_DIM: 96
+    DEPTHS: (2, 2, 6, 2)
+    NUM_HEADS: (3, 6, 12, 24)
+    WINDOW_SIZE: 7
+    MLP_RATIO: 4
+    DROP_PATH_RATE:  0.2
+    APE: False # absolute positional embedding
+
+  # VISION:
+    # FREEZE_CONV_BODY_AT: 
+    # CONV_BODY: 
+    # USE_CHECKPOINT: 
+    # OUT_FEATURES: 
+
+LOADER:
+  BS: 64
+  SHUFFLE: True
+
+SOLVER:
+  MAX_EPOCH: 20
+
+LOSS:
+  BODY: "CE" # "AAM" # additive angular margin
+
+  AAM:
+    S: 0
+    M: (0.0, 0.0, 0.0)
+    INTER_THRESH: 0

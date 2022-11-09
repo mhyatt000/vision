@@ -1,94 +1,67 @@
 import datetime
 import logging
-import sys
-import os
 import math
+import os
+# from general.utils.metric_logger import MetricLogger
+# from general.utils.ema import ModelEma
+# from general.utils.amp import autocast, GradScaler
+# from general.data.datasets.evaluation import evaluate
+# from .inference import inference
+import pdb
+import sys
 import time
 
 import torch
+from torch import nn
 import torch.distributed as dist
 
-from general.utils import comm 
-# from general.utils.metric_logger import MetricLogger
-# from general.utils.ema import ModelEma
-from general.utils.amp import autocast, GradScaler
-from general.data.datasets.evaluation import evaluate
-from .inference import inference
-import pdb
-
 from general.config import cfg
+from general.utils import comm
 
+from tqdm import tqdm
 
-""" helpers
-checkpointer
-logger
-# meters
-# metriclogger
-gradscaler
-"""
+def train_iter(model, loader, trainer):
 
-def train_iter():
-    """
-    for epoch in epochs:
-        output = train_iter()
+    losses = []
+    conv = nn.Conv2d(768,5,8)
+    for X, Y in tqdm(loader):
 
-        ...
-        all the extra stuff
-        ...
-    """
-    pass
+        output = model(X)[-1]
+        Yh = conv(output).view((-1,5))
 
+        # transform labels [1..5] to 0,-1,1?
+        loss = trainer.loss(Yh, Y)
+        loss.backward()
+        trainer.optimizer.step()
+        trainer.scheduler.step()
 
-def do_train(
-    model,
-    data_loader,
-    optimizer,
-    scheduler, # checkpointer,
-    val_data_loader=None, # meters=None,
-):
+        losses.append(loss)
+        print(losses[-1])
+    quit()
 
-    """
-    initial training setup
-    TODO put inside an init_train()
-    """
+def do_train(model, loader, trainer):
 
-    """ this part is repeated from original train() """
-
-    logger = logging.getLogger("general.trainer")
-    logger.info("Start training")
-
-    max_iter = len(data_loader)
-    start_iter = arguments["iteration"]
-    model.train()
-
-    device = torch.device(cfg.device)
-
+    device = torch.device(cfg.MODEL.DEVICE)
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
-    start_training_time = time.time()
-    end = time.time()
-
     global_rank = comm.get_rank()
 
     if cfg.SOLVER.CHECKPOINT_PER_EPOCH != -1 and cfg.SOLVER.MAX_EPOCH >= 1:
-        checkpoint_period = (
-            len(data_loader) * cfg.SOLVER.CHECKPOINT_PER_EPOCH // cfg.SOLVER.MAX_EPOCH
-        )
+        checkpoint_period = len(loader) * cfg.SOLVER.CHECKPOINT_PER_EPOCH // cfg.SOLVER.MAX_EPOCH
 
     if global_rank <= 0 and cfg.SOLVER.MAX_EPOCH >= 1:
-        print("Iter per epoch ", len(data_loader) // cfg.SOLVER.MAX_EPOCH)
+        print("Iter per epoch ", len(loader) // cfg.SOLVER.MAX_EPOCH)
 
-    trainer = Trainer()
+    print("begin training loop")
+    for epoch in range(cfg.SOLVER.MAX_EPOCH):
+        print(f"epoch {epoch}")
+        train_iter(model, loader, trainer)
 
-    # Adapt the weight decay
-    if cfg.SOLVER.WEIGHT_DECAY_SCHEDULE and hasattr(scheduler, "milestones"):
-        milestone_target = 0
-        for i, milstone in enumerate(list(scheduler.milestones)):
-            if scheduler.last_epoch >= milstone * cfg.SOLVER.WEIGHT_DECAY_SCHEDULE_RATIO:
-                milestone_target = i + 1
 
-    """
-    begin training loop
-    """
+def sandbox():
+    pass
+
+
+"""
 
     for iteration, (
         images,
@@ -97,10 +70,8 @@ def do_train(
         positive_map,
         positive_map_eval,
         greenlight_map,
-    ) in enumerate(data_loader, start_iter):
+    ) in enumerate(loader, start_iter):
 
-
-        train_iter()
 
 
         nnegative = sum(len(target) < 1 for target in targets)
@@ -229,7 +200,7 @@ def do_train(
                         memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
                     )
                 )
-        if val_data_loader and (iteration % checkpoint_period == 0 or iteration == max_iter):
+        if val_loader and (iteration % checkpoint_period == 0 or iteration == max_iter):
             if comm.is_main_process():
                 print("Evaluating")
             eval_result = 0.0
@@ -242,7 +213,7 @@ def do_train(
                         _model = model
                     _result = inference(
                         model=_model,
-                        data_loader=val_data_loader,
+                        loader=val_loader,
                         dataset_name="val",
                         device=device,
                         expected_results=cfg.TEST.EXPECTED_RESULTS,
@@ -256,7 +227,7 @@ def do_train(
             else:
                 results_dict = {}
                 cpu_device = torch.device("cpu")
-                for i, batch in enumerate(val_data_loader):
+                for i, batch in enumerate(val_loader):
                     images, targets, image_ids, positive_map, *_ = batch
                     with torch.no_grad():
                         images = images.to(device)
@@ -278,7 +249,7 @@ def do_train(
                         predictions.update(p)
                     predictions = [predictions[i] for i in list(sorted(predictions.keys()))]
                     eval_result, _ = evaluate(
-                        val_data_loader.dataset,
+                        val_loader.dataset,
                         predictions,
                         output_folder=None,
                         box_only=cfg.DATASETS.CLASS_AGNOSTIC,
@@ -293,7 +264,7 @@ def do_train(
                 model_ema.ema.eval()
                 results_dict = {}
                 cpu_device = torch.device("cpu")
-                for i, batch in enumerate(val_data_loader):
+                for i, batch in enumerate(val_loader):
                     images, targets, image_ids, positive_map, positive_map_eval = batch
                     with torch.no_grad():
                         images = images.to(device)
@@ -315,7 +286,7 @@ def do_train(
                         predictions.update(p)
                     predictions = [predictions[i] for i in list(sorted(predictions.keys()))]
                     eval_result, _ = evaluate(
-                        val_data_loader.dataset,
+                        val_loader.dataset,
                         predictions,
                         output_folder=None,
                         box_only=cfg.DATASETS.CLASS_AGNOSTIC,
@@ -347,3 +318,4 @@ def do_train(
             total_time_str, total_training_time / (max_iter)
         )
     )
+"""

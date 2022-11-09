@@ -52,8 +52,10 @@ cfg.distributed = cfg.num_gpus > 1
 if cfg.disable_output_distributed:
     set_dist_print(cfg.local_rank <= 0)
 
-""" temporary """
-cfg.config_file = "/Users/matthewhyatt/cs/vision/configs/VOLT.yaml"
+file = input('config file: ')+'.yaml'
+cfg.config_file = os.path.join('/'.join(__file__.split('/')[:-3]), 'configs',file)
+print(cfg.config_file, '\n')
+
 if cfg.config_file:
     cfg.merge_from_file(cfg.config_file)
 cfg.merge_from_list(cfg.opts)

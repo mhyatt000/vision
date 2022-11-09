@@ -40,3 +40,14 @@ class Trainer:
                     print(f"{n}Auto Termination at {iteration or 'NA'}, current best {best,n}")
                 return False
         return True
+
+    def init_decay():
+        """docstring"""
+
+        # Adapt the weight decay
+        if cfg.SOLVER.WEIGHT_DECAY_SCHEDULE and hasattr(scheduler, "milestones"):
+            milestone_target = 0
+            for i, milstone in enumerate(list(scheduler.milestones)):
+                if scheduler.last_epoch >= milstone * cfg.SOLVER.WEIGHT_DECAY_SCHEDULE_RATIO:
+                    milestone_target = i + 1
+
