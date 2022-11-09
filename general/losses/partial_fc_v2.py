@@ -230,7 +230,7 @@ class AllGatherFunc(torch.autograd.Function):
     def forward(ctx, tensor, *gather_list):
         gather_list = list(gather_list)
         # dist.all_gather(gather_list, tensor)
-        tensor= dist.all_gather(_gather_list )
+        tensor= dist.all_gather(gather_list )
         return tuple(gather_list)
 
     @staticmethod
