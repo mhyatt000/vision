@@ -1,5 +1,5 @@
 MODEL: 
-  DEVICE: 'cpu'
+  DEVICE: 'cuda' # 'cpu'
   BODY: "SWINT"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
