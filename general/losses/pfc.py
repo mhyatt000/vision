@@ -2,12 +2,11 @@ import math
 from typing import Callable
 
 import torch
-# from torch import distributed as dist
-from general.utils import dist
 from torch.nn.functional import linear, normalize
+from torch import distributed as dist
 
 from general.config import cfg
-
+from general.utils.import dist
 from general.losses import arcloss
 
 
@@ -51,24 +50,26 @@ class PartialFC_V2(torch.nn.Module):
             # dist.is_initialized()
         # ), "must initialize distributed before create this"
 
-        self.rank = dist.get_rank()
-        self.world_size = dist.get_world_size()
+        self.rank = 0 # dist.get_rank()
+        self.world_size = 1 # dist.get_world_size()
 
-        self.dist_cross_entropy = DistCrossEntropy()
+        # self.dist_cross_entropy = DistCrossEntropy()
+        self.CE = torch.nn.CrossEntropyLoss()
+
         self.embedding_size = embedding_size
         self.sample_rate = sample_rate
         self.fp16 = fp16
 
-        self.num_local = num_classes // self.world_size + int(
-            self.rank < num_classes % self.world_size
-        )
+        # self.num_local = num_classes // self.world_size + int(
+            # self.rank < num_classes % self.world_size
+        # )
 
-        self.class_start = num_classes // self.world_size * self.rank + min(
-            self.rank, num_classes % self.world_size
-        )
+        # self.class_start = num_classes // self.world_size * self.rank + min(
+            # self.rank, num_classes % self.world_size
+        # )
 
-        self.num_sample = int(self.sample_rate * self.num_local)
-        self.last_batch_size = 0
+        # self.num_sample = int(self.sample_rate * self.num_local)
+        # self.last_batch_size = 0
 
         self.is_updated = True
         self.init_weight_update = True
@@ -91,6 +92,7 @@ class PartialFC_V2(torch.nn.Module):
         optimizer: torch.optim.Optimizer
             pass
         """
+
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).cuda()
             if self.num_sample - positive.size(0) >= 0:
@@ -106,39 +108,41 @@ class PartialFC_V2(torch.nn.Module):
 
         return self.weight[self.weight_index]
 
-    def forward( self, local_embeddings, local_labels):
+    def forward( self, embeddings, labels):
         """
         Parameters:
         ----------
-        local_embeddings: feature embeddings on each GPU(Rank).
-        local_labels: labels on each GPU(Rank).
+        embeddings: feature embeddings on each GPU(Rank).
+        labels: labels on each GPU(Rank).
 
         Returns:
         -------
         loss: 
         """
 
-        local_labels.squeeze_()
-        local_labels = local_labels.long()
+        labels.squeeze_()
+        labels = labels.long()
 
-        batch_size = local_embeddings.size(0)
-        if self.last_batch_size == 0:
-            self.last_batch_size = batch_size
-        assert self.last_batch_size == batch_size, (
-            f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}")
+        batch_size = embeddings.size(0)
 
-        _gather_embeddings = [
-            torch.zeros((batch_size, self.embedding_size)).cuda()
-            for _ in range(self.world_size)
-        ]
-        _gather_labels = [
-            torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)
-        ]
-        _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
-        dist.all_gather(_gather_labels, local_labels)
+        # if self.last_batch_size == 0:
+            # self.last_batch_size = batch_size
+        # assert self.last_batch_size == batch_size, (
+            # f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}")
 
-        embeddings = torch.cat(_list_embeddings)
-        labels = torch.cat(_gather_labels)
+        # _gather_embeddings = [
+            # torch.zeros((batch_size, self.embedding_size)).cuda()
+            # for _ in range(self.world_size)
+        # ]
+        # _gather_labels = [
+            # torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)
+        # ]
+
+        # _list_embeddings = AllGather(embeddings, *_gather_embeddings)
+        # dist.all_gather(_gather_labels, labels)
+
+        # embeddings = torch.cat(_list_embeddings)
+        # labels = torch.cat(_gather_labels)
 
         labels = labels.view(-1, 1)
         index_positive = (self.class_start <= labels) & (
@@ -161,7 +165,7 @@ class PartialFC_V2(torch.nn.Module):
         logits = logits.clamp(-1, 1)
 
         logits = self.margin_softmax(logits, labels)
-        loss = self.dist_cross_entropy(logits, labels)
+        loss = self.CE(logits, labels)
         return loss
 
 
@@ -247,7 +251,7 @@ class AllGatherFunc(torch.autograd.Function):
         for _op in dist_ops:
             _op.wait()
 
-        grad_out *= len(grad_list)  # cooperate with distributed loss function
+        grad_out *= len(grad_list)  # cooperate with dist loss function
         return (grad_out, *[None for _ in range(len(grad_list))])
 
 
