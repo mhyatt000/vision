@@ -25,7 +25,7 @@ conv.to(cfg.DEVICE)
 
 def train_iter(model, loader, trainer):
 
-    t = tqdm(total=len(loader)):
+    t = tqdm(total=len(loader))
     for X, Y in loader: #(t := tqdm(loader)):
 
         X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
