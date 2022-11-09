@@ -12,7 +12,7 @@ def make_optimizer(model):
     return OPTIM[cfg.OPTIM.BODY](
         model.parameters(),
         lr=cfg.OPTIM.LR,
-        betas=cfg.optim.BETAS,
+        betas=cfg.OPTIM.BETAS,
     )
 
 
