@@ -76,7 +76,7 @@ class PartialFC_V2(torch.nn.Module):
 
         # margin_loss
         if isinstance(margin_loss, Callable):
-            self.margin_softmax = margin_loss
+            self.margin_softmax = margin_loss()
         else:
             raise
 
