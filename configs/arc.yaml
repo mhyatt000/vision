@@ -45,9 +45,10 @@ LOADER:
 
 SOLVER:
   MAX_EPOCH: 20
+  GRAD_CLIP: 5
 
 LOSS:
-  BODY: "PFC" # "AAM" # additive angular margin
+  BODY: "CE" # "PFC" #  "AAM" # additive angular margin
 
   AAM:
     S: 0

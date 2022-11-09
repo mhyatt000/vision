@@ -39,6 +39,7 @@ def train_iter(model, loader, trainer):
         loss = trainer.loss(Yh, Y)
         loss.backward()
         trainer.optimizer.step()
+        trainer.optimizer.zero_grad()
         # trainer.scheduler.step()
 
         acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
