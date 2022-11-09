@@ -51,7 +51,7 @@ LOSS:
 
   AAM:
     S: 0
-    M: (0.0, 0.0, 0.0)
+    M: [0.0, 0.0, 0.0]
     INTER_THRESH: 0
 
   PFC:
