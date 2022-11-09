@@ -160,7 +160,7 @@ class PartialFC_V2(torch.nn.Module):
             logits = linear(norm_embeddings, norm_weight_activated)
         if self.fp16:
             logits = logits.float()
-        logits = logits.clamp(-1, 1)
+        logits = logits.clamp(-1, 1).to(device)
 
         logits = self.margin_softmax(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)
