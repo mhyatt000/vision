@@ -1,5 +1,5 @@
 from general.config import cfg
-import torch.optim
+from torch import optim
 
 
 OPTIM = {
