@@ -1,3 +1,4 @@
+DEVICE: 'cuda'
 MODEL: 
   DEVICE: 'cuda' # 'cpu'
   BODY: "SWINT"

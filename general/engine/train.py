@@ -24,7 +24,11 @@ def train_iter(model, loader, trainer):
 
     losses = []
     conv = nn.Conv2d(768,5,8)
+    conv.to(cfg.DEVICE)
     for X, Y in tqdm(loader):
+
+        X.to(cfg.DEVICE)
+        Y.to(cfg.DEVICE)
 
         output = model(X)[-1]
         Yh = conv(output).view((-1,5))
