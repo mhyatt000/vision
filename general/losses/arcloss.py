@@ -26,11 +26,11 @@ class CombinedMarginLoss(torch.nn.Module):
         self.cosface = CosFace(s=self.s, margin=self.m3)
 
         # For ArcFace
-        self.cos_m = math.cos(self.m2)
-        self.sin_m = math.sin(self.m2)
-        self.theta = math.cos(math.pi - self.m2)
-        self.sinmm = math.sin(math.pi - self.m2) * self.m2
-        self.easy_margin = False
+        # self.cos_m = math.cos(self.m2)
+        # self.sin_m = math.sin(self.m2)
+        # self.theta = math.cos(math.pi - self.m2)
+        # self.sinmm = math.sin(math.pi - self.m2) * self.m2
+        # self.easy_margin = False
 
     def forward(self, logits, labels):
 
@@ -99,12 +99,12 @@ class CosFace(torch.nn.Module):
         super(CosFace, self).__init__()
 
         self.s = s
-        self.m = m
+        self.margin = m
 
     def forward(self, logits, labels):
         index = torch.where(labels != -1)[0]
         tgt = logits[index, labels[index].view(-1)]
-        final_tgt = tgt - self.m
+        final_tgt = tgt - self.margin
 
         logits[index, labels[index].view(-1)] = final_tgt
         logits = logits * self.s
