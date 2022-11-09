@@ -18,9 +18,9 @@ class CombinedMarginLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.s = cfg.AAM.S
-        self.m1, self.m2, self.m3 = cfg.AAM.M
-        self.inter_thresh = cfg.AAM.INTER_THRESH
+        self.s = cfg.LOSS.AAM.S
+        self.m1, self.m2, self.m3 = cfg.LOSS.AAM.M
+        self.inter_thresh = cfg.LOSS.AAM.INTER_THRESH
 
         self.arcface = ArcFace(s=self.s, margin=self.m2)
         self.cosface = CosFace(s=self.s, margin=self.m3)
