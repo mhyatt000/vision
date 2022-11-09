@@ -8,7 +8,7 @@ from torch.nn.functional import linear, normalize
 
 from general.config import cfg
 
-from general.losses import arcloss
+from . import arcloss
 
 
 class PartialFC_V2(torch.nn.Module):
@@ -135,7 +135,8 @@ class PartialFC_V2(torch.nn.Module):
             torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)
         ]
         _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
-        dist.all_gather(_gather_labels, local_labels)
+        # dist.all_gather(_gather_labels, local_labels)
+        _gather_labels = dist.all_gather(local_labels)
 
         embeddings = torch.cat(_list_embeddings)
         labels = torch.cat(_gather_labels)
@@ -227,7 +228,8 @@ class AllGatherFunc(torch.autograd.Function):
     @staticmethod
     def forward(ctx, tensor, *gather_list):
         gather_list = list(gather_list)
-        dist.all_gather(gather_list, tensor)
+        # dist.all_gather(gather_list, tensor)
+        _gather_list = dist.all_gather(tensor)
         return tuple(gather_list)
 
     @staticmethod
