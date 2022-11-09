@@ -55,7 +55,7 @@ class WBLOT(Dataset):
         x, label = self.data[idx]
         img_path = join(self.datafolders[label], x)
         image = read_image(img_path).float()
-        label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
+        # label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
 
         if self.transform:
             image = self.transform(image)
