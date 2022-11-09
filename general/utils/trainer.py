@@ -1,10 +1,25 @@
 from general.config import cfg
+import torch.optim
+
+
+OPTIM = {
+    "ADAM": optim.Adam,
+    "SGD": optim.SGD,
+}
+
+
+def make_optimizer(model):
+    return OPTIM[cfg.OPTIM.BODY](
+        model.parameters(),
+        lr=cfg.OPTIM.LR,
+        betas=cfg.optim.BETAS,
+    )
 
 
 class Trainer:
     """manages and abstracts options from the training loop"""
 
-    def __init__(self):
+    def __init__(self, model):
 
         """what is ema"""
 
@@ -50,4 +65,3 @@ class Trainer:
             for i, milstone in enumerate(list(scheduler.milestones)):
                 if scheduler.last_epoch >= milstone * cfg.SOLVER.WEIGHT_DECAY_SCHEDULE_RATIO:
                     milestone_target = i + 1
-

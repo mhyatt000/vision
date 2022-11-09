@@ -53,3 +53,9 @@ LOSS:
     S: 0
     M: (0.0, 0.0, 0.0)
     INTER_THRESH: 0
+
+OPTIM:
+  BODY: "ADAM"
+  
+  LR: 0.5
+  BETAS: 0.999

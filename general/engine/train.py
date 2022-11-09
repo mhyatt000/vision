@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import os
+
 # from general.utils.metric_logger import MetricLogger
 # from general.utils.ema import ModelEma
 # from general.utils.amp import autocast, GradScaler
@@ -20,28 +21,30 @@ from general.utils import comm
 
 from tqdm import tqdm
 
-conv = nn.Conv2d(768,5,8)
+conv = nn.Conv2d(768, 5, 8)
 conv.to(cfg.DEVICE)
+
 
 def train_iter(model, loader, trainer):
 
     t = tqdm(total=len(loader))
-    for X, Y in loader: #(t := tqdm(loader)):
+    for X, Y in loader:  # (t := tqdm(loader)):
 
         X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
 
         output = model(X)[-1]
-        Yh = conv(output).view((-1,5))
+        Yh = conv(output).view((-1, 5))
 
         # transform labels [1..5] to 0,-1,1?
         loss = trainer.loss(Yh, Y)
         loss.backward()
         trainer.optimizer.step()
-        trainer.scheduler.step()
+        # trainer.scheduler.step()
 
-        acc = sum([y==yh for y,yh in zip(Y.tolist(),Yh.tolist())])/Y.shape[:-1]
+        acc = sum([y == yh for y, yh in zip(Y.tolist(), Yh.tolist())]) / Y.shape[:-1]
         t.set_description(f'loss: {"%.4f" % loss} | acc: {acc}')
         t.update()
+
 
 def do_train(model, loader, trainer):
 

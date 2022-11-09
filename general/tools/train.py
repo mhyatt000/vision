@@ -6,16 +6,16 @@ import random
 
 import numpy as np
 import torch
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torch import nn
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from general.config import cfg
 from general.data import build_loader
 from general.engine.train import do_train
-from general.models import build_model
-from general.utils.trainer import Trainer
-from general.solver import make_lr_scheduler, make_optimizer
 from general.losses import make_loss
+from general.models import build_model
+# from general.solver import make_lr_scheduler, make_optimizer
+from general.utils.trainer import Trainer, make_optimizer
 
 # from general.data import make_data_loader
 # from general.engine.inference import inference
@@ -82,7 +82,7 @@ def train():
 
     trainer = Trainer()
     trainer.optimizer = make_optimizer(model)
-    trainer.scheduler = make_lr_scheduler(trainer.optimizer)
+    # trainer.scheduler = make_lr_scheduler(trainer.optimizer)
     trainer.loss = make_loss()
 
     loader = build_loader()
