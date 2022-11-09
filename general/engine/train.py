@@ -22,6 +22,8 @@ from tqdm import tqdm
 
 def train_iter(model, loader, trainer):
 
+    print(cfg.DEVICE)
+
     losses = []
     conv = nn.Conv2d(768,5,8)
     conv.to(cfg.DEVICE)
