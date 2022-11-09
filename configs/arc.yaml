@@ -57,5 +57,5 @@ LOSS:
 OPTIM:
   BODY: "ADAM"
   
-  LR: 0.5
-  BETAS: 0.999
+  LR: 0.005
+  BETAS: [0.5,0.999]
