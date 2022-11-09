@@ -42,7 +42,7 @@ def train_iter(model, loader, trainer):
         # trainer.scheduler.step()
 
         acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
-        t.set_description(f'loss: {"%.4f" % loss} | acc: {acc}')
+        t.set_description(f'loss: {"%.4f" % loss} | acc: {"%.4f" % acc}')
         t.update()
 
 
