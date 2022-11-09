@@ -26,23 +26,21 @@ conv.to(cfg.DEVICE)
 def train_iter(model, loader, trainer):
 
     losses = []
-    with tqdm(total=len(loader), bar_format="{*posfix}", posfix=[]) as t:
-        for X, Y in loader:
+    for X, Y in (t := tqdm(loader)):
 
-            X = X.to(cfg.DEVICE)
-            Y = Y.to(cfg.DEVICE)
+        X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
 
-            output = model(X)[-1]
-            Yh = conv(output).view((-1,5))
+        output = model(X)[-1]
+        Yh = conv(output).view((-1,5))
 
-            # transform labels [1..5] to 0,-1,1?
-            loss = trainer.loss(Yh, Y)
-            loss.backward()
-            trainer.optimizer.step()
-            trainer.scheduler.step()
+        # transform labels [1..5] to 0,-1,1?
+        loss = trainer.loss(Yh, Y)
+        loss.backward()
+        trainer.optimizer.step()
+        trainer.scheduler.step()
 
-            t.posfix[0] = loss
-            t.postfix[1] = sum([y==yh for y,yh in zip(Y,Yh)])
+        acc = sum([y==yh for y,yh in zip(Y,Yh)])
+        t.set_description(f'loss: {loss} | acc: {acc}')
 
 
 def do_train(model, loader, trainer):
