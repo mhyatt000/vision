@@ -94,21 +94,23 @@ class ResNet(nn.Module):
         # Translate string names to implementations
         norm_level = None
         stem_module = _STEM_MODULES[cfg.MODEL.RESNETS.STEM_FUNC]
-        stage_specs = _STAGE_SPECS[cfg.MODEL.BACKBONE.CONV_BODY]
+        stage_specs = _STAGE_SPECS[cfg.MODEL.VISION.CONV_BODY]
         transformation_module = _TRANSFORMATION_MODULES[cfg.MODEL.RESNETS.TRANS_FUNC]
 
-        if cfg.MODEL.BACKBONE.USE_BN:
+        if cfg.MODEL.VISION.USE_BN:
             stem_module = StemWithBatchNorm
             transformation_module = BottleneckWithBatchNorm
-            norm_level = cfg.MODEL.BACKBONE.NORM_LEVEL
-        elif cfg.MODEL.BACKBONE.USE_NSYNCBN:
+            norm_level = cfg.MODEL.VISION.NORM_LEVEL
+
+        elif cfg.MODEL.VISION.USE_NSYNCBN:
             stem_module = StemWithNaiveSyncBatchNorm
             transformation_module = BottleneckWithNaiveSyncBatchNorm
-            norm_level = cfg.MODEL.BACKBONE.NORM_LEVEL
-        elif cfg.MODEL.BACKBONE.USE_SYNCBN:
+            norm_level = cfg.MODEL.VISION.NORM_LEVEL
+
+        elif cfg.MODEL.VISION.USE_SYNCBN:
             stem_module = StemWithSyncBatchNorm
             transformation_module = BottleneckWithSyncBatchNorm
-            norm_level = cfg.MODEL.BACKBONE.NORM_LEVEL
+            norm_level = cfg.MODEL.VISION.NORM_LEVEL
 
         # Construct the stem module
         self.stem = stem_module()
@@ -163,7 +165,7 @@ class ResNet(nn.Module):
             self.return_features[name] = stage_spec.return_features
 
         # Optionally freeze (requires_grad=False) parts of the backbone
-        self._freeze_backbone(cfg.MODEL.BACKBONE.FREEZE_CONV_BODY_AT)
+        self._freeze_backbone(cfg.MODEL.VISION.FREEZE_CONV_BODY_AT)
 
     def _freeze_backbone(self, freeze_at):
         if freeze_at < 0:

@@ -1,13 +1,13 @@
 from . import backbone, head, layers, lang, rpn
 from .vlrcnn import VLRCNN
 
-from .backbone import vit, swint
+from .backbone import vit, swint, resnet
 from general.config import cfg
 
 models = {
     "VLRCNN": VLRCNN,
     "SWINT": swint.SwinTransformer,
-    "RESNET": None,
+    "RESNET": resnet.ResNet,
     "VIT": vit.VIT,
 }
 

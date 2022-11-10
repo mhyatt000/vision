@@ -9,7 +9,7 @@ class SELayer(nn.Module):
             nn.Linear(channel, channel // reduction, bias=False),
             nn.ReLU(inplace=True),
             nn.Linear(channel // reduction, channel, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, x):
@@ -20,22 +20,28 @@ class SELayer(nn.Module):
 
 
 class SEBlock(nn.Module):
-    def __init__(self, channels, reduction=16,
-                 use_conv=True, mid_activation=nn.ReLU(inplace=True), out_activation=nn.Sigmoid()):
+    def __init__(
+        self,
+        channels,
+        reduction=16,
+        use_conv=True,
+        mid_activation=nn.ReLU(inplace=True),
+        out_activation=nn.Sigmoid(),
+    ):
         super(SEBlock, self).__init__()
+
         self.use_conv = use_conv
         mid_channels = channels // reduction
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         if use_conv:
             self.conv1 = nn.Conv2d(channels, mid_channels, kernel_size=1, bias=True)
-        else:
-            self.fc1 = nn.Linear(channels, mid_channels)
-        self.activ = mid_activation
-        if use_conv:
             self.conv2 = nn.Conv2d(mid_channels, channels, kernel_size=1, bias=True)
         else:
+            self.fc1 = nn.Linear(channels, mid_channels)
             self.fc2 = nn.Linear(mid_channels, channels)
+
+        self.activ = mid_activation
         self.sigmoid = out_activation
 
     def forward(self, x):

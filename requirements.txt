@@ -43,3 +43,4 @@ nomkl
 yacs
 scipy
 einops
+kornia
