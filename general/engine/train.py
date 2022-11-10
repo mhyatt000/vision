@@ -63,6 +63,7 @@ def do_train(model, loader, trainer):
 
     # t = tqdm(total=len(loader))
     for epoch in range(cfg.SOLVER.MAX_EPOCH):
+        print(f'epoch: {epoch}/{cfg.SOLVER.MAX_EPOCH}')
         train_iter(model, loader, trainer)
         # t.set_description(f'epoch: {epoch}')
         # t.update()
