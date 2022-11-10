@@ -124,16 +124,19 @@ class ResNet(nn.Module):
         self.stages = []
         self.out_channels = []
         self.return_features = {}
+
         for stage_spec in stage_specs:
             name = "layer" + str(stage_spec.index)
             stage2_relative_factor = 2 ** (stage_spec.index - 1)
             bottleneck_channels = stage2_bottleneck_channels * stage2_relative_factor
             out_channels = stage2_out_channels * stage2_relative_factor
             stage_with_dcn = cfg.MODEL.RESNETS.STAGE_WITH_DCN[stage_spec.index - 1]
+
             if cfg.MODEL.RESNETS.USE_AVG_DOWN:
                 avg_down_stride = 1 if stage_spec.index == 1 else 2
             else:
                 avg_down_stride = 0
+
             module = _make_stage(
                 transformation_module,
                 in_channels,
@@ -152,6 +155,7 @@ class ResNet(nn.Module):
                 with_se=with_se,
                 avg_down_stride=avg_down_stride,
             )
+
             in_channels = out_channels
             self.add_module(name, module)
             self.stages.append(name)
