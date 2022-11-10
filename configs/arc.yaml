@@ -1,7 +1,7 @@
 DEVICE: 'cuda' 
 MODEL: 
   DEVICE:  'cuda'
-  BODY: "SWINT"
+  BODY: "RESNET"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
 

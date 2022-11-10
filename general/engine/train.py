@@ -21,10 +21,6 @@ from general.utils import comm
 
 from tqdm import tqdm
 
-conv = nn.Conv2d(768, 5, 8)
-conv.to(cfg.DEVICE)
-
-
 def train_iter(model, loader, trainer):
 
     t = tqdm(total=len(loader))
@@ -32,8 +28,7 @@ def train_iter(model, loader, trainer):
 
         X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
 
-        output = model(X)[-1]
-        Yh = conv(output).view((-1, 5))
+        Yh = model(X).view((-1, 5))
 
         # transform labels [1..5] to 0,-1,1?
         loss = trainer.loss(Yh, Y)

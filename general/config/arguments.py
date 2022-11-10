@@ -7,6 +7,13 @@ from .defaults import _C as cfg
 parser = argparse.ArgumentParser(description="PyTorch Object Detection Training")
 
 parser.add_argument(
+    '--config-name',
+    default="",
+    metavar="FILE",
+    help="path to config file",
+    type=str,
+)
+parser.add_argument(
     "--config-file",
     default="",
     metavar="FILE",
@@ -52,7 +59,7 @@ cfg.distributed = cfg.num_gpus > 1
 if cfg.disable_output_distributed:
     set_dist_print(cfg.local_rank <= 0)
 
-file = input('config file: ')+'.yaml'
+file = (args.config_name or input('config file: '))+'.yaml'
 cfg.config_file = os.path.join('/'.join(__file__.split('/')[:-3]), 'configs',file)
 print(cfg.config_file, '\n')
 

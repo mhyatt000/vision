@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 import torch
 
+from .spacial_transform import LearnableSpatialTransformWrapper
 from .batch_norm import FrozenBatchNorm2d, NaiveSyncBatchNorm2d
 from .misc import Conv2d, _NewEmptyTensorOp
 from .misc import ConvTranspose2d

@@ -3,14 +3,14 @@
 # original implementation https://github.com/pkumivision/FFC/blob/main/model_zoo/ffc.py
 # paper https://proceedings.neurips.cc/paper/2020/file/2fd5d41ec6cfab47e32164d5624269b1-Paper.pdf
 
-from lama.base import BaseDiscriminator, get_activation
-from lama.spatial_transform import LearnableSpatialTransformWrapper
+from .lama import BaseDiscriminator, get_activation
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from .se import SELayer
+from .spatial_transform import LearnableSpatialTransformWrapper
 
 
 def get_shape(t):
@@ -118,13 +118,7 @@ class FourierUnit(nn.Module):
         ffted = torch.fft.rfftn(x, dim=fft_dim, norm=self.fft_norm)
         ffted = torch.stack((ffted.real, ffted.imag), dim=-1)
         ffted = ffted.permute(0, 1, 4, 2, 3).contiguous()  # (batch, c, 2, h, w/2+1)
-        ffted = ffted.view(
-            (
-                batch,
-                -1,
-            )
-            + ffted.size()[3:]
-        )
+        ffted = ffted.view( ( batch, -1) + ffted.size()[3:])
 
         if self.spectral_pos_encoding:
             height, width = ffted.shape[-2:]

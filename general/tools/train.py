@@ -73,9 +73,19 @@ def freeze_model(model):
         freeze(model.rpn)
 
 
+class TEMP(nn.Module):
+
+    def __init__(self):
+        super(TEMP,self).__init__()
+
+    def forward(self,x):
+        return x[-1]
+
 def train():
 
     model = build_model()
+    model = nn.Sequential(model,TEMP(),  nn.Conv2d(1024,5,16))
+    # model = nn.Sequential(model,TEMP(),  nn.Conv2d(768,5,8))
     model, device = init_model(model)
     # model = freeze_model(model)
     model.train()
