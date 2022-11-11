@@ -39,6 +39,12 @@ MODEL:
     # USE_CHECKPOINT: 
     # OUT_FEATURES: 
 
+  FFC:
+    NDF: 64
+    LAYERS: 4
+    GIN: 1.0 # 0.5
+    GOUT: 1.0 # 0.5
+
 LOADER:
   BS: 64
   SHUFFLE: True

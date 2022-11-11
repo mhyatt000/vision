@@ -3,14 +3,16 @@
 # original implementation https://github.com/pkumivision/FFC/blob/main/model_zoo/ffc.py
 # paper https://proceedings.neurips.cc/paper/2020/file/2fd5d41ec6cfab47e32164d5624269b1-Paper.pdf
 
-from .lama import BaseDiscriminator, get_activation
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .se import SELayer
-from .spatial_transform import LearnableSpatialTransformWrapper
+from general.config import cfg
+
+from general.models.layers.lama import BaseDiscriminator, get_activation
+from general.models.layers.se import SELayer
+from general.models.layers.spatial_transform import LearnableSpatialTransformWrapper
 
 
 def get_shape(t):
@@ -118,7 +120,7 @@ class FourierUnit(nn.Module):
         ffted = torch.fft.rfftn(x, dim=fft_dim, norm=self.fft_norm)
         ffted = torch.stack((ffted.real, ffted.imag), dim=-1)
         ffted = ffted.permute(0, 1, 4, 2, 3).contiguous()  # (batch, c, 2, h, w/2+1)
-        ffted = ffted.view( ( batch, -1) + ffted.size()[3:])
+        ffted = ffted.view((batch, -1) + ffted.size()[3:])
 
         if self.spectral_pos_encoding:
             height, width = ffted.shape[-2:]
@@ -318,8 +320,8 @@ class FFC_BN_ACT(nn.Module):
         in_channels,
         out_channels,
         kernel_size,
-        ratio_gin,
-        ratio_gout,
+        ratio_gin=cfg.MODEL.FFC.GIN,
+        ratio_gout=cfg.MODEL.FFC.GOUT,
         stride=1,
         padding=0,
         dilation=1,
@@ -332,6 +334,7 @@ class FFC_BN_ACT(nn.Module):
         **kwargs
     ):
         super(FFC_BN_ACT, self).__init__()
+
         self.ffc = FFC(
             in_channels,
             out_channels,
@@ -347,6 +350,7 @@ class FFC_BN_ACT(nn.Module):
             padding_type=padding_type,
             **kwargs
         )
+
         lnorm = nn.Identity if ratio_gout == 1 else norm_layer
         gnorm = nn.Identity if ratio_gout == 0 else norm_layer
         global_channels = int(out_channels * ratio_gout)
@@ -562,6 +566,7 @@ class FFCNLayerDiscriminator(BaseDiscriminator):
         conv_kwargs={},
     ):
         super().__init__()
+
         self.n_layers = n_layers
 
         def _act_ctor(inplace=True):
@@ -637,7 +642,7 @@ class FFCNLayerDiscriminator(BaseDiscriminator):
     def forward(self, x):
         act = self.get_all_activations(x)
         feats = []
-        for out in act[:-1]:
+        for i,out in enumerate(act[:-1]):
             if isinstance(out, tuple):
                 if torch.is_tensor(out[1]):
                     out = torch.cat(out, dim=1)
@@ -645,3 +650,10 @@ class FFCNLayerDiscriminator(BaseDiscriminator):
                     out = out[0]
             feats.append(out)
         return act[-1], feats
+
+
+if __name__ == "__main__":
+    model = FFCNLayerDiscriminator(3)
+    t = torch.Tensor(torch.ones([1, 3, 255, 255]))
+    out = model(t)
+    print(out.shape)
