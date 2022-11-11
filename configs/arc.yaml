@@ -1,7 +1,7 @@
 DEVICE: 'cuda' 
 MODEL: 
   DEVICE:  'cuda'
-  BODY: "RESNET"
+  BODY: "SWINT"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
 
@@ -57,7 +57,7 @@ LOSS:
   BODY: "CE" # "PFC" #  "AAM" # additive angular margin
 
   AAM:
-    S: 0
+    S: 64.0
     M: [1.0, 0.0, 0.0]
     INTER_THRESH: 0
 
