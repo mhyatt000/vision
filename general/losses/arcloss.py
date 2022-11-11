@@ -47,7 +47,7 @@ class CombinedMarginLoss(torch.nn.Module):
                 tensor_mul = 1 - dirty
             logits = tensor_mul * logits
 
-        tgt = logits[index, labels[index].view(-1)]
+        tgt = logits[labels[index].view(-1)]
 
         if self.m1 == 1.0 and self.m3 == 0.0:
             logits = self.arcface(tgt, labels)
@@ -76,13 +76,13 @@ class ArcFace(torch.nn.Module):
 
     def forward(self, logits, labels):
         index = torch.where(labels != -1)[0]
-        tgt = logits[index, labels[index].view(-1)]
+        tgt = logits[labels[index].view(-1)]
 
         sin_theta = torch.sqrt(1.0 - torch.pow(tgt, 2))
         cos_theta_m = tgt * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
         final_tgt = apply_easy_margin(tgt)
 
-        logits[index, labels[index].view(-1)] = final_tgt
+        logits[labels[index].view(-1)] = final_tgt
         logits = logits * self.s
         return logits
 
@@ -103,9 +103,9 @@ class CosFace(torch.nn.Module):
 
     def forward(self, logits, labels):
         index = torch.where(labels != -1)[0]
-        tgt = logits[index, labels[index].view(-1)]
+        tgt = logits[labels[index].view(-1)]
         final_tgt = tgt - self.margin
 
-        logits[index, labels[index].view(-1)] = final_tgt
+        logits[labels[index].view(-1)] = final_tgt
         logits = logits * self.s
         return logits
