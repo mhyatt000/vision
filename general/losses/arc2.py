@@ -1,4 +1,5 @@
 import math
+import  torch.nn.functional as F
 
 import torch
 
@@ -33,6 +34,11 @@ class CombinedMarginLoss(torch.nn.Module):
         # self.easy_margin = False
 
     def forward(self, logits, labels):
+
+        
+
+
+
 
         # index of positive samples
         index = torch.where(labels != -1)[0]
@@ -75,22 +81,51 @@ class ArcFace(torch.nn.Module):
         self.easy_margin = False
 
     def forward(self, logits, labels):
+
+        C = set(labels.tolist())
+        print('C',C)
+        for c in C:
+            index = torch.where(labels == c)[0]
+            X = logits[index.view(-1)]
+            Y = labels[index.view(-1)]
+
+            # X is a collection of vector directions now
+            # scaled by their magnitude
+            X = torch.div(X, torch.sqrt(torch.sum(torch.pow(X,2), -1)).reshape(-1,1))
+            W = torch.mean(X, -2)
+            # W is the average of the directions of the others
+            W = torch.div(W, torch.sqrt(torch.sum(torch.pow(W,2), -1)).reshape(-1,1))
+            print(torch.sqrt(torch.sum(torch.pow(W,2))))
+
+            quit()
+
         index = torch.where(labels != -1)[0]
-        tgt = logits[index, labels[index].view(-1)]
+        print(labels[index].view(-1))
+        print(logits)
+        tgt = logits[labels[index].view(-1)]
 
         sin_theta = torch.sqrt(1.0 - torch.pow(tgt, 2))
+        print(sin_theta)
         cos_theta_m = tgt * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
-        final_tgt = apply_easy_margin(tgt)
-
-        logits[index, labels[index].view(-1)] = final_tgt
+        print(cos_theta_m)
+        cos_theta_m = tgt * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
+        print(cos_theta_m)
+        final_tgt = self.apply_easy_margin(tgt, cos_theta_m)
+        print(final_tgt, final_tgt.shape)
+        print(logits.shape)
+        print(index.shape)
+        print(labels.shape, labels[index].shape, labels[index].view(-1).shape)
+        logits[labels[index].view(-1)] = final_tgt
+        print(logits)
         logits = logits * self.s
+        print(logits)
         return logits
 
-    def apply_easy_margin(self, tgt):
+    def apply_easy_margin(self, tgt, cos_theta_m):
         return torch.where(
             tgt > (0 if self.easy_margin else self.theta),
             cos_theta_m,
-            tgt - (0 if self.easy_margin else self.sinm),
+            tgt - (0 if self.easy_margin else self.sinmm),
         )
 
 
@@ -109,3 +144,19 @@ class CosFace(torch.nn.Module):
         logits[index, labels[index].view(-1)] = final_tgt
         logits = logits * self.s
         return logits
+
+if __name__ == '__main__': 
+
+    loss = CombinedMarginLoss()
+
+    arcface = loss.arcface
+    print(arcface.cos_m)
+    print(arcface.sin_m)
+    print(arcface.theta)
+    print(arcface.sinmm)
+
+    x = torch.Tensor(torch.rand([5,10]))
+    y = torch.Tensor(torch.rand([5])).int()
+    print(x.dtype,y.dtype)
+
+    arcface(x,y)

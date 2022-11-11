@@ -175,7 +175,6 @@ class DistCrossEntropyFunc(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, logits: torch.Tensor, label: torch.Tensor):
-        """ """
         batch_size = logits.size(0)
         # for numerical stability
         max_logits, _ = torch.max(logits, dim=1, keepdim=True)
