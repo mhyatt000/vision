@@ -1,12 +1,13 @@
 import math
-import  torch.nn.functional as F
 
 import torch
+from torch import nn
+import torch.nn.functional as F
 
 from general.config import cfg
 
 
-class CombinedMarginLoss(torch.nn.Module):
+class CombinedMarginLoss(nn.Module):
     """
     m: margins for:
         m1: multiplicative angular margin
@@ -65,7 +66,7 @@ class CombinedMarginLoss(torch.nn.Module):
         return logits
 
 
-class ArcFace(torch.nn.Module):
+class ArcFace(nn.Module):
     """
     ArcFace (https://arxiv.org/pdf/1801.07698v1.pdf):
     """
@@ -82,6 +83,11 @@ class ArcFace(torch.nn.Module):
 
     def forward(self, logits, labels):
 
+        """ try to rewrite the loss from their paper 
+        L2 from paper
+        L3 is added margin
+        """
+
         C = set(labels.tolist())
         print('C',C)
         for c in C:
@@ -95,9 +101,10 @@ class ArcFace(torch.nn.Module):
             W = torch.mean(X, -2)
             # W is the average of the directions of the others
             W = torch.div(W, torch.sqrt(torch.sum(torch.pow(W,2), -1)).reshape(-1,1))
-            print(torch.sqrt(torch.sum(torch.pow(W,2))))
 
-            quit()
+            print(W.repeat(X.shape[0], 1).shape == X.shape)
+            loss = nn.CrossEntropyLoss()(X, W.repeat(X.shape[0], 1))
+            print(loss)
 
         index = torch.where(labels != -1)[0]
         print(labels[index].view(-1))
@@ -129,7 +136,7 @@ class ArcFace(torch.nn.Module):
         )
 
 
-class CosFace(torch.nn.Module):
+class CosFace(nn.Module):
     def __init__(self, s=64.0, margin=0.40):
         super(CosFace, self).__init__()
 
@@ -155,7 +162,7 @@ if __name__ == '__main__':
     print(arcface.theta)
     print(arcface.sinmm)
 
-    x = torch.Tensor(torch.rand([5,10]))
+    x = torch.Tensor(torch.rand([5,2]))
     y = torch.Tensor(torch.rand([5])).int()
     print(x.dtype,y.dtype)
 
