@@ -84,8 +84,13 @@ class TEMP(nn.Module):
 def train():
 
     model = build_model()
-    # model = nn.Sequential(model,TEMP(),  nn.Conv2d(1024,5,16))
-    model = nn.Sequential(model,TEMP(),  nn.Conv2d(768,5,8))
+
+    # if cfg.LOSS.BODY != "PFC":
+    if cfg.MODEL.BODY == 'RESNET':
+        model = nn.Sequential(model,TEMP(),  nn.Conv2d(1024,512,16))
+    elif cfg.MODEL.BODY == 'SWINT':
+        model = nn.Sequential(model,TEMP(),  nn.Conv2d(768,5,8))
+
     model, device = init_model(model)
     # model = freeze_model(model)
     model.train()

@@ -80,13 +80,13 @@ class ArcFace(torch.nn.Module):
 
         sin_theta = torch.sqrt(1.0 - torch.pow(tgt, 2))
         cos_theta_m = tgt * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
-        final_tgt = self.apply_easy_margin(tgt)
+        final_tgt = self.apply_easy_margin(tgt, cos_theta_m)
 
         logits[labels[index].view(-1)] = final_tgt
         logits = logits * self.s
         return logits
 
-    def apply_easy_margin(self, tgtm cos_theta_m):
+    def apply_easy_margin(self, tgt, cos_theta_m):
         return torch.where(
             tgt > (0 if self.easy_margin else self.theta),
             cos_theta_m,

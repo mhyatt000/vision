@@ -1,7 +1,7 @@
 DEVICE: 'cuda' 
 MODEL: 
   DEVICE:  'cuda'
-  BODY: "SWINT"
+  BODY: "RESNET"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
 
@@ -54,7 +54,7 @@ SOLVER:
   GRAD_CLIP: 5.0
 
 LOSS:
-  BODY: "CE" # "PFC" #  "AAM" # additive angular margin
+  BODY:  "PFC" #  "AAM" # additive angular margin
 
   AAM:
     S: 64.0
@@ -62,13 +62,13 @@ LOSS:
     INTER_THRESH: 0
 
   PFC:
-    EMBED_DIM: 512
+    EMBED_DIM: 512  
     NC: 5
     SAMPLE_RATE: 1.0
     FP16: True
 
 OPTIM:
   BODY: "ADAM"
-  
-  LR: 0.005
+
+  LR: 0.1 # 0.005
   BETAS: [0.5,0.999]

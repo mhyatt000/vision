@@ -26,9 +26,12 @@ def train_iter(model, loader, trainer):
     t = tqdm(total=len(loader))
     for X, Y in loader:  # (t := tqdm(loader)):
 
+        if X.shape[0] != cfg.LOADER.BS:
+            return
+
         X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
 
-        Yh = model(X).view((-1, 5))
+        Yh = model(X).view((cfg.LOADER.BS, -1))
 
         # transform labels [1..5] to 0,-1,1?
         loss = trainer.loss(Yh, Y)

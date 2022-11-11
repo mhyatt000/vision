@@ -22,7 +22,7 @@ class PartialFC_V2(torch.nn.Module):
         When sample rate equal to 1, Partial FC is equal to model parallelism(default sample rate is 1).
     Example:
     --------
-    >>> module_pfc = PartialFC(embedding_size=512, num_classes=8000000, sample_rate=0.2)
+    >>> module_pfc = PartialFC(embedding_size=512, num_classes=8_000_000, sample_rate=0.2)
     >>> for img, labels in data_loader:
     >>>     embeddings = net(img)
     >>>     loss = module_pfc(embeddings, labels)
@@ -174,23 +174,23 @@ class DistCrossEntropyFunc(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, logits: torch.Tensor, label: torch.Tensor):
+    def forward(ctx, logits, label):
         batch_size = logits.size(0)
         # for numerical stability
         max_logits, _ = torch.max(logits, dim=1, keepdim=True)
         # local to global
-        dist.all_reduce(max_logits, dist.ReduceOp.MAX)
+        # dist.all_reduce(max_logits, dist.ReduceOp.MAX)
         logits.sub_(max_logits)
         logits.exp_()
         sum_logits_exp = torch.sum(logits, dim=1, keepdim=True)
         # local to global
-        dist.all_reduce(sum_logits_exp, dist.ReduceOp.SUM)
+        # dist.all_reduce(sum_logits_exp, dist.ReduceOp.SUM)
         logits.div_(sum_logits_exp)
         index = torch.where(label != -1)[0]
         # loss
         loss = torch.zeros(batch_size, 1, device=logits.device)
         loss[index] = logits[index].gather(1, label[index])
-        dist.all_reduce(loss, dist.ReduceOp.SUM)
+        # dist.all_reduce(loss, dist.ReduceOp.SUM)
         ctx.save_for_backward(index, logits, label)
         return loss.clamp_min_(1e-30).log_().mean() * (-1)
 
@@ -238,16 +238,16 @@ class AllGatherFunc(torch.autograd.Function):
         rank = dist.get_rank()
         grad_out = grad_list[rank]
 
-        dist_ops = [
-            dist.reduce(grad_out, rank, dist.ReduceOp.SUM, async_op=True)
-            if i == rank
-            else dist.reduce(
-                grad_list[i], i, dist.ReduceOp.SUM, async_op=True
-            )
-            for i in range(dist.get_world_size())
-        ]
-        for _op in dist_ops:
-            _op.wait()
+        # dist_ops = [
+            # dist.reduce(grad_out, rank, dist.ReduceOp.SUM, async_op=True)
+            # if i == rank
+            # else dist.reduce(
+                # grad_list[i], i, dist.ReduceOp.SUM, async_op=True
+            # )
+            # for i in range(dist.get_world_size())
+        # ]
+        # for _op in dist_ops:
+            # _op.wait()
 
         grad_out *= len(grad_list)  # cooperate with distributed loss function
         return (grad_out, *[None for _ in range(len(grad_list))])
