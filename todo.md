@@ -1,4 +1,5 @@
 1. arc face gan
+    * hparam search!
 2. pristine focused loss
 3. inference metrics form arcface paper and sarah.43 paper
 
