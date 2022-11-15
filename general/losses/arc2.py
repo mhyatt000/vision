@@ -106,6 +106,7 @@ class ArcFace(nn.Module):
             loss = nn.CrossEntropyLoss()(X, W.repeat(X.shape[0], 1))
             print(loss)
 
+        """
         index = torch.where(labels != -1)[0]
         print(labels[index].view(-1))
         print(logits)
@@ -127,6 +128,7 @@ class ArcFace(nn.Module):
         logits = logits * self.s
         print(logits)
         return logits
+        """
 
     def apply_easy_margin(self, tgt, cos_theta_m):
         return torch.where(
