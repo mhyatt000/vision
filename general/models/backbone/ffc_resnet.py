@@ -1,6 +1,8 @@
 import torch.nn as nn
 from general.models.layers.ffc import *
 
+from general.config import cfg
+
 __all__ = [
     "FFCResNet",
     "FFCR18",
@@ -41,9 +43,11 @@ class BasicBlock(nn.Module):
             raise ValueError("BasicBlock only supports groups=1 and base_width=64")
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
+
         width = int(planes * (base_width / 64.0)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when
         # stride != 1
+
         self.conv1 = FFC_BNA(
             inplanes,
             width,
@@ -66,9 +70,8 @@ class BasicBlock(nn.Module):
             norm_layer=norm_layer,
             enable_lfu=lfu,
         )
-        self.se_block = (
-            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
-        )
+        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -139,9 +142,7 @@ class Bottleneck(nn.Module):
             ratio_gout=ratio_gout,
             enable_lfu=lfu,
         )
-        self.se_block = (
-            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
-        )
+        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -167,14 +168,14 @@ class FFCResNet(nn.Module):
         self,
         block,
         layers,
-        num_classes=1000,
+        num_classes=cfg.MODEL.FFCR.NUM_CLASSES or 1000,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
         norm_layer=None,
         ratio=0.5,
         lfu=True,
-        use_se=False,
+        use_se=cfg.MODEL.FFCR.USE_SE or False,
     ):
         super(FFCResNet, self).__init__()
 
@@ -343,6 +344,20 @@ def FFCRX101_32x8d(**kwargs):
 
     return model
 
-model = FFCR18(num_classes=5)
-output = model(torch.Tensor(torch.ones(1,3,255,255)))
-print(output.shape)
+
+models = {
+    "18": FFCR18,
+    "26": FFCR26,
+    "34": FFCR34,
+    "50": FFCR50,
+    "101": FFCR101,
+    "152": FFCR152,
+    "200": FFCR200,
+}
+
+def FFCR():
+    """default builder for ffc resnet variants"""
+
+    """TODO include resNEXT variants"""
+    return models[cfg.MODEL.FFCR.BODY]()
+
