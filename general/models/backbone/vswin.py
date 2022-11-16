@@ -6,7 +6,7 @@ from operator import mul
 
 from einops import rearrange
 from mmaction.utils import get_root_logger
-from mmcv.runner import load_checkpoint
+# from mmcv.runner import load_checkpoint
 import numpy as np
 from timm.models.layers import DropPath, trunc_normal_
 import torch
@@ -749,7 +749,8 @@ class SwinTransformer3D(nn.Module):
                 self.inflate_weights(logger)
             else:
                 # Directly load 3D model.
-                load_checkpoint(self, self.pretrained, strict=False, logger=logger)
+                # load_checkpoint(self, self.pretrained, strict=False, logger=logger)
+                raise 'unimplemented'
         elif self.pretrained is None:
             self.apply(_init_weights)
         else:

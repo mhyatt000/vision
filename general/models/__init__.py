@@ -1,7 +1,7 @@
 from general.config import cfg
 
 from . import backbone, head, lang, layers, rpn
-from .backbone import resnet, swint, vit
+from .backbone import resnet, swint, vit, ffc_resnet
 from .vlrcnn import VLRCNN
 
 models = {
