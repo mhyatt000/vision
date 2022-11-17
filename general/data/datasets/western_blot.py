@@ -9,7 +9,6 @@ import sys
 
 from PIL import Image, ImageDraw
 import numpy as np
-import pandas as pd
 import torch
 from torch.utils.data import Dataset
 import torchvision
@@ -25,8 +24,10 @@ class WBLOT(Dataset):
     def __init__(self, root="western_blots", transform=None, target_transform=None):
         super(WBLOT, self).__init__()
 
-        # init folders
-        self.root = join(cfg.DATASETS.LOC, root)
+        try:
+            self.root = join(cfg.DATASETS.LOC, root)
+        except:
+            self.root = root
 
         self.real = join(self.root, "real")
         self.synth = join(self.root, "synth")
@@ -55,8 +56,12 @@ class WBLOT(Dataset):
         x, label = self.data[idx]
         img_path = join(self.datafolders[label], x)
         image = read_image(img_path).float()
-        label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
- 
+
+        if cfg.LOSS.BODY in ["PFC", "AAM"]:  # arcface loss
+            label = torch.Tensor([label])
+        else:
+            label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
+
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

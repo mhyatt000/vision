@@ -26,14 +26,13 @@ def train_iter(model, loader, trainer):
     t = tqdm(total=len(loader))
     for X, Y in loader:  # (t := tqdm(loader)):
 
-        if X.shape[0] != cfg.LOADER.BS:
-            return
+        # if X.shape[0] != cfg.LOADER.BS:
+            # return
 
-        X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
+        X, Y = X.to(cfg.rank), Y.to(cfg.rank)
 
-        Yh = model(X).view((cfg.LOADER.BS, -1))
+        Yh = model(X).view((Y.size(), -1))
 
-        # transform labels [1..5] to 0,-1,1?
         loss = trainer.loss(Yh, Y)
         loss.backward()
         trainer.optimizer.step()
@@ -45,10 +44,11 @@ def train_iter(model, loader, trainer):
         t.set_description(f'loss: {"%.4f" % loss} | acc: {"%.4f" % acc}')
         t.update()
 
+        torch.cuda.empty_cache()
+
 
 def do_train(model, loader, trainer):
 
-    device = torch.device(cfg.MODEL.DEVICE)
     checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
     global_rank = comm.get_rank()
 

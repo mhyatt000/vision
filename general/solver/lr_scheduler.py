@@ -2,8 +2,30 @@
 from bisect import bisect_right
 import math
 
-from general.config import cfg 
 import torch
+
+from general.config import cfg
+
+
+def assert_milestones(milestones):
+    """docstring"""
+
+    if not list(milestones) == sorted(milestones):
+        raise ValueError(
+            "Milestones should be a list of" 
+            f" increasing integers. Got {milestones}"
+        )
+
+
+def assert_warmup(warmup_method):
+    """docstring"""
+
+    if warmup_method not in ("constant", "linear"):
+        raise ValueError(
+            "Only 'constant' or 'linear' warmup_method accepted"
+            f"got {warmup_method}"
+        )
+
 
 
 # FIXME ideally this would be achieved with a CombinedLRScheduler,
@@ -21,17 +43,8 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
         last_epoch=-1,
     ):
 
-        if not list(milestones) == sorted(milestones):
-            raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}",
-                milestones,
-            )
-
-        if warmup_method not in ("constant", "linear"):
-            raise ValueError(
-                "Only 'constant' or 'linear' warmup_method accepted"
-                "got {}".format(warmup_method)
-            )
+        assert_milestones(milestones)
+        assert_warmup(warmup_method)
 
         self.milestones = milestones
         self.gamma = gamma
@@ -69,11 +82,8 @@ class WarmupCosineAnnealingLR(torch.optim.lr_scheduler._LRScheduler):
             last_epoch=-1,
     ):
 
-        if warmup_method not in ("constant", "linear"):
-            raise ValueError(
-                "Only 'constant' or 'linear' warmup_method accepted"
-                "got {}".format(warmup_method)
-            )
+        assert_warmup(warmup_method)
+
         self.max_iters = max_iters
         self.gamma = gamma
         self.warmup_factor = warmup_factor
@@ -119,11 +129,8 @@ class WarmupReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
             verbose = False,
     ):    
 
-        if warmup_method not in ("constant", "linear"):
-            raise ValueError(
-                "Only 'constant' or 'linear' warmup_method accepted"
-                "got {}".format(warmup_method)
-            )
+        assert_warmup(warmup_method)
+
         self.warmup_factor = warmup_factor
         self.warmup_iters = warmup_iters
         self.warmup_method = warmup_method

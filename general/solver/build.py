@@ -1,10 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 import itertools
 
+from general.config import cfg
 import torch
 
-from .lr_scheduler import WarmupCosineAnnealingLR, WarmupMultiStepLR, WarmupReduceLROnPlateau
-from general.config import cfg
+from .lr_scheduler import (WarmupCosineAnnealingLR, WarmupMultiStepLR,
+                           WarmupReduceLROnPlateau)
+
 
 def make_optimizer(model):
 

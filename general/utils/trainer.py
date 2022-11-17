@@ -1,6 +1,9 @@
 from general.config import cfg
 from torch import optim
 
+from general.losses import make_loss
+# from general.solver import make_lr_scheduler, make_optimizer
+
 
 OPTIM = {
     "ADAM": optim.Adam,
@@ -21,8 +24,14 @@ class Trainer:
 
     def __init__(self):
 
+        # optimization
+        self.optimizer = make_optimizer(model)
+        # self.scheduler = make_lr_scheduler(self.optimizer)
+        self.loss = make_loss()
+
         """what is ema"""
 
+        # early stopping 
         self.use_patience = cfg.SOLVER.AUTO_TERMINATE_PATIENCE != -1
         self.patience = 0
         self.max_patience = cfg.SOLVER.AUTO_TERMINATE_PATIENCE
@@ -30,6 +39,12 @@ class Trainer:
 
         self.use_decay = cfg.SOLVER.WEIGHT_DECAY_SCHEDULE
         self.milestone_tgt = 0
+
+
+        # snapshots and checkpoints
+        self.snap = cfg.config_file.replace('configs','snapshots')
+        self.ckt = cfg.config_file.replace('configs','checkpoints')
+
 
     def update(self):
         """update after the training loop"""
@@ -65,3 +80,16 @@ class Trainer:
             for i, milstone in enumerate(list(scheduler.milestones)):
                 if scheduler.last_epoch >= milstone * cfg.SOLVER.WEIGHT_DECAY_SCHEDULE_RATIO:
                     milestone_target = i + 1
+
+
+    def _save_ckp(self, epoch):
+        """docstring"""
+
+        if self.gpu_id or (epoch % cfg.save_every):
+            return
+
+        ckp = self.model.module if cfg.distributed else self.model
+        ckp = ckp.state_dict()
+        torch.save(ckp, "ckp.pt")
+        print(f'Epoch {epoch} | saved model')
+
