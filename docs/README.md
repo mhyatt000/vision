@@ -1,4 +1,7 @@
-# VOLT
+# DOCS
+
+---
+---
 
 here is a description of how all the moving parts interact. much of this is borrowed from reading the GLIP repo.
 
@@ -13,6 +16,10 @@ __default__
 
 __paths_catalog__
 * contains functions for finding datasets and model weights
+
+__arguments__
+* handles the integration of command line arguments with the experiment configurations
+* currently only used to specify config file
 
 ## general.engine
 
@@ -33,7 +40,9 @@ __inference__
 (vision + language) -> rpn -> roi
 
 __matcher__
+
 __sampler__
+
 __pooler__
 
 ## general.models.layers
@@ -48,8 +57,11 @@ __mlp__
 roi heads ... currently only the box head exists
 
 __head__
+
 __feature_extractor__
+
 __predictor__
+
 __inference__
 
 ## general.structures
@@ -61,6 +73,7 @@ contains operations for manipulating images and boxes
 
 __comm__
 * communications for distributed systems
+
 __amp__
 * util for automatic mixed precision
 
