@@ -1,6 +1,35 @@
 # DOCS
 
 ---
+```
+├── configs
+│   └── pretrain
+├── docs
+├── general
+│   ├── config
+│   │   └── remove
+│   ├── data
+│   │   ├── datasets
+│   │   │   └── evaluation
+│   │   │       ├── ...
+│   │   ├── samplers
+│   │   └── transforms
+│   ├── engine
+│   ├── losses
+│   ├── models
+│   │   ├── backbone
+│   │   ├── discriminator
+│   │   ├── head
+│   │   │   └── box
+│   │   ├── lang
+│   │   ├── layers
+│   │   └── rpn
+│   ├── solver
+│   ├── structures
+│   ├── tools
+│   └── utils
+│       └── logger
+```
 ---
 
 here is a description of how all the moving parts interact. much of this is borrowed from reading the GLIP repo.
