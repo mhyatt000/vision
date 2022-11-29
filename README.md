@@ -10,4 +10,8 @@
 ./run.sh <config-name>
 ```
 
-requires a proper config file located in configs/
+requires a proper config file located in `configs/`
+
+## Docs
+
+read the `docs/` to understand the various parts of this project
