@@ -17,6 +17,7 @@ from torchvision.io import read_image
 from general.config import cfg
 import torchvision.transforms.functional as F
 
+import sklearn
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""

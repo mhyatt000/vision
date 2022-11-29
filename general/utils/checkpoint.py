@@ -4,17 +4,23 @@ import os
 
 import torch
 
-from general.utils.big_model_loading import load_big_format
-from general.utils.c2_model_loading import load_c2_format
+from general.config import cfg
+
+# from general.utils.big_model_loading import load_big_format
+# from general.utils.c2_model_loading import load_c2_format
 from general.utils.imports import import_file
 from general.utils.model_serialization import load_state_dict
 from general.utils.model_zoo import cache_url
-from general.utils.pretrain_model_loading import load_pretrain_format
-from general.config import cfg
+
+# from general.utils.pretrain_model_loading import load_pretrain_format
+
 
 class Checkpointer(object):
-
-    def __init__(self, model, optimizer=None, scheduler=None,
+    def __init__(
+        self,
+        model,
+        optimizer=None,
+        scheduler=None,
         save_dir="",
         save_to_disk=None,
         logger=None,
@@ -23,16 +29,18 @@ class Checkpointer(object):
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
+
         self.save_dir = save_dir
         self.save_to_disk = save_to_disk
-        self.logger = logger or logging.getLogger(__name__) 
+        # self.logger = logger or logging.getLogger(__name__)
 
     def save(self, name, **kwargs):
 
         if not self.save_dir or self.save_to_disk:
             return
 
-        data = {"model" : self.model.state_dict()}
+        data = {"model": self.model.state_dict()}
+
         if self.optimizer is not None:
             data["optimizer"] = self.optimizer.state_dict()
         if self.scheduler is not None:
@@ -49,7 +57,7 @@ class Checkpointer(object):
         # use relative path name to save the checkpoint
         self.tag_last_checkpoint(f"{name}.pth")
 
-    def load(self, f=None, force=False, keyword="model", skip_optimizer =False):
+    def load(self, f=None, force=False, keyword="model", skip_optimizer=False):
 
         resume = False
         if self.has_checkpoint() and not force:
@@ -113,46 +121,3 @@ class Checkpointer(object):
 
     def _load_model(self, checkpoint, keyword="model"):
         load_state_dict(self.model, checkpoint.pop(keyword))
-
-
-class DetectronCheckpointer(Checkpointer):
-    def __init__(
-        self,
-        model,
-        optimizer=None,
-        scheduler=None,
-        save_dir="",
-        save_to_disk=None,
-        logger=None,
-    ):
-        super(DetectronCheckpointer, self).__init__(
-            model, optimizer, scheduler, save_dir, save_to_disk, logger
-        )
-
-    def _load_file(self, f):
-        # catalog lookup
-        if f.startswith("catalog://"):
-            paths_catalog = import_file(
-                "general.config.paths_catalog", cfg.PATHS_CATALOG, True
-            )
-            catalog_f = paths_catalog.ModelCatalog.get(f[len("catalog://") :])
-            self.logger.info("{} points to {}".format(f, catalog_f))
-            f = catalog_f
-        # download url files
-        if f.startswith("http"):
-            # if the file is a url path, download it and cache it
-            cached_f = cache_url(f)
-            self.logger.info("url {} cached in {}".format(f, cached_f))
-            f = cached_f
-        # convert Caffe2 checkpoint from pkl
-        if f.endswith(".pkl"):
-            return load_c2_format(cfg, f)
-        if f.endswith(".big"):
-            return load_big_format(cfg, f)
-        if f.endswith(".pretrain"):
-            return load_pretrain_format(cfg, f)
-        # load native detectron.pytorch checkpoint
-        loaded = super(DetectronCheckpointer, self)._load_file(f)
-        if "model" not in loaded:
-            loaded = dict(model=loaded)
-        return loaded

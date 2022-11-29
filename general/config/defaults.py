@@ -707,6 +707,7 @@ _C.SEARCH = CN(
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN(
+    new_allowed=True,
     init_dict=dict(
         USE_AMP=False,
         MAX_ITER=40000,

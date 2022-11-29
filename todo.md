@@ -1,3 +1,9 @@
+
+enable checkpoints and snapshots
+enable training split
+
+---
+
 1. arc face gan
     * hparam search!
 2. pristine focused loss

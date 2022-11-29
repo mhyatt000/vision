@@ -26,25 +26,17 @@ def train_iter(model, loader, trainer):
     t = tqdm(total=len(loader))
     for X, Y in loader:  # (t := tqdm(loader)):
 
-        # if X.shape[0] != cfg.LOADER.BS:
-            # return
-
         X, Y = X.to(cfg.rank), Y.to(cfg.rank)
+        Yh = model(X).view((Y.shape[0], -1))
 
-        Yh = model(X).view((Y.size(), -1))
-
-        loss = trainer.loss(Yh, Y)
-        loss.backward()
-        trainer.optimizer.step()
-        trainer.optimizer.zero_grad()
-        # trainer.scheduler.step()
+        loss = trainer.step(Yh, Y)
 
         acc = -1
         acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
         t.set_description(f'loss: {"%.4f" % loss} | acc: {"%.4f" % acc}')
         t.update()
 
-        torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
 
 
 def do_train(model, loader, trainer):

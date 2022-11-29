@@ -14,11 +14,9 @@ from torch.distributed import init_process_group, destroy_process_group
 from general.config import cfg
 from general.data import build_loader
 from general.engine.train import do_train
-from general.losses import make_loss
 from general.models import build_model
 
-# from general.solver import make_lr_scheduler, make_optimizer
-from general.utils.trainer import Trainer, make_optimizer
+from general.helpers import Trainer 
 
 # from general.data import make_data_loader
 # from general.engine.inference import inference
@@ -35,13 +33,13 @@ from general.utils.trainer import Trainer, make_optimizer
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 
-def init_seed():
-    """sets random seed for experiments"""
-
-    seed = cfg.SOLVER.SEED + cfg.rank
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
+# def init_seed():
+    # """sets random seed for experiments"""
+# 
+    # seed = cfg.SOLVER.SEED + cfg.rank
+    # torch.manual_seed(seed)
+    # np.random.seed(seed)
+    # random.seed(seed)
 
 
 def ddp_init():
@@ -62,6 +60,8 @@ def init_model(model):
     adds gradient clipping
     """
 
+    # torch.cuda.set_device(cfg.rank)
+    model = DDP(model, device_ids=[cfg.rank], output_device=cfg.rank)
     model.to(cfg.rank)
 
     if cfg.MODEL.VISION.RESET_BN:
@@ -106,10 +106,10 @@ class TEMP(nn.Module):
 
 
 def main():
-
+    print('main')
     ddp_init()
 
-    init_seed()
+    # init_seed()
 
     model = build_model()
 
@@ -122,18 +122,10 @@ def main():
     model= init_model(model)
     # model = freeze_model(model)
     model.train()
-
-    """TODO Trainer.__init__() builds optimizer and loss"""
-    trainer = Trainer()
-    trainer.optimizer = make_optimizer(model)
-    # trainer.scheduler = make_lr_scheduler(trainer.optimizer)
-    trainer.loss = make_loss()
-
+    trainer = Trainer(model)
     loader = build_loader()
 
     do_train(model, loader, trainer)
-
-
     ddp_destroy()
 
 

@@ -14,4 +14,4 @@ models = {
 
 
 def build_model():
-    return models[cfg.MODEL.BODY]()
+    return models[cfg.MODEL.BODY]().to(cfg.rank)

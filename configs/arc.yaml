@@ -46,12 +46,14 @@ MODEL:
     USE_SE: False
 
 LOADER:
-  BS: 64 # try bigger batch size !!!
+  BATCH_SIZE: 64 # try bigger batch size !!!
   SHUFFLE: True
 
 SOLVER:
   MAX_EPOCH: 200
   GRAD_CLIP: 5.0
+  CHECKPOINT_PER_EPOCH: 1.0
+  SEED: 0 # default ... why is it in solver?
 
 LOSS:
   BODY:  "CE" # "PFC" #  "AAM" # additive angular margin
@@ -72,3 +74,7 @@ OPTIM:
 
   LR: 0.1 # 0.005
   BETAS: [0.5,0.999]
+
+RECIPE:
+  TRAIN: True
+
