@@ -1,7 +1,7 @@
 DEVICE: 'cuda' 
 MODEL: 
   DEVICE:  'cuda'
-  BODY: "FFCR"
+  BODY: "RESNET"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
 
@@ -56,7 +56,7 @@ SOLVER:
   SEED: 0 # default ... why is it in solver?
 
 LOSS:
-  BODY:  "CE" # "PFC" #  "AAM" # additive angular margin
+  BODY:  "AAM" # additive angular margin
 
   AAM:
     S: 64.0
