@@ -196,6 +196,7 @@ class FFCResNet(nn.Module):
         self.bn1 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
         self.layer1 = self._make_layer(
             block, inplanes * 1, layers[0], stride=1, ratio_gin=0, ratio_gout=ratio
         )
@@ -208,6 +209,7 @@ class FFCResNet(nn.Module):
         self.layer4 = self._make_layer(
             block, inplanes * 8, layers[3], stride=2, ratio_gin=ratio, ratio_gout=0
         )
+
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(inplanes * 8 * block.expansion, num_classes)
 
@@ -288,9 +290,9 @@ class FFCResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
         x = self.avgpool(x[0])
+
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-
         return x
 
 
@@ -355,9 +357,9 @@ models = {
     "200": FFCR200,
 }
 
+
 def FFCR():
     """default builder for ffc resnet variants"""
 
     """TODO include resNEXT variants"""
     return models[cfg.MODEL.FFCR.BODY]()
-

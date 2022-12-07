@@ -350,9 +350,11 @@ class Bottleneck(nn.Module):
         self.bn1 = norm_func(bottleneck_channels)
         # TODO: specify init for the above
         with_dcn = dcn_config.get("stage_with_dcn", False)
+
         if with_dcn:
             deformable_groups = dcn_config.get("deformable_groups", 1)
             with_modulated_dcn = dcn_config.get("with_modulated_dcn", False)
+
             self.conv2 = DFConv2d(
                 bottleneck_channels,
                 bottleneck_channels,
@@ -384,10 +386,7 @@ class Bottleneck(nn.Module):
 
         self.se = SELayer(out_channels) if with_se and not with_dcn else None
 
-        for l in [
-            self.conv1,
-            self.conv3,
-        ]:
+        for l in [ self.conv1, self.conv3 ]:
             nn.init.kaiming_uniform_(l.weight, a=1)
 
     def forward(self, x):

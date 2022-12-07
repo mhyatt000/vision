@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
 
@@ -10,28 +11,30 @@ ds = {
     "WBLOT": WBLOT,
 }
 
-
-"""
-SPLIT could be 0,1,2 for train,val,test
-data = split(cfg.LOADER.SPLIT) if cfg.LOADER.USE_SPLIT else dataset
-"""
-
-def build_loader():
+def build_loaders():
     """custom dataloader"""
 
-    dataset = ds["WBLOT"]()
+    print("building loader...\n")
+    print(cfg.LOADER, "\n")
 
-    split = random_split(
+    dataset = ds[cfg.LOADER.DATASET]()
+
+    datasets = random_split(
         dataset,
-        [len(dataset) * x for x in [0.7, 0.15, 0.15]], # update torch?
+        [0.7, 0.3],
         generator=torch.Generator().manual_seed(cfg.SOLVER.SEED),
-    ) [0 if cfg.RECIPE.TRAIN else 1 if cfg.RECIPE.VAL else 2]
+    )
 
-    kwargs = dict(batch_size=cfg.LOADER.BATCH_SIZE or 64)
+    loaders = {}
+    splits = ["train", "test"]
+    for dataset, split in zip(datasets, splits):
+        sampler = DistributedSampler(dataset) if cfg.distributed else None
+        loader = DataLoader(
+            dataset,
+            batch_size=cfg.LOADER.BATCH_SIZE,
+            sampler=sampler,
+            shuffle=(sampler == None),
+        )
+        loaders[split] = loader
 
-    if cfg.distributed:
-        kwargs["sampler"] = DistributedSampler(dataset) if cfg.distributed else None
-    else:
-        kwargs["shuffle"] = (cfg.LOADER.SHUFFLE and not cfg.distributed) or True
-
-    return DataLoader(split, **kwargs)
+    return loaders

@@ -10,13 +10,11 @@ from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 from torch.distributed import init_process_group, destroy_process_group
-
 from general.config import cfg
-from general.data import build_loader
 from general.engine.train import do_train
 from general.models import build_model
 
-from general.helpers import Trainer 
+from general.helpers import Trainer
 
 # from general.data import make_data_loader
 # from general.engine.inference import inference
@@ -33,19 +31,22 @@ from general.helpers import Trainer
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 
-# def init_seed():
-    # """sets random seed for experiments"""
-# 
-    # seed = cfg.SOLVER.SEED + cfg.rank
-    # torch.manual_seed(seed)
-    # np.random.seed(seed)
-    # random.seed(seed)
+def init_seed():
+    """sets random seed for experiments"""
+
+    print(f"set random seed to {cfg.SOLVER.SEED}")
+    seed = cfg.SOLVER.SEED  # + cfg.rank
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 def ddp_init():
     """set up for ddp"""
+    torch.cuda.device_count()
     if cfg.distributed:
         init_process_group(backend="nccl")
+        torch.cuda.set_device(cfg.rank)
 
 
 def ddp_destroy():
@@ -60,9 +61,13 @@ def init_model(model):
     adds gradient clipping
     """
 
-    # torch.cuda.set_device(cfg.rank)
-    model = DDP(model, device_ids=[cfg.rank], output_device=cfg.rank)
-    model.to(cfg.rank)
+    model.to(cfg.DEVICE)
+    if cfg.distributed:
+        model = DDP(
+            model,
+            device_ids=[cfg.rank],
+            output_device=cfg.rank,
+        )
 
     if cfg.MODEL.VISION.RESET_BN:
         for name, param in model.named_buffers():
@@ -104,28 +109,27 @@ class TEMP(nn.Module):
         return x[-1]
 
 
-
 def main():
-    print('main')
+
     ddp_init()
-
-    # init_seed()
-
+    init_seed()
     model = build_model()
 
-    # if cfg.LOSS.BODY != "PFC":
     if cfg.MODEL.BODY == "RESNET":
-        model = nn.Sequential(model, TEMP(), nn.Conv2d(1024, 512, 16))
-    elif cfg.MODEL.BODY == "SWINT":
-        model = nn.Sequential(model, TEMP(), nn.Conv2d(768, 5, 8))
+        if cfg.LOSS.BODY in ["PFC", "AAM"]:
+            model = nn.Sequential(model, TEMP(), nn.Conv2d(1024, cfg.LOSS.PFC.EMBED_DIM, 16))
+        elif cfg.LOSS.BODY == "CE":
+            model = nn.Sequential( model, TEMP(), nn.Conv2d(1024, cfg.LOADER.NCLASSES, 16), nn.Softmax(dim=1))
 
-    model= init_model(model)
+        elif cfg.MODEL.BODY == "SWINT":
+            model = nn.Sequential(model, TEMP(), nn.Conv2d(768, 5, 8))
+
+    model = init_model(model)
     # model = freeze_model(model)
     model.train()
     trainer = Trainer(model)
-    loader = build_loader()
 
-    do_train(model, loader, trainer)
+    trainer.run()
     ddp_destroy()
 
 

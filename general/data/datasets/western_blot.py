@@ -44,6 +44,7 @@ class WBLOT(Dataset):
         self.data = []
         for i, df in enumerate(self.datafolders):
             self.data += [(img, i) for img in os.listdir(df)]
+        random.shuffle(self.data)
 
         # init transforms
         self.transform = transform

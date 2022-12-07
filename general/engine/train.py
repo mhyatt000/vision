@@ -21,41 +21,51 @@ from general.utils import comm
 
 from tqdm import tqdm
 
+
 def train_iter(model, loader, trainer):
 
-    t = tqdm(total=len(loader))
-    for X, Y in loader:  # (t := tqdm(loader)):
+    t = tqdm(total=len(loader)) if not (cfg.rank and cfg.distributed) else None
+    for X, Y in loader:
 
         X, Y = X.to(cfg.rank), Y.to(cfg.rank)
         Yh = model(X).view((Y.shape[0], -1))
 
-        loss = trainer.step(Yh, Y)
+        # print('yh',Yh)
+        # print('yh',Yh.shape)
+        # quit()
+
+        loss = trainer.iter(Yh, Y)
 
         acc = -1
-        acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
-        t.set_description(f'loss: {"%.4f" % loss} | acc: {"%.4f" % acc}')
-        t.update()
+        # acc = sum([y.argmax() == yh.argmax() for y, yh in zip(Y, Yh)]) / len(Y.tolist())
+        if t:
+            t.set_description(f'loss: {"%.4f" % loss} | acc: {"%.4f" % acc}')
+            t.update()
 
         # torch.cuda.empty_cache()
 
 
 def do_train(model, loader, trainer):
 
-    checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
-    global_rank = comm.get_rank()
+    # checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
+    # global_rank = comm.get_rank()
 
-    if cfg.SOLVER.CHECKPOINT_PER_EPOCH != -1 and cfg.SOLVER.MAX_EPOCH >= 1:
-        checkpoint_period = len(loader) * cfg.SOLVER.CHECKPOINT_PER_EPOCH // cfg.SOLVER.MAX_EPOCH
+    # if cfg.SOLVER.CHECKPOINT_PER_EPOCH != -1 and cfg.SOLVER.MAX_EPOCH >= 1:
+    # checkpoint_period = len(loader) * cfg.SOLVER.CHECKPOINT_PER_EPOCH // cfg.SOLVER.MAX_EPOCH
 
-    if global_rank <= 0 and cfg.SOLVER.MAX_EPOCH >= 1:
-        print("Iter per epoch ", len(loader) // cfg.SOLVER.MAX_EPOCH)
+    # if global_rank <= 0 and cfg.SOLVER.MAX_EPOCH >= 1:
+    # print("Iter per epoch ", len(loader) // cfg.SOLVER.MAX_EPOCH)
 
     print("begin training loop")
 
     # t = tqdm(total=len(loader))
     for epoch in range(cfg.SOLVER.MAX_EPOCH):
-        print(f'epoch: {epoch}/{cfg.SOLVER.MAX_EPOCH}')
+        print(f"epoch: {epoch}/{cfg.SOLVER.MAX_EPOCH}")
+        loader.sampler.set_epoch(epoch)
+
+        """train_iter should be train_epoch"""
         train_iter(model, loader, trainer)
+        trainer.step()
         # t.set_description(f'epoch: {epoch}')
         # t.update()
 

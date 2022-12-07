@@ -1,6 +1,5 @@
 DEVICE: 'cuda' 
 MODEL: 
-  DEVICE:  'cuda'
   BODY: "RESNET"
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
@@ -46,8 +45,11 @@ MODEL:
     USE_SE: False
 
 LOADER:
-  BATCH_SIZE: 64 # try bigger batch size !!!
+  DATASET: "WBLOT"
+  BATCH_SIZE: 128 # 512 # try bigger batch size !!!
   SHUFFLE: True
+  TRAIN: True
+  VAL: True
 
 SOLVER:
   MAX_EPOCH: 200
@@ -60,21 +62,23 @@ LOSS:
 
   AAM:
     S: 64.0
-    M: [1.0, 0.0, 0.0]
+    M: [1.0, 0.0, 0.4]
     INTER_THRESH: 0
 
   PFC:
-    EMBED_DIM: 512  
+    EMBED_DIM: 64   # 3
     NC: 5
-    SAMPLE_RATE: 1.0
-    FP16: True
+    NCLASSES: 5
+    SAMPLE_RATE: 1 # 0.2
+    FP16: False
 
 OPTIM:
   BODY: "ADAM"
 
-  LR: 0.1 # 0.005
+  LR: 0.005 # 0.005 # 0.1
   BETAS: [0.5,0.999]
+  DECAY: 5e-4
 
-RECIPE:
-  TRAIN: True
-
+TRAINER:
+  TRAIN: False
+  VAL: True

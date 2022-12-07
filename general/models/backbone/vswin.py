@@ -5,7 +5,7 @@ from functools import lru_cache, reduce
 from operator import mul
 
 from einops import rearrange
-from mmaction.utils import get_root_logger
+# from mmaction.utils import get_root_logger
 # from mmcv.runner import load_checkpoint
 import numpy as np
 from timm.models.layers import DropPath, trunc_normal_
@@ -741,8 +741,8 @@ class SwinTransformer3D(nn.Module):
             self.pretrained = pretrained
         if isinstance(self.pretrained, str):
             self.apply(_init_weights)
-            logger = get_root_logger()
-            logger.info(f"load model from: {self.pretrained}")
+            # logger = get_root_logger()
+            # logger.info(f"load model from: {self.pretrained}")
 
             if self.pretrained2d:
                 # Inflate 2D model into 3D model.
