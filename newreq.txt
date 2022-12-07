@@ -1,0 +1,13 @@
+# or use CUDA 11.6 since that seemed pretty good
+# conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+
+
+yacs
+kornia
+scipy
+einops
+timm
+transformers
+scikit-learn
+matplotlib
+plotly

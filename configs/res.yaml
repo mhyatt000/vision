@@ -1,0 +1,39 @@
+DEVICE: 'cuda' # TODO add implicit GPU detection
+
+MODEL:
+  BODY: "RESNET"
+
+  RESNET: "ResNet50Conv5ROIFeatureExtractor"
+
+  FFCR:
+    BODY: '50'
+    NUM_CLASSES: 16
+    USE_SE: False
+
+LOADER: 
+  NCLASSES: 5 # change other configs to NCLASSES
+  DATASET: "WBLOT"
+  BATCH_SIZE: 128
+  SHUFFLE: True
+  USE_SPLIT: True
+  SPLIT: [0,1]
+
+SOLVER:
+  MAX_EPOCH: 15
+  GRAD_CLIP: 5.0
+  CHECKPOINT_PER_EPOCH: 1.0
+  SEED: 0 # default ... why in solver
+
+LOSS: 
+  BODY: "CE" 
+
+OPTIM: 
+  BODY: "ADAM"
+  LR: 0.001
+  BETAS: [0.5, 0.999]
+  DECAY: 5e-4
+
+TRAINER:
+  TRAIN: True
+  VAL: True
+

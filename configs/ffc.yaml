@@ -1,0 +1,35 @@
+DEVICE: 'cuda' # TODO add implicit GPU detection
+
+MODEL:
+  BODY: "FFCR"
+
+  FFCR:
+    BODY: '50'
+    LAYERS: [3,4,6,3]
+    NUM_CLASSES: 5
+    USE_SE: False
+
+LOADER: 
+  DATASET: "WBLOT"
+  BATCH_SIZE: 128
+  SHUFFLE: True
+  USE_SPLIT: True
+  SPLIT: [0,1]
+
+SOLVER:
+  MAX_EPOCH: 200
+  GRAD_CLIP: 5.0
+  CHECKPOINT_PER_EPOCH: 1.0
+  SEED: 0 # default ... why in solver
+
+LOSS: 
+  BODY: "CE" 
+
+OPTIM: 
+  BODY: "ADAM"
+  LR: 0.1
+  BETAS: [0.5, 0.999]
+  DECAY: 5e-4
+
+TRAINER:
+  TRAIN: True

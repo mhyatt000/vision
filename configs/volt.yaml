@@ -1,0 +1,40 @@
+MODEL: 
+  META_ARCHITECTURE:
+  WEIGHT:
+  RPN_ONLY:
+  RPN_ARCHITECTURE: "VLDYHEAD"
+
+  VISION:
+    BODY: "VIDEO-SWIN"
+
+  VSWIN:
+    EMBED_DIM:
+    DEPTHS:
+    NUM_HEADS:
+    WSZ: 
+    OUT_CHANNELS:
+    DROP_PATH_RATE: 0.4 # IS THAT TOO HIGH??
+
+  LM:
+    FREEZE: False
+    MODEL_TYPE: "bert-base-uncased"
+    MASK_SPECIAL: 
+
+  # RPN:
+    # USE_FPN: 
+    # ANCHOR_SIZES: 
+    # ANCHOR_STRIDE: 
+    # ASPECT_RATIOS:
+    # SCALES_PER_OCTAVE:
+
+  DYHEAD: 
+    CHANNELS: 256
+    NUM_CONVS: 8
+    USE_GN: True
+    USE_DYRELU: True
+    USE_DFCONV: True
+    USE_DYFUSE: True
+    TOPK: 9
+    SCORE_AGG: "MEAN"
+    LOG_SCALE: 0.0
+
