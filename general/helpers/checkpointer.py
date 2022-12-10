@@ -6,7 +6,10 @@ import torch
 
 def mkdir(path):
     if not os.path.exists(path):
-        os.system(f"mkdir {path}")
+        try:
+            os.system(f"mkdir {path}")
+        except:
+            return
 
 
 class Checkpointer:
@@ -31,13 +34,22 @@ class Checkpointer:
             "epoch",
             "losses",
             "accs",
+            "best",
+            "best_epoch",
+        ]
+        self.states = [
+            "criterion",
+            "scheduler",
+            "optimizer",
+            "scaler",
         ]
 
     def save(self):
-        if cfg.rank or (self.epoch % cfg.SOLVER.CHECKPOINT_PER_EPOCH):
+        if cfg.rank or (self.trainer.epoch % cfg.SOLVER.CHECKPOINT_PER_EPOCH):
             return
 
         snap = {a.upper(): getattr(self.trainer, a) for a in self.remember}
+        snap.update({a.upper(): getattr(self.trainer, a).state_dict() for a in self.states})
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         snap["MODEL"] = mod.state_dict()
         torch.save(snap, self.psnap)
@@ -57,7 +69,10 @@ class Checkpointer:
         mod.load_state_dict(snap["MODEL"])
         del snap["MODEL"]
         for k, v in snap.items():
-            setattr(self.trainer, k.lower(), v)
+            try:
+                getattr(self.trainer, k.lower()).load_state_dict(v)
+            except:
+                setattr(self.trainer, k.lower(), v)
 
         print(f"Resuming training from snapshot at epoch {self.trainer.epoch}")
         print(self.psnap)

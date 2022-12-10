@@ -9,15 +9,15 @@ import sys
 
 from PIL import Image, ImageDraw
 import numpy as np
+import sklearn
+
+from general.config import cfg
 import torch
 from torch.utils.data import Dataset
 import torchvision
 from torchvision.io import read_image
-
-from general.config import cfg
 import torchvision.transforms.functional as F
 
-import sklearn
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
@@ -29,6 +29,9 @@ class WBLOT(Dataset):
             self.root = join(cfg.DATASETS.LOC, root)
         except:
             self.root = root
+
+        # TODO: add WBLOT to defaults
+        self.binary = cfg.LOADER.WBLOT.BINARY if 'WBLOT' in cfg.LOADER else False
 
         self.real = join(self.root, "real")
         self.synth = join(self.root, "synth")
@@ -59,10 +62,12 @@ class WBLOT(Dataset):
         img_path = join(self.datafolders[label], x)
         image = read_image(img_path).float()
 
+        label = bool(label) if self.binary else label
         if cfg.LOSS.BODY in ["PFC", "AAM"]:  # arcface loss
             label = torch.Tensor([label])
         else:
-            label = torch.Tensor([int(i == label) for i in range(len(self.datafolders))])
+            nclasses = 2 if self.binary else len(self.datafolders)
+            label = torch.Tensor([int(i == label) for i in range(nclasses)])
 
         if self.transform:
             image = self.transform(image)

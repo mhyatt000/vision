@@ -7,14 +7,14 @@ import random
 import numpy as np
 import torch
 from torch import nn
+from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-from torch.distributed import init_process_group, destroy_process_group
+
 from general.config import cfg
 from general.engine.train import do_train
-from general.models import build_model
-
 from general.helpers import Trainer
+from general.models import build_model
 
 # from general.data import make_data_loader
 # from general.engine.inference import inference
@@ -29,7 +29,6 @@ from general.helpers import Trainer
 # from general.utils.miscellaneous import mkdir, save_config
 
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
-
 
 def init_seed():
     """sets random seed for experiments"""

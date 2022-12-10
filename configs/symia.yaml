@@ -5,7 +5,7 @@ MODEL:
   FFCR:
     BODY: '50'
     LAYERS: [3,4,6,3]
-    NUM_CLASSES: 16 # 5 ... embed dim
+    NUM_CLASSES: 16 # 5 but its  embed dim
     USE_SE: False
 
 LOADER: 
@@ -14,6 +14,7 @@ LOADER:
   SHUFFLE: True
   USE_SPLIT: True
   SPLIT: [0,1]
+  NCLASSES: 5
 
 SOLVER:
   MAX_EPOCH: 200
@@ -22,7 +23,7 @@ SOLVER:
   SEED: 0 # default ... why in solver
 
 LOSS: 
-  BODY: "AAM" # TODO aam uses pfc sampler ... from paper
+  BODY: "AAM" # aam uses pfc sampler
 
   AAM:
     S: 64.0

@@ -1,6 +1,6 @@
 from general.config import cfg
 
-from . import  resnet, vswin, vit # fbnet
+from . import  resnet, vswin, vit, ffcresnet, iresnet  # fbnet
 from .vswin import SwinTransformer3D as VSWIN
 
 

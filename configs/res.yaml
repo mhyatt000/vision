@@ -29,7 +29,7 @@ LOSS:
 
 OPTIM: 
   BODY: "ADAM"
-  LR: 0.001
+  LR: 0.01
   BETAS: [0.5, 0.999]
   DECAY: 5e-4
 

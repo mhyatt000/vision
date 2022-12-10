@@ -1,6 +1,11 @@
 DEVICE: 'cuda' 
+AMP: True
 MODEL: 
-  BODY: "RESNET"
+  BODY: "IRESNET"
+
+  IRESNET:
+    BODY: "100"
+    OUT_DIM: 64
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
 
@@ -41,18 +46,19 @@ MODEL:
   FFCR:
     BODY: '50'
     # LAYERS: [3,4,6,3]
-    NUM_CLASSES: 5
+    OUT_DIM: 5
     USE_SE: False
 
 LOADER:
   DATASET: "WBLOT"
-  BATCH_SIZE: 128 # 512 # try bigger batch size !!!
+  BATCH_SIZE: 16 # 512 # try bigger batch size !!!
   SHUFFLE: True
   TRAIN: True
   VAL: True
+  NCLASSES: 5
 
 SOLVER:
-  MAX_EPOCH: 200
+  MAX_EPOCH: 50
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   SEED: 0 # default ... why is it in solver?
@@ -69,16 +75,15 @@ LOSS:
     EMBED_DIM: 64   # 3
     NC: 5
     NCLASSES: 5
-    SAMPLE_RATE: 1 # 0.2
-    FP16: False
+    SAMPLE_RATE:  0.2 # original is 0.2 ... 1
 
 OPTIM:
   BODY: "ADAM"
 
-  LR: 0.005 # 0.005 # 0.1
+  LR: 0.001 # 0.005 # 0.1
   BETAS: [0.5,0.999]
   DECAY: 5e-4
 
 TRAINER:
-  TRAIN: False
+  TRAIN: True
   VAL: True

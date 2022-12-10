@@ -1,17 +1,28 @@
 
+### TODO RIGHT NOW:
+
+do you even have the right architectures??
+- there should probably be a softmax at the end ...
+- what did arcface do? (given they used iresnet)
+
 ### for classification
 
+```
 11k for test ... check if it is balanced
 - classwise accuracy
     - for each cls
     - TP TN FP FN
     - also f1, precision recall 
     - confusion matrix
+```
 
 ### for arcface embeddings
+
+```
 - 5k positive pairs (1k per cls)
 - 5k negative pairs (1k per cls)
 - measure d' population distance from pos/neg
+```
 
 ---
 

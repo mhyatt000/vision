@@ -1,40 +1,26 @@
 import os
 
 import matplotlib.pyplot as plt
+from sklearn.decomposition import KernelPCA as KPCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.manifold import TSNE
+# ...
 import torch
 from torch import distributed as dist
 from torch import optim
 from torch.cuda.amp.grad_scaler import GradScaler
-from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau, StepLR
 from tqdm import tqdm
 
 from general.config import cfg
 from general.data import build_loaders
-from general.helpers import Checkpointer
+from general.helpers import Checkpointer, make_optimizer, make_scheduler
 from general.losses import make_loss
+
+from torch.cuda.amp import  autocast
+from torch.cuda.amp import GradScaler
 
 # import plotly.express as px
 # from general.solver import make_lr_scheduler, make_optimizer
-
-
-OPTIM = {
-    "ADAM": optim.Adam,
-    "SGD": optim.SGD,
-}
-
-
-def make_optimizer(model):
-    return OPTIM[cfg.OPTIM.BODY](
-        model.parameters(),
-        lr=cfg.OPTIM.LR,
-        betas=cfg.OPTIM.BETAS,
-        weight_decay=float(cfg.OPTIM.DECAY),
-    )
-
-
-def make_scheduler(optimizer):
-    return StepLR(optimizer, step_size=1, gamma=0.5)
-
 
 def gather(x):
     """simple all gather manuver"""
@@ -54,12 +40,18 @@ class Trainer:
 
         # essentials
         self.model = model
-        self.optimizer = make_optimizer(model)
-        self.scaler = GradScaler()
-        self.scheduler = make_scheduler(self.optimizer)
         self.criterion = make_loss()
+
+        params = [{"params":model.parameters()}]
+        if cfg.LOSS.BODY == 'AAM':
+            params.append({"params": self.criterion.parameters()})
+
+        self.optimizer = make_optimizer(params)
+        self.scaler = GradScaler(growth_interval=100) # default is 2k
+        self.scheduler = make_scheduler(self.optimizer)
         self.ckp = Checkpointer(self)
         self.loaders = build_loaders()
+        self.scaler = GradScaler()
 
         # for validation
         """
@@ -76,13 +68,15 @@ class Trainer:
         self.patience = 0
         self.max_patience = cfg.SOLVER.AUTO_TERMINATE_PATIENCE
         self.best = 0.0
+        self.best_epoch = 0
 
         self.use_decay = cfg.SOLVER.WEIGHT_DECAY_SCHEDULE
         self.milestone_tgt = 0
 
         # state
         self.epoch, self.batch = 0, 0
-        self.losses, self.accs = [], []
+        self.losses, self.accs = [], [0]
+        self.best_epoch = 0
 
         # try to load from snapshot ... must be last
         self.ckp.load()
@@ -94,11 +88,17 @@ class Trainer:
     def patient(self):
         """given the eval result should we terminate the loop"""
 
+        if cfg.LOSS.BODY == "AAM":
+            self.ckp.save()
+            self.best_eopch = self.epoch
+            return
+
         if self.accs[-1] < self.best:
             self.patience += 1
         else:
             self.patience = 0
             self.best = self.accs[-1]
+            self.best_epoch = self.epoch
             self.ckp.save()
 
         if self.use_patience and self.patience >= self.max_patience:
@@ -119,23 +119,24 @@ class Trainer:
     def iter(self, X, Y):
         """performs a training step after inference"""
 
-        X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
         self.optimizer.zero_grad()
-        Yh = self.model(X).view((Y.shape[0], -1))
 
-        # print(Yh[0])
-        # print(Y[0])
+        with autocast(cfg.AMP):
+            X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
+            Yh = self.model(X).view((Y.shape[0], -1))
 
-        # backwards pass
-        loss = self.criterion(Yh, Y)
-        loss.backward()
+            # backwards pass
+            loss = self.criterion(Yh, Y)
+
+        #TODO: make robust ... if amp then use amp else regular
+        self.scaler.scale(loss.to(cfg.DEVICE)).backward() # loss.backward()
+
+        #TODO: can you make this into a hook?
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.SOLVER.GRAD_CLIP)
 
-        # self.scaler.scale(loss).backward()
-        # self.scaler.step(self.optimizer)
-        # self.scaler.update()
+        self.scaler.step(self.optimizer) # self.optimizer.step()
+        self.scaler.update()
 
-        self.optimizer.step()
         self.loss = float(loss)
 
         # fitting fc for validation
@@ -170,13 +171,10 @@ class Trainer:
             self.iter(X, Y)
 
             if t:
-                desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {"%.4f" % self.loss} | '
-
+                desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {"%.4f" % self.loss} | amp: {"%4f" % self.scaler.get_scale()} '
                 t.set_description(desc)  # acc: {"%.4f" % acc}')
                 t.update()
 
-        self.epoch += 1
-        self.batch = 0
         self.scheduler.step()
 
     def train(self):
@@ -189,19 +187,26 @@ class Trainer:
             if not (cfg.rank and cfg.distributed)
             else None
         )
+
         _ = t.update(self.epoch) if t else None
 
         for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH):
 
             self.step()
             self.show_loss()
-            _ = t.update() if t else None
-
             self.eval()
+
+            self.epoch += 1
+            self.batch = 0
 
             # save model and state
             self.ckp.epoch = self.epoch
             self.patient()
+
+            if t:
+                t.set_description(f"Epochs | best: {'%.4f' % self.best} @ {self.best_epoch} | lr: {'%.4f' % self.scheduler.get_last_lr()[0]} ")
+                t.update()
+
 
     def run(self):
         """trains model"""
@@ -210,19 +215,28 @@ class Trainer:
             self.train()
         if cfg.TRAINER.VAL:
             self.eval()
-            self.summary()
+            # self.summary()
 
     def eval(self):
-        """get classwise accuracy"""
+        """docstring"""
 
         if not cfg.TRAINER.VAL:
             return
-        if cfg.LOSS.BODY != "CE":
-            return
+        if cfg.LOSS.BODY == "AAM":
+            if cfg.TRAINER.TRAIN:
+                return
+            Y, Yh = self.embed()
+            self.population_distance(Y, Yh)
+            self.show_embeddings(Y, Yh)
+        if cfg.LOSS.BODY == "CE":
+            self.classwise_accuracy()
+
+
+    def embed(self):
+        """docstring"""
 
         loader = self.loaders["test"]
-
-        confusion = torch.zeros(cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES)
+        allY, allYh = [], []
         t = tqdm(total=len(loader), leave=False) if not (cfg.rank and cfg.distributed) else None
         with torch.no_grad():
             for X, Y in loader:
@@ -231,31 +245,46 @@ class Trainer:
                 Yh = self.model(X).view((Y.shape[0], -1))
                 Y, Yh = gather(Y), gather(Yh)
 
-                """
-                Yh = self.fc(Yh)
-                if cfg.LOSS.BODY != "CE":
-                    Y = torch.Tensor([[int(i == y) for i in range(5)] for y in Y]).to(cfg.DEVICE)
-                """
+                allY.append(Y)
+                allYh.append(Yh)
 
-                _, Yh = torch.max(Yh, 1)
-                for y, yh in zip(Y.view(-1), Yh.view(-1)):
-                    confusion[y.long(), yh.long()] += 1
-
-                acc = confusion.diag().sum() / confusion.sum(1).sum()
-                # acc = -1
                 if t:
-                    t.set_description(f"validation loop...  acc: {'%.4f' % acc} | ")
+                    t.set_description(f"Embed")
                     t.update()
 
+        return torch.cat(allY), torch.cat(allYh)
+
+
+    def classwise_accuracy(self):
+        """get classwise accuracy"""
+
+        Y, Yh = self.embed()
+
+        """
+        Yh = self.fc(Yh)
+        if cfg.LOSS.BODY != "CE":
+            Y = torch.Tensor([[int(i == y) for i in range(5)] for y in Y]).to(cfg.DEVICE)
+        """
+
+        confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
+        Y, Yh = torch.argmax(Y, 1), torch.argmax(Yh, 1)
+        for y, yh in zip(Y.view(-1), Yh.view(-1)):
+            confusion[y, yh] += 1
+
+        acc = confusion.diag().sum() / confusion.sum(1).sum()
+
+        # print(confusion.tolist())
         self.accs.append(acc)
         self.confusion = confusion
         # print(confusion.diag() / confusion.sum(1))
+
         self.show_confusion()
         self.show_acc()
 
     def show_confusion(self):
         """builds confusion matrix"""
 
+        plt.rcParams.update({"font.size": 18})
         fig, ax = plt.subplots(figsize=(7.5, 7.5))
         ax.matshow(self.confusion, cmap=plt.cm.Blues, alpha=0.3)
 
@@ -265,9 +294,49 @@ class Trainer:
                     x=j, y=i, s=int(self.confusion[i, j]), va="center", ha="center", size="xx-large"
                 )
 
-        plt.rcParams.update({'font.size': 18})
-        ax.set(xlabel="Predictions", ylabel="Ground Truth", title="Confusion Matrix")
+        ax.set(
+            xlabel="Predictions",
+            ylabel="Ground Truth",
+            title=f"Confusion Matrix | {cfg.config_name} {self.epoch}/{cfg.SOLVER.MAX_EPOCH}",
+        )
         plt.savefig(os.path.join(self.ckp.path, "confusion.png"))
+        plt.close()
+
+
+    def population_distance(self, Y, Yh):
+        """measures if positive pairs are different from negative pairs"""
+
+        phist = {i: [] for i in range(cfg.LOADER.NCLASSES)}
+        nhist = {i: [] for i in range(cfg.LOADER.NCLASSES)}
+        C = set(range(cfg.LOADER.NCLASSES))
+
+        Y = Y.view(-1)
+
+        for c in C:
+            pos = Yh[(Y == c).view(-1)]
+            neg = Yh[(Y != c).view(-1)]
+
+            dist = lambda a, b: (a - b).pow(2).sum(-1).sqrt()
+            angle = ( lambda a, b: torch.acos( torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))) * 180 / 3.141592)
+
+            n = len(pos) // 2
+            ppairs = [angle(i, j) for i, j in zip(pos[:n], pos[n : 2 * n])]
+            npairs = [angle(i, j) for i, j in zip(pos[:n], neg[n : 2 * n])]
+
+            phist[c] = phist[c] + ppairs
+            nhist[c] = nhist[c] + npairs
+
+        pall, nall = [], []
+        for c in C:
+            pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
+            nall += [float(x) for x in nhist[c][:1000]]
+
+        fig, ax = plt.subplots()
+        ax.hist(pall, label='positive', bins=30, alpha=0.5)
+        ax.hist(nall, label='negative', bins=30, alpha=0.5)
+        ax.set(title="Population Distance (d`)", xlabel="angle", ylabel="frequency")
+        plt.legend()
+        plt.savefig(os.path.join(self.ckp.path, "dist.png"))
         plt.close()
 
     def show_acc(self):
@@ -276,7 +345,7 @@ class Trainer:
         fig, ax = plt.subplots()
         ax.plot([i for i in range(len(self.accs))], self.accs)
         ax.set(title="accuracy / time", xlabel="epochs", ylabel="accuracy")
-        plt.savefig("acc.png")
+        plt.savefig(os.path.join(self.ckp.path,"acc.png"))
         plt.close()
 
     def show_loss(self):
@@ -285,20 +354,27 @@ class Trainer:
         fig, ax = plt.subplots()
         ax.plot([i for i in range(len(self.losses))], self.losses)
         ax.set(title="loss / time", xlabel="epochs", ylabel="loss")
-        plt.savefig("loss.png")
+        plt.savefig(os.path.join(self.ckp.path,"loss.png"))
         plt.close()
 
     def show_embeddings(self, Y, Yh):
         """docstring"""
 
+        lda = LDA(n_components=2,solver='svd')
+        # tsne = TSNE(n_components=3, random_state=cfg.SOLVER.SEED)
+        # kpca = KPCA(n_components=2, kernel='poly', gamma=15, random_state=cfg.SOLVER.SEED)
+
+        Yh = lda.fit_transform(Yh.cpu().numpy(),Y.cpu().numpy())
+
         fig, ax = plt.subplots()
-        ax = fig.add_subplot(projection="3d")
+        # ax = fig.add_subplot(projection="3d")
 
-        for c in set(Y.tolist()):
-            yh = Yh[Y == c].tolist()
-            ax.scatter(yh[..., 0], yh[..., 1], yh[..., 2])
+        scatter = ax.scatter(Yh[:,0], Yh[:,1], c=Y.view(-1).tolist())
+        # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
+        # ax.view_init(0, 180)
 
-        plt.savefig("temp.png")
+        ax.legend(*scatter.legend_elements())
+        plt.savefig(os.path.join(self.ckp.path,"embed.png"))
         plt.close()
 
     def summary(self):
@@ -307,38 +383,15 @@ class Trainer:
         if cfg.LOSS.BODY != "AAM":
             return  # only for embeddings
 
-        loader = self.loaders["test"]
+        Y, Yh = self.embed()
 
-        """
-        DO YOU NEED TO TURN OFF DISTRIBUTED SAMPLING??
-        """
+        scale = lambda X: torch.div( X, torch.sqrt(torch.sum(torch.pow(X, 2), -1)).reshape(-1, 1))
 
-        srcs, tgts = [], []
-        t = tqdm(total=len(loader), leave=False) if not (cfg.rank and cfg.distributed) else None
-        for X, Y in loader:
-            with torch.no_grad():
-
-                X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
-                Yh = self.model(X).view((Y.shape[0], -1))
-
-                srcs.append(Yh)
-                tgts.append(Y)
-
-                if t:
-                    t.set_description(f"Summary")
-                    t.update()
-
-        srcs, tgts = torch.cat(srcs), torch.cat(tgts)
+        # find center vector
         for c in set([i[0] for i in tgts.tolist()]):
 
-            embed = srcs[(tgts == c).view(-1)]
-
-            # find center vector
-            scale = lambda X: torch.div(
-                X, torch.sqrt(torch.sum(torch.pow(X, 2), -1)).reshape(-1, 1)
-            )
+            embed = Yh[(Y == c).view(-1)]
             embed = scale(embed)
             x = scale(torch.mean(embed, -2))
-
             loss = torch.nn.CrossEntropyLoss()(embed, x.repeat(embed.shape[0], 1))
             print(f"cls {int(c)} | nsamples: {embed.shape[0]} | loss: {float(loss)}")

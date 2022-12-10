@@ -27,8 +27,8 @@ class PartialFC_V2(torch.nn.Module):
     --------
     >>> module_pfc = PartialFC(embedding_size=512, num_classes=8000000, sample_rate=0.2)
     >>> for img, labels in data_loader:
-    >>>     embeddings = net(img)
-    >>>     loss = module_pfc(embeddings, labels)
+    >>>     embed = net(img)
+    >>>     loss = module_pfc(embed, labels)
     >>>     loss.backward()
     >>>     optimizer.step()
     """
@@ -53,18 +53,16 @@ class PartialFC_V2(torch.nn.Module):
 
         self.world_size = distributed.get_world_size()
 
-
         """
         .
         why does it have to be distributed???
         .
         """
 
-
         self.dist_cross_entropy = DistCrossEntropy()
-        self.embedding_size = cfg.LOSS.PFC.EMBED_DIM
+        self.embed_size = cfg.LOSS.PFC.EMBED_DIM
         self.sample_rate = cfg.LOSS.PFC.SAMPLE_RATE
-        self.fp16 = cfg.LOSS.PFC.FP16
+        self.amp = cfg.AMP
         num_classes = cfg.LOSS.PFC.NC
         self.num_local: int = num_classes // self.world_size + int(
             self.rank < num_classes % self.world_size
@@ -78,7 +76,7 @@ class PartialFC_V2(torch.nn.Module):
         self.is_updated: bool = True
         self.init_weight_update: bool = True
         self.weight = torch.nn.Parameter(
-            torch.normal(0, 0.01, (self.num_local, self.embedding_size))
+            torch.normal(0, 0.01, (self.num_local, self.embed_size))
         ).cuda()
 
         # margin_loss
@@ -115,11 +113,11 @@ class PartialFC_V2(torch.nn.Module):
 
         return self.weight[self.weight_index]
 
-    def forward(self, local_embeddings, local_labels):
+    def forward(self, local_embed, local_labels):
         """
         Parameters:
         ----------
-        local_embeddings: torch.Tensor
+        local_embed: torch.Tensor
             feature embeddings on each GPU(Rank).
         local_labels: torch.Tensor
             labels on each GPU(Rank).
@@ -129,47 +127,48 @@ class PartialFC_V2(torch.nn.Module):
             pass
         """
 
-        local_labels.squeeze_()
-        local_labels = local_labels.long()
+        with torch.cuda.amp.autocast(self.amp):
 
-        batch_size = local_embeddings.size(0)
-        if self.last_batch_size == 0:
-            self.last_batch_size = batch_size
-        """
-        assert (
-            self.last_batch_size == batch_size
-        ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
-        """
+            local_labels.squeeze_()
+            local_labels = local_labels.long()
 
-        _gather_embeddings = [
-            torch.zeros((batch_size, self.embedding_size)).cuda() for _ in range(self.world_size)
-        ]
-        _gather_labels = [torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)]
+            batch_size = local_embed.size(0)
+            if self.last_batch_size == 0:
+                self.last_batch_size = batch_size
 
-        _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
-        distributed.all_gather(_gather_labels, local_labels)
+            """ 
+            assert (
+                self.last_batch_size == batch_size
+            ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
+            """
 
-        embeddings = torch.cat(_list_embeddings)
-        labels = torch.cat(_gather_labels)
+            zero = lambda dim: torch.zeros(dim, device=cfg.DEVICE)
+            _embed = [zero((batch_size, self.embed_size)) for _ in range(self.world_size)]
+            _labels = [zero(batch_size).long() for _ in range(self.world_size)]
 
-        labels = labels.view(-1, 1)
-        index_positive = (self.class_start <= labels) & (labels < self.class_start + self.num_local)
-        labels[~index_positive] = -1
-        labels[index_positive] -= self.class_start
+            _list_embed = AllGather(local_embed, *_embed)
+            distributed.all_gather(_labels, local_labels)
 
-        if self.sample_rate < 1:
-            weight = self.sample(labels, index_positive).cuda()
-        else:
-            weight = self.weight
+            embed = torch.cat(_list_embed)
+            labels = torch.cat(_labels)
 
-        with torch.cuda.amp.autocast(self.fp16):
-            norm_embeddings = F.normalize(embeddings).cpu()
-            norm_weight_activated = F.normalize(weight).cpu()
-            logits = F.linear(norm_embeddings, norm_weight_activated)
+            labels = labels.view(-1, 1)
+            index_positive = (self.class_start <= labels) & (
+                labels < self.class_start + self.num_local
+            )
+            labels[~index_positive] = -1
+            labels[index_positive] -= self.class_start
 
-        if self.fp16:
+            weight = self.sample(labels, index_positive) if self.sample_rate < 1 else self.weight
+            weight.to(cfg.DEVICE)
+
+            norm_embed = F.normalize(embed)
+            norm_weight_activated = F.normalize(weight)
+            logits = F.linear(norm_embed, norm_weight_activated)
+
+        if self.amp:
             logits = logits.float()
-        logits = logits.clamp(-1, 1).cuda()
+        logits = logits.clamp(-1, 1)
 
         logits = self.margin_softmax(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)
@@ -236,7 +235,7 @@ class AllGatherFunc(torch.autograd.Function):
     @staticmethod
     def forward(ctx, tensor, *gather_list):
         gather_list = list(gather_list)
-        distributed.all_gather(gather_list, tensor)
+        distributed.all_gather(gather_list, tensor.to(torch.float32))
         return tuple(gather_list)
 
     @staticmethod
