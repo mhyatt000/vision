@@ -1,23 +1,21 @@
 import os
 
+# ...
 import matplotlib.pyplot as plt
 from sklearn.decomposition import KernelPCA as KPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
-# ...
 import torch
 from torch import distributed as dist
 from torch import optim
+from torch.cuda.amp import GradScaler, autocast
 from torch.cuda.amp.grad_scaler import GradScaler
 from tqdm import tqdm
 
 from general.config import cfg
-from general.data import build_loaders
+from general.data import build_loaders, build_loaderx
 from general.helpers import Checkpointer, make_optimizer, make_scheduler
 from general.losses import make_loss
-
-from torch.cuda.amp import  autocast
-from torch.cuda.amp import GradScaler
 
 # import plotly.express as px
 # from general.solver import make_lr_scheduler, make_optimizer
@@ -50,8 +48,12 @@ class Trainer:
         self.scaler = GradScaler(growth_interval=100) # default is 2k
         self.scheduler = make_scheduler(self.optimizer)
         self.ckp = Checkpointer(self)
-        self.loaders = build_loaders()
-        self.scaler = GradScaler()
+
+        if cfg.LOADER.X:
+            loader = build_loaderx()
+            self.loaders = {'train':loader}
+        else: 
+            self.loaders = build_loaders()
 
         # for validation
         """
@@ -131,6 +133,7 @@ class Trainer:
         #TODO: make robust ... if amp then use amp else regular
         self.scaler.scale(loss.to(cfg.DEVICE)).backward() # loss.backward()
 
+        self.scaler.unscale_(self.optimizer)
         #TODO: can you make this into a hook?
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.SOLVER.GRAD_CLIP)
 
@@ -171,7 +174,7 @@ class Trainer:
             self.iter(X, Y)
 
             if t:
-                desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {"%.4f" % self.loss} | amp: {"%4f" % self.scaler.get_scale()} '
+                desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {"%.4f" % self.loss} | amp: {self.scaler.get_scale()} '
                 t.set_description(desc)  # acc: {"%.4f" % acc}')
                 t.update()
 
@@ -181,6 +184,10 @@ class Trainer:
         """trains model"""
 
         print("begin training loop...")
+
+        self.model.train()
+        if cfg.LOSS.BODY == 'AAM':
+            self.criterion.train()
 
         t = (
             tqdm(total=cfg.SOLVER.MAX_EPOCH, desc="Epochs", leave=False)

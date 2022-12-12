@@ -4,7 +4,7 @@ MODEL:
   BODY: "IRESNET"
 
   IRESNET:
-    BODY: "100"
+    BODY: "IR18" # "IR50"
     OUT_DIM: 64
 
   RESNET: "ResNet50Conv5ROIFeatureExtractor"
@@ -50,8 +50,9 @@ MODEL:
     USE_SE: False
 
 LOADER:
+  X: True
   DATASET: "WBLOT"
-  BATCH_SIZE: 16 # 512 # try bigger batch size !!!
+  BATCH_SIZE: 64 # 512 # try bigger batch size !!!
   SHUFFLE: True
   TRAIN: True
   VAL: True

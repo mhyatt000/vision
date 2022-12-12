@@ -9,7 +9,13 @@ arguments for train/test will be post-fixed by a _TRAIN or _TEST
 Config definition
 """
 
-_C = CN(new_allowed=True)
+_C = CN(
+    new_allowed=True,
+    init_dict=dict(
+        DEVICE="cuda",
+        AMP=True,
+    ),
+)
 
 _C.MODEL = CN(
     new_allowed=True,
@@ -33,9 +39,25 @@ _C.MODEL = CN(
     ),
 )
 
-# -----------------------------------------------------------------------------
-# INPUT
-# -----------------------------------------------------------------------------
+
+
+_C.LOADER = CN(
+    new_allowed=True,
+    init_dict=dict(
+        X=False,
+    ),
+)
+
+
+_C.MODEL.IRESNET = CN(
+    new_allowed=True,
+    init_dict=dict(
+        BODY="IR50",
+        OUT_DIM=512,
+    ),
+)
+
+
 _C.INPUT = CN(
     init_dict=dict(
         # Size of the smallest side of the image during training
@@ -57,9 +79,6 @@ _C.INPUT = CN(
     )
 )
 
-# -----------------------------------------------------------------------------
-# Augmentation
-# -----------------------------------------------------------------------------
 _C.AUGMENT = CN(
     init_dict=dict(
         USE_RA=0,
@@ -76,9 +95,6 @@ _C.AUGMENT = CN(
     )
 )
 
-# -----------------------------------------------------------------------------
-# Dataset
-# -----------------------------------------------------------------------------
 _C.DATASETS = CN(
     init_dict=dict(
         LOC=os.path.join(os.path.expanduser("~"), "cs", ".datasets"),  # location
@@ -162,9 +178,6 @@ _C.DATASETS = CN(
     )
 )
 
-# -----------------------------------------------------------------------------
-# DataLoader
-# -----------------------------------------------------------------------------
 _C.DATALOADER = CN(
     init_dict=dict(
         # Number of data loading threads
@@ -763,7 +776,7 @@ _C.SOLVER = CN(
         USE_EMA_FOR_MONITOR=False,
         WEIGHT_DECAY_SCHEDULE=False,
         WEIGHT_DECAY_SCHEDULE_RATIO=0.667,
-    )
+    ),
 )
 
 

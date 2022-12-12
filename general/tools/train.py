@@ -1,5 +1,6 @@
 """ Basic training script for PyTorch """
 
+import time
 import argparse
 import os
 import random
@@ -16,11 +17,6 @@ from general.engine.train import do_train
 from general.helpers import Trainer
 from general.models import build_model
 
-# from general.data import make_data_loader
-# from general.engine.inference import inference
-# from general.utils.amp import GradScaler, autocast
-# from general.utils.checkpoint import DetectronCheckpointer
-# from general.utils.collect_env import collect_env_info
 # from general.utils.comm import get_rank, synchronize
 # from general.utils.dist import set_dist_print
 # from general.utils.imports import import_file
@@ -68,12 +64,12 @@ def init_model(model):
             output_device=cfg.rank,
         )
 
-    if cfg.MODEL.VISION.RESET_BN:
-        for name, param in model.named_buffers():
-            if "running_mean" in name:
-                nn.init.constant_(param, 0)
-            if "running_var" in name:
-                nn.init.constant_(param, 1)
+    # if cfg.MODEL.VISION.RESET_BN:
+        # for name, param in model.named_buffers():
+            # if "running_mean" in name:
+                # nn.init.constant_(param, 0)
+            # if "running_var" in name:
+                # nn.init.constant_(param, 1)
 
     if cfg.SOLVER.GRAD_CLIP:
         clip_value = cfg.SOLVER.GRAD_CLIP
@@ -100,34 +96,16 @@ def freeze_model(model):
         freeze(model.rpn)
 
 
-class TEMP(nn.Module):
-    def __init__(self):
-        super(TEMP, self).__init__()
-
-    def forward(self, x):
-        return x[-1]
-
-
 def main():
 
     ddp_init()
     init_seed()
     model = build_model()
-
-    if cfg.MODEL.BODY == "RESNET":
-        if cfg.LOSS.BODY in ["PFC", "AAM"]:
-            model = nn.Sequential(model, TEMP(), nn.Conv2d(1024, cfg.LOSS.PFC.EMBED_DIM, 16))
-        elif cfg.LOSS.BODY == "CE":
-            model = nn.Sequential( model, TEMP(), nn.Conv2d(1024, cfg.LOADER.NCLASSES, 16), nn.Softmax(dim=1))
-
-        elif cfg.MODEL.BODY == "SWINT":
-            model = nn.Sequential(model, TEMP(), nn.Conv2d(768, 5, 8))
-
     model = init_model(model)
     # model = freeze_model(model)
     model.train()
     trainer = Trainer(model)
-
+    time.sleep(1)
     trainer.run()
     ddp_destroy()
 

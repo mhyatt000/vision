@@ -15,14 +15,24 @@ from general.config import cfg
 import torch
 from torch.utils.data import Dataset
 import torchvision
+from torchvision import transforms
 from torchvision.io import read_image
 import torchvision.transforms.functional as F
+
+NORM = transforms.Compose(
+    [
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]
+)
 
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
 
-    def __init__(self, root="western_blots", transform=None, target_transform=None):
+    def __init__(self, root="western_blots", transform=NORM, target_transform=None):
         super(WBLOT, self).__init__()
 
         try:
@@ -31,7 +41,7 @@ class WBLOT(Dataset):
             self.root = root
 
         # TODO: add WBLOT to defaults
-        self.binary = cfg.LOADER.WBLOT.BINARY if 'WBLOT' in cfg.LOADER else False
+        self.binary = cfg.LOADER.WBLOT.BINARY if "WBLOT" in cfg.LOADER else False
 
         self.real = join(self.root, "real")
         self.synth = join(self.root, "synth")
