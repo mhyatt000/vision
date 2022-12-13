@@ -13,5 +13,5 @@ LOSSES = {
 def make_loss():
     l = LOSSES[cfg.LOSS.BODY]()
     if cfg.LOSS.BODY == "AAM":
-        l.to(cfg.DEVICE)
+        l.train().to(cfg.DEVICE)
     return l

@@ -50,7 +50,6 @@ class PartialFC_V2(torch.nn.Module):
         super(PartialFC_V2, self).__init__()
         assert distributed.is_initialized(), "must initialize distributed before create this"
         self.rank = distributed.get_rank()
-
         self.world_size = distributed.get_world_size()
 
         """
@@ -79,12 +78,7 @@ class PartialFC_V2(torch.nn.Module):
             torch.normal(0, 0.01, (self.num_local, self.embed_size))
         ).cuda()
 
-        # margin_loss
-        margin_loss = arcloss.CombinedMarginLoss
-        if isinstance(margin_loss, Callable):
-            self.margin_softmax = margin_loss()
-        else:
-            raise
+        self.margin_loss = arcloss.CombinedMarginLoss()
 
     def sample(self, labels, index_positive):
         """
@@ -168,9 +162,9 @@ class PartialFC_V2(torch.nn.Module):
 
         if self.amp:
             logits = logits.float()
-        logits = logits.clamp(-1, 1)
+        logits = logits.clamp(-1, 1).to(cfg.DEVICE)
 
-        logits = self.margin_softmax(logits, labels)
+        logits = self.margin_loss(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)
         return loss
 

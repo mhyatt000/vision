@@ -19,11 +19,14 @@ def build_loaders():
 
     dataset = ds[cfg.LOADER.DATASET]()
 
-    datasets = random_split(
-        dataset,
-        [0.7, 0.3],
-        generator=torch.Generator().manual_seed(cfg.SOLVER.SEED),
-    )
+    if cfg.LOADER.SPLIT:
+        datasets = random_split(
+            dataset,
+            [0.7, 0.3],
+            generator=torch.Generator().manual_seed(cfg.SOLVER.SEED),
+        )
+    else:
+        datasets = [dataset,ds[cfg.LOADER.DATASET]()]
 
     loaders = {}
     splits = ["train", "test"]
