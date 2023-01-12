@@ -1,47 +1,26 @@
-import logging
-import math
 import os
 from os.path import join
-import pdb
-import random
-import re
-import sys
 
 from PIL import Image, ImageDraw
-import numpy as np
-import sklearn
 
 from general.config import cfg
 import torch
 from torch.utils.data import Dataset
 import torchvision
-from torchvision import transforms
 from torchvision.io import read_image
 import torchvision.transforms.functional as F
-
-NORM = transforms.Compose(
-    [
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    ]
-)
 
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
 
-    def __init__(self, root="western_blots", transform=NORM, target_transform=None):
+    def __init__(self, root="western_blots", transform=None, target_transform=None):
         super(WBLOT, self).__init__()
 
         try:
             self.root = join(cfg.DATASETS.LOC, root)
         except:
             self.root = root
-
-        # TODO: add WBLOT to defaults
-        self.binary = cfg.LOADER.WBLOT.BINARY if "WBLOT" in cfg.LOADER else False
 
         self.real = join(self.root, "real")
         self.synth = join(self.root, "synth")
@@ -57,7 +36,6 @@ class WBLOT(Dataset):
         self.data = []
         for i, df in enumerate(self.datafolders):
             self.data += [(img, i) for img in os.listdir(df)]
-        random.shuffle(self.data)
 
         # init transforms
         self.transform = transform
@@ -72,11 +50,10 @@ class WBLOT(Dataset):
         img_path = join(self.datafolders[label], x)
         image = read_image(img_path).float()
 
-        label = bool(label) if self.binary else label
         if cfg.LOSS.BODY in ["PFC", "AAM"]:  # arcface loss
             label = torch.Tensor([label])
         else:
-            nclasses = 2 if self.binary else len(self.datafolders)
+            nclasses = len(self.datafolders)
             label = torch.Tensor([int(i == label) for i in range(nclasses)])
 
         if self.transform:
@@ -84,4 +61,4 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        return image, label
+        return image.to("cuda"), label.to("cuda")

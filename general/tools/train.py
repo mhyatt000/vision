@@ -50,19 +50,8 @@ def ddp_destroy():
         destroy_process_group()
 
 
-def init_model(model):
-    """
-    returns a model with bn mean and variance init
-    adds gradient clipping
-    """
-
-    model.to(cfg.DEVICE)
-    if cfg.distributed:
-        model = DDP(
-            model,
-            device_ids=[cfg.rank],
-            output_device=cfg.rank,
-        )
+def grad_hook(model):
+    """ adds gradient clipping """
 
     # if cfg.MODEL.VISION.RESET_BN:
         # for name, param in model.named_buffers():
@@ -101,11 +90,8 @@ def main():
     ddp_init()
     init_seed()
     model = build_model()
-    model = init_model(model)
     # model = freeze_model(model)
-    model.train()
     trainer = Trainer(model)
-    time.sleep(1)
     trainer.run()
     ddp_destroy()
 

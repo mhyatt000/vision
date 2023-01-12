@@ -15,6 +15,9 @@ LOADER:
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
+  
+  WBLOT:
+    LEAVE_OUT: None # could be 0..5
 
 SOLVER:
   MAX_EPOCH: 200
@@ -40,6 +43,7 @@ OPTIM:
   BODY: "SGD" # "ADAM"
   LR: 0.1
   DECAY: 5e-4
+  MOMENTUM: 0.9
 
 TRAINER:
   TRAIN: True

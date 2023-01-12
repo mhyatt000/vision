@@ -17,6 +17,16 @@ _C = CN(
     ),
 )
 
+_C.EXP = CN( # experiment
+    new_allowed=True,
+    init_dict=dict(
+        BODY= None,
+        TRAIN= True,
+        EVAL= False,
+    ),
+)
+
+
 _C.MODEL = CN(
     new_allowed=True,
     init_dict=dict(
@@ -45,6 +55,13 @@ _C.LOADER = CN(
     new_allowed=True,
     init_dict=dict(
         X=False,
+
+        NUM_WORKERS=4, # Number of data loading threads
+        # each collated batch_size % SIZE_DIVISIBILITY should == 0 
+        SIZE_DIVISIBILITY=0,
+        USE_RANDOM_SEED=False, # Use random sampler during training
+        DISTRIBUTE_CHUNK_AMONG_NODE=False,
+
     ),
 )
 
