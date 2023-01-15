@@ -1,28 +1,26 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
-
 MODEL:
   BODY: "FFCR"
 
   FFCR:
     BODY: '50'
     LAYERS: [3,4,6,3]
-    OUT_DIM: 64 # 5 classes but its  embed dim
+    NUM_CLASSES: 2 # 5 but its  embed dim
     USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 64 # 128 is possible
+  BATCH_SIZE: 128
   SHUFFLE: True
-  SPLIT: True
+  USE_SPLIT: True
+  SPLIT: [0,1]
   NCLASSES: 5
-  SIZE: 38200
-  
-  LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_EPOCH: 20 # you said 200 but 20 is on arcface
+  MAX_EPOCH: 80
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
+  SEED: 0 # default ... why in solver
 
 LOSS: 
   BODY: "AAM" # aam uses pfc sampler
@@ -33,17 +31,18 @@ LOSS:
     INTER_THRESH: 0
 
   PFC: 
-    EMBED_DIM: 64
+    EMBED_DIM: 2
     NC: 5
     NCLASSES: 5
-    SAMPLE_RATE: 0.2 # 1.0
+    SAMPLE_RATE: 1.0
+    FP16: False
 
 OPTIM: 
-  BODY: "SGD" # "ADAM"
-  LR: 0.1
+  BODY: "ADAM"
+  LR: 0.01
+  BETAS: [0.5, 0.999]
   DECAY: 5e-4
-  MOMENTUM: 0.9
 
 TRAINER:
-  TRAIN: True
+  TRAIN: False
   VAL: True

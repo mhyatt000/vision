@@ -1,15 +1,14 @@
-import math
-
 import torch
-
+import math
 from general.config import cfg
 
 
 class CombinedMarginLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
+
         self.s = cfg.LOSS.AAM.S
-        self.m1, self.m2, self.m3 = cfg.LOSS.AAM.M
+        self.m1 , self.m2 , self.m3 = cfg.LOSS.AAM.M
         self.interclass_filtering_threshold = cfg.LOSS.AAM.INTER_THRESH
 
         # For ArcFace

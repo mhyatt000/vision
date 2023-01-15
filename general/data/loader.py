@@ -12,11 +12,12 @@ ds = {
 }
 
 
-def build_loaders(leaveout=None, swap=None):
+def build_loaders(swap=None):
     """custom dataloader"""
 
     print("building loader...\n")
     print(cfg.LOADER, "\n")
+    leaveout = cfg.LOADER.LEAVE_OUT
 
     dataset = ds[cfg.LOADER.DATASET]()
 

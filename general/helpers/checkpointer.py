@@ -34,14 +34,14 @@ class Checkpointer:
             "epoch",
             "losses",
             "accs",
-            "best",
-            "best_epoch",
+            # "best",
+            # "best_epoch",
         ]
         self.states = [
             "criterion",
-            "scheduler",
             "optimizer",
-            "scaler",
+            "amp",
+            "scheduler",
         ]
 
     def save(self):

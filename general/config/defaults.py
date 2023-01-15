@@ -3,10 +3,7 @@ from yacs.config import CfgNode as CN
 
 """
 Convention about Training / Test specific parameters
-
 arguments for train/test will be post-fixed by a _TRAIN or _TEST 
-
-Config definition
 """
 
 _C = CN(
@@ -14,6 +11,7 @@ _C = CN(
     init_dict=dict(
         DEVICE="cuda",
         AMP=True,
+        SEED=0,
     ),
 )
 
@@ -26,6 +24,14 @@ _C.EXP = CN( # experiment
     ),
 )
 
+# temp
+_C.SCHEDULER = CN(
+    new_allowed=True,
+    init_dict=dict(
+        BODY= "Poly",
+        WARMUP= 0,
+    ),
+)
 
 _C.MODEL = CN(
     new_allowed=True,
@@ -736,6 +742,9 @@ _C.SEARCH = CN(
 # ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
+
+#NOTE: it seems like solver is a combo of loss, optim, and scheduler
+
 _C.SOLVER = CN(
     new_allowed=True,
     init_dict=dict(

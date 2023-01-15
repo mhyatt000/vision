@@ -1,16 +1,12 @@
 import math
-import time
 from typing import Callable
 
+from general.config import cfg
 import torch
 from torch import distributed
-from torch.nn import functional as F
+from torch.nn.functional import linear, normalize
 
-from general.config import cfg
-
-# from general.utils import dist
-
-from . import arcloss
+from .arcloss import CombinedMarginLoss
 
 
 class PartialFC_V2(torch.nn.Module):
@@ -27,8 +23,8 @@ class PartialFC_V2(torch.nn.Module):
     --------
     >>> module_pfc = PartialFC(embedding_size=512, num_classes=8000000, sample_rate=0.2)
     >>> for img, labels in data_loader:
-    >>>     embed = net(img)
-    >>>     loss = module_pfc(embed, labels)
+    >>>     embeddings = net(img)
+    >>>     loss = module_pfc(embeddings, labels)
     >>>     loss.backward()
     >>>     optimizer.step()
     """
@@ -36,38 +32,21 @@ class PartialFC_V2(torch.nn.Module):
     _version = 2
 
     def __init__(self):
-        """
-        Paramenters:
-        -----------
-        embedding_size: int
-            The dimension of embedding, required
-        num_classes: int
-            Total number of classes, required
-        sample_rate: float
-            The rate of negative centers participating in the calculation, default is 1.0.
-        """
-
         super(PartialFC_V2, self).__init__()
+
         assert distributed.is_initialized(), "must initialize distributed before create this"
         self.rank = distributed.get_rank()
         self.world_size = distributed.get_world_size()
 
-        """
-        .
-        why does it have to be distributed???
-        .
-        """
-
         self.dist_cross_entropy = DistCrossEntropy()
-        self.embed_size = cfg.LOSS.PFC.EMBED_DIM
-        self.sample_rate = cfg.LOSS.PFC.SAMPLE_RATE
-        self.amp = cfg.AMP
-        num_classes = cfg.LOSS.PFC.NC
-        self.num_local: int = num_classes // self.world_size + int(
-            self.rank < num_classes % self.world_size
+        self.embedding_size = cfg.LOSS.PFC.EMBED_DIM
+        self.sample_rate: float = cfg.LOSS.PFC.SAMPLE_RATE
+        self.fp16 = cfg.AMP
+        self.num_local: int = cfg.LOSS.PFC.NCLASSES // self.world_size + int(
+            self.rank < cfg.LOSS.PFC.NCLASSES % self.world_size
         )
-        self.class_start: int = num_classes // self.world_size * self.rank + min(
-            self.rank, num_classes % self.world_size
+        self.class_start: int = cfg.LOSS.PFC.NCLASSES // self.world_size * self.rank + min(
+            self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
         )
         self.num_sample: int = int(self.sample_rate * self.num_local)
         self.last_batch_size: int = 0
@@ -75,10 +54,11 @@ class PartialFC_V2(torch.nn.Module):
         self.is_updated: bool = True
         self.init_weight_update: bool = True
         self.weight = torch.nn.Parameter(
-            torch.normal(0, 0.01, (self.num_local, self.embed_size))
-        ).cuda()
+            torch.normal(0, 0.01, (self.num_local, cfg.LOSS.PFC.EMBED_DIM))
+        )
 
-        self.margin_loss = arcloss.CombinedMarginLoss()
+        # margin_loss
+        self.margin_softmax = CombinedMarginLoss()
 
     def sample(self, labels, index_positive):
         """
@@ -92,6 +72,7 @@ class PartialFC_V2(torch.nn.Module):
         optimizer: torch.optim.Optimizer
             pass
         """
+
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).cuda()
             if self.num_sample - positive.size(0) >= 0:
@@ -107,11 +88,15 @@ class PartialFC_V2(torch.nn.Module):
 
         return self.weight[self.weight_index]
 
-    def forward(self, local_embed, local_labels):
+    def forward(
+        self,
+        local_embeddings: torch.Tensor,
+        local_labels: torch.Tensor,
+    ):
         """
         Parameters:
         ----------
-        local_embed: torch.Tensor
+        local_embeddings: torch.Tensor
             feature embeddings on each GPU(Rank).
         local_labels: torch.Tensor
             labels on each GPU(Rank).
@@ -121,50 +106,47 @@ class PartialFC_V2(torch.nn.Module):
             pass
         """
 
-        with torch.cuda.amp.autocast(self.amp):
+        local_labels.squeeze_()
+        local_labels = local_labels.long()
 
-            local_labels.squeeze_()
-            local_labels = local_labels.long()
+        batch_size = local_embeddings.size(0)
+        if self.last_batch_size == 0:
+            self.last_batch_size = batch_size
 
-            batch_size = local_embed.size(0)
-            if self.last_batch_size == 0:
-                self.last_batch_size = batch_size
+        assert (
+            self.last_batch_size == batch_size
+        ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
 
-            """ 
-            assert (
-                self.last_batch_size == batch_size
-            ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
-            """
+        _gather_embeddings = [
+            torch.zeros((batch_size, self.embedding_size)).cuda() for _ in range(self.world_size)
+        ]
+        _gather_labels = [torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)]
 
-            zero = lambda dim: torch.zeros(dim, device=cfg.DEVICE)
-            _embed = [zero((batch_size, self.embed_size)) for _ in range(self.world_size)]
-            _labels = [zero(batch_size).long() for _ in range(self.world_size)]
+        _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
+        distributed.all_gather(_gather_labels, local_labels)
 
-            _list_embed = AllGather(local_embed, *_embed)
-            distributed.all_gather(_labels, local_labels)
+        embeddings = torch.cat(_list_embeddings)
+        labels = torch.cat(_gather_labels)
 
-            embed = torch.cat(_list_embed)
-            labels = torch.cat(_labels)
+        labels = labels.view(-1, 1)
+        index_positive = (self.class_start <= labels) & (labels < self.class_start + self.num_local)
+        labels[~index_positive] = -1
+        labels[index_positive] -= self.class_start
 
-            labels = labels.view(-1, 1)
-            index_positive = (self.class_start <= labels) & (
-                labels < self.class_start + self.num_local
-            )
-            labels[~index_positive] = -1
-            labels[index_positive] -= self.class_start
+        if self.sample_rate < 1:
+            weight = self.sample(labels, index_positive)
+        else:
+            weight = self.weight
 
-            weight = self.sample(labels, index_positive) if self.sample_rate < 1 else self.weight
-            weight.to(cfg.DEVICE)
-
-            norm_embed = F.normalize(embed)
-            norm_weight_activated = F.normalize(weight)
-            logits = F.linear(norm_embed, norm_weight_activated)
-
-        if self.amp:
+        with torch.cuda.amp.autocast(self.fp16):
+            norm_embeddings = normalize(embeddings).cpu()
+            norm_weight_activated = normalize(weight).cpu()
+            logits = linear(norm_embeddings, norm_weight_activated)
+        if self.fp16:
             logits = logits.float()
-        logits = logits.clamp(-1, 1).to(cfg.DEVICE)
+        logits = logits.clamp(-1, 1).cuda()
 
-        logits = self.margin_loss(logits, labels)
+        logits = self.margin_softmax(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)
         return loss
 
@@ -229,7 +211,7 @@ class AllGatherFunc(torch.autograd.Function):
     @staticmethod
     def forward(ctx, tensor, *gather_list):
         gather_list = list(gather_list)
-        distributed.all_gather(gather_list, tensor.to(torch.float32))
+        distributed.all_gather(gather_list, tensor)
         return tuple(gather_list)
 
     @staticmethod
