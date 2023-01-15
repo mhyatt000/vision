@@ -5,10 +5,10 @@
 # git pull:
 # conda activate vision;
 
-if [$NODE1 == hostname]; then
-    GPUS=4
-else
+if [$NODE0 == hostname]; then
     GPUS=2
+else
+    GPUS=4
 fi
 
 clear;
