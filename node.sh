@@ -12,7 +12,7 @@ git pull;
 clear;
 
 export OMP_NUM_THREADS=10;
-torchrun --use_env vision --nproc_per_node=$2 --nnodes=2 --node_rank=$1 \
+torchrun --nproc_per_node=$2 --nnodes=2 --node_rank=$1 \
     --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=$3 \
     general/tools/train.py --config-name $4
 
