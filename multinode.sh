@@ -9,7 +9,7 @@ do
     ssh $NODE eval "cd cs/vision && git pull"
 done
 
-HEAD=hostname -I;
+HEAD=$(hostname -I);
 echo $HEAD;
 
 # clear;
