@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo $PATH
 cd ~/cs/vision;
 git pull:
