@@ -1,11 +1,11 @@
 #!/bin/bash
 
-echo $PATH
-cd ~/cs/vision;
-git pull:
-conda activate vision;
+# echo $PATH
+# cd ~/cs/vision;
+# git pull:
+# conda activate vision;
 
-# clear;
+clear;
 export OMP_NUM_THREADS=10;
 torchrun --standalone --nproc_per_node=$1 general/master.py --config-name $2
 
