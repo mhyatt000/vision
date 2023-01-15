@@ -7,7 +7,7 @@ for NODE in "${NODES[@]}"
 do
     echo $NODE
     # ssh $NODE eval "cd cs/vision && git pull"
-    ssh $NODE hostname;
+    ssh $NODE whoami;
 done
 
 HEAD=$(hostname -I);
