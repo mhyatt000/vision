@@ -18,7 +18,7 @@ _C = CN(
 _C.EXP = CN( # experiment
     new_allowed=True,
     init_dict=dict(
-        BODY= None,
+        BODY=None,
         TRAIN= True,
         EVAL= False,
     ),
