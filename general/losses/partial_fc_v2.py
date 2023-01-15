@@ -162,6 +162,8 @@ class DistCrossEntropyFunc(torch.autograd.Function):
         """ """
         batch_size = logits.size(0)
         # for numerical stability
+        print(logits.shape)
+        quit()
         max_logits, _ = torch.max(logits, dim=1, keepdim=True)
         # local to global
         distributed.all_reduce(max_logits, distributed.ReduceOp.MAX)
