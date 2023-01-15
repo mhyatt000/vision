@@ -12,7 +12,7 @@ done
 HEAD=hostname -I;
 echo $HEAD;
 
-clear;
+# clear;
 # ssh $NODE1 ~/cs/vision/node.sh && \ 
     # ssh $NODE2 ~/cs/vision/node.sh;
 
