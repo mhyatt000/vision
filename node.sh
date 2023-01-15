@@ -9,6 +9,8 @@ conda activate vision;
 cd ~/cs/vision;
 git pull;
 
+clear;
+
 # export OMP_NUM_THREADS=10;
 # torchrun --nproc_per_node=2 --nnodes=2 --node_rank=0 \
     # --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=$ENVVAR \
