@@ -10,6 +10,7 @@ cd ~/cs/vision;
 git pull;
 
 clear;
+echo 'temp';
 
 # export OMP_NUM_THREADS=10;
 # torchrun --nproc_per_node=2 --nnodes=2 --node_rank=0 \
