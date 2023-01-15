@@ -3,6 +3,8 @@
 # This is for execution on the GPU node... usually called by multinode.sh
 
 whoami && hostname;
+source ~/.bashrc
+source ~/.zshrc
 conda activate vision;
 cd ~/cs/vision;
 git pull;
