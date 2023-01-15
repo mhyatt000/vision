@@ -6,7 +6,8 @@ NODES=("$NODE1" "$NODE2")
 for NODE in "${NODES[@]}"
 do
     echo $NODE
-    ssh $NODE eval "cd cs/vision && git pull"
+    # ssh $NODE eval "cd cs/vision && git pull"
+    ssh $NODE hostname;
 done
 
 HEAD=$(hostname -I);
