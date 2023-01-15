@@ -1,3 +1,4 @@
+source ~/.zshrc;
 cd ~/cs/vision;
 git pull:
 conda activate vision;
