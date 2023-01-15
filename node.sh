@@ -4,7 +4,7 @@
 
 whoami && hostname;
 conda activate vision;
-cd cs/vision;
+cd ~/cs/vision;
 git pull;
 
 # export OMP_NUM_THREADS=10;
