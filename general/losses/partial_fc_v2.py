@@ -45,7 +45,7 @@ class PartialFC_V2(torch.nn.Module):
         self.num_local: int = cfg.LOSS.PFC.NCLASSES // self.world_size + int(
             self.rank < cfg.LOSS.PFC.NCLASSES % self.world_size
         )
-        self.class_start: int = cfg.LOSS.PFC.NCLASSES // self.world_size * self.rank + min(
+        self.class_start = cfg.LOSS.PFC.NCLASSES // self.world_size * self.rank + min(
             self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
         )
         self.num_sample: int = int(self.sample_rate * self.num_local)
@@ -59,6 +59,7 @@ class PartialFC_V2(torch.nn.Module):
 
         # margin_loss
         self.margin_softmax = CombinedMarginLoss()
+
 
     def sample(self, labels, index_positive):
         """

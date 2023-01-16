@@ -50,15 +50,6 @@ class Trainer:
 
         # essentials
         self.model = model
-
-        """ final trial!!
-        from ..arc_temp.partial_fc_v2 import PartialFC_V2
-        from ..arc_temp.losses import CombinedMarginLoss
-        margin_loss = CombinedMarginLoss(64, 1.0,0,0.4)
-        self.criterion = PartialFC_V2( margin_loss, 64, 5, 0.2, True )
-        self.criterion.train().cuda()
-        """
-
         self.criterion = make_loss()
 
         params = [{"params": model.parameters()}]

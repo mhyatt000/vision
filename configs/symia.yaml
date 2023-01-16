@@ -11,7 +11,7 @@ MODEL:
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 64 # 128 is possible
+  BATCH_SIZE: 128 # is possible
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
