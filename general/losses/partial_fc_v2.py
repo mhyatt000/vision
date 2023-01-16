@@ -51,11 +51,12 @@ class PartialFC_V2(torch.nn.Module):
             self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
         )
 
-        """ so that each GPU can have at least one class """
+        """ so that each GPU can have at least one class 
+        unfortunately, not sure that it helps training
         if self.num_local == 0:
             self.num_local = 1
             self.class_start = random.randint(0,cfg.LOSS.PFC.NCLASSES)
-        """ end """
+        end """
 
         self.num_sample = int(self.sample_rate * self.num_local)
         self.last_batch_size = 0
