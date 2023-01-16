@@ -8,7 +8,7 @@
 if [$NODE0 == hostname]; then
     GPUS=2
 else
-    GPUS=6
+    GPUS=5
 fi
 
 clear;
