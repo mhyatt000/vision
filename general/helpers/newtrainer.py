@@ -31,7 +31,7 @@ def prog(length):
     def decorator(func):
         def wrapper(*args, **kwargs):
             if not hasattr(wrapper, "tqdm"):
-                wrapper.tqdm = tqdm(total=length, leave=False)
+                wrapper.tqdm = tqdm(total=length) #, leave=False)
             result = func(*args, **kwargs)
             wrapper.tqdm.set_description(result)
             wrapper.tqdm.update()
