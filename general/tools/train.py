@@ -24,7 +24,7 @@ from general.models import build_model
 # from general.utils.metric_logger import MetricLogger, TensorboardLogger
 # from general.utils.miscellaneous import mkdir, save_config
 
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+# os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def init_seed():
     """sets random seed for experiments"""

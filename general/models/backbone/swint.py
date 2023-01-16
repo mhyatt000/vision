@@ -5,12 +5,12 @@
 
 import numpy as np
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+
+from general.config import cfg
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-
-from general.config import cfg
 
 
 class Mlp(nn.Module):
@@ -95,7 +95,7 @@ class WindowAttention(nn.Module):
         self.window_size = window_size  # Wh, Ww
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        self.scale = qk_scale or head_dim ** -0.5
+        self.scale = qk_scale or head_dim**-0.5
 
         # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
@@ -594,7 +594,7 @@ class SwinTransformer(nn.Module):
         self.layers = nn.ModuleList()
         for i_layer in range(self.num_layers):
             layer = BasicLayer(
-                dim=int(embed_dim * 2 ** i_layer),
+                dim=int(embed_dim * 2**i_layer),
                 depth=depths[i_layer],
                 num_heads=num_heads[i_layer],
                 window_size=window_size,
@@ -612,10 +612,10 @@ class SwinTransformer(nn.Module):
 
             stage = f"stage{i_layer + 2}"
             if stage in self.out_features:
-                self._out_feature_channels[stage] = embed_dim * 2 ** i_layer
-                self._out_feature_strides[stage] = 4 * 2 ** i_layer
+                self._out_feature_channels[stage] = embed_dim * 2**i_layer
+                self._out_feature_strides[stage] = 4 * 2**i_layer
 
-        num_features = [int(embed_dim * 2 ** i) for i in range(self.num_layers)]
+        num_features = [int(embed_dim * 2**i) for i in range(self.num_layers)]
         self.num_features = num_features
 
         # add a norm layer for each output
@@ -672,7 +672,7 @@ class SwinTransformer(nn.Module):
         x = self.patch_embed(x)
 
         Wh, Ww = x.size(2), x.size(3)
-        if self.ape: # interpolate the position embedding to the corresponding size
+        if self.ape:  # interpolate the position embedding to the corresponding size
             absolute_pos_embed = F.interpolate(
                 self.absolute_pos_embed, size=(Wh, Ww), mode="bicubic"
             )
