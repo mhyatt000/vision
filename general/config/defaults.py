@@ -1,5 +1,6 @@
 import os
 from yacs.config import CfgNode as CN
+from .model import MODEL
 
 """
 Convention about Training / Test specific parameters
@@ -15,7 +16,8 @@ _C = CN(
     ),
 )
 
-_C.EXP = CN( # experiment
+# experiment
+_C.EXP = CN( 
     new_allowed=True,
     init_dict=dict(
         BODY=None,
@@ -54,6 +56,9 @@ _C.MODEL = CN(
         MULTITASK=CN(new_allowed=True),  # Multitask Training / Test specific parameters
     ),
 )
+
+# workaround for now
+_C.MODEL.FFCR = MODEL.FFCR
 
 
 
