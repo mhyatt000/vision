@@ -1,11 +1,11 @@
-Contents
+Machine Learning EXperiment (MLEX) Package
 --------
 
 .. include:: readme.rst
 .. include:: installation.rst
 
 .. ERROR::
-   cant use more GPUs than classes
+   cant use more GPUs than classes for arc loss
 
 .. IMPORTANT::
    temp todo
