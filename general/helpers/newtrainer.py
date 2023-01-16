@@ -128,7 +128,7 @@ class Trainer:
     def step(self, X, Y):
 
         Yh = self.model(X)
-        print(Yh.shape)
+        print(Yh[-1].shape)
         quit()
         loss = self.criterion(Yh, Y)
         clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
