@@ -42,24 +42,25 @@ class PartialFC_V2(torch.nn.Module):
         self.embedding_size = cfg.LOSS.PFC.EMBED_DIM
         self.sample_rate: float = cfg.LOSS.PFC.SAMPLE_RATE
         self.fp16 = cfg.AMP
+
         self.num_local: int = cfg.LOSS.PFC.NCLASSES // self.world_size + int(
             self.rank < cfg.LOSS.PFC.NCLASSES % self.world_size
         )
         self.class_start = cfg.LOSS.PFC.NCLASSES // self.world_size * self.rank + min(
             self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
         )
-        self.num_sample: int = int(self.sample_rate * self.num_local)
-        self.last_batch_size: int = 0
 
-        self.is_updated: bool = True
-        self.init_weight_update: bool = True
+        self.num_sample = int(self.sample_rate * self.num_local)
+        self.last_batch_size = 0
+
+        self.is_updated = True
+        self.init_weight_update = True
+
         self.weight = torch.nn.Parameter(
             torch.normal(0, 0.01, (self.num_local, cfg.LOSS.PFC.EMBED_DIM))
         )
 
-        # margin_loss
         self.margin_softmax = CombinedMarginLoss()
-
 
     def sample(self, labels, index_positive):
         """
