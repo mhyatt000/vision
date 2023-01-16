@@ -37,9 +37,9 @@ cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ els
 cfg.rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
-# dist_print = False
-# if not dist_print:
-    # set_dist_print(cfg.rank <= 0)
+dist_print = False
+if not dist_print:
+    set_dist_print(cfg.rank <= 0)
 
 cfg.freeze()
 print('CONFIG:', cfg.config_file, "\n")
