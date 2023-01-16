@@ -1,9 +1,9 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "SWIN"
+  BODY: "SWINT"
 
-  SWIN: 
+    # SWIN: 
 
 LOADER: 
   DATASET: "WBLOT"
