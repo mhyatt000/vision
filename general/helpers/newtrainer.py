@@ -128,6 +128,8 @@ class Trainer:
     def step(self, X, Y):
 
         Yh = self.model(X)
+        print(Yh.shape)
+        quit()
         loss = self.criterion(Yh, Y)
         clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
@@ -147,28 +149,9 @@ class Trainer:
 
         self.scheduler.step()
 
-        """
-        with autocast(cfg.AMP):
-            Yh = self.model(X).view((Y.shape[0], -1))
-
-            # backwards pass
-            loss = self.criterion(Yh, Y)
-
         # TODO: make robust ... if amp then use amp else regular
-        self.amp.scale(loss.to(cfg.DEVICE)).backward()  # loss.backward()
-
-        self.amp.unscale_(self.optimizer)
-        # TODO: can you make this into a hook?
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.SOLVER.GRAD_CLIP)
-
-        self.amp.step(self.optimizer)  # self.optimizer.step()
-        self.amp.update()
-        self.optimizer.zero_grad()
-        """
-
-        """TODO make msg messenger obj to handle reporting
-        and documenting (maybe a graph?)
-        """
+        # TODO make msg messenger obj to handle reporting
+        # and documenting (maybe a graph?)
 
         self.loss = float(loss)
         self.losses.append(self.loss)

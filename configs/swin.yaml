@@ -1,13 +1,9 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "FFCR"
+  BODY: "SWIN"
 
-  FFCR:
-    BODY: '50'
-    LAYERS: [3,4,6,3]
-    OUT_DIM: 64 # 5 classes but its  embed dim
-    USE_SE: False
+  SWIN: 
 
 LOADER: 
   DATASET: "WBLOT"
