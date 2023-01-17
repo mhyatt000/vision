@@ -45,6 +45,7 @@ MODEL.CONV = CN(
         ICHANNEL=1,
         OCHANNEL=1,
         KERNEL=3,
+        RESHAPE=True,
     ),
 )
 
