@@ -52,7 +52,7 @@ LOSS:
 
 OPTIM: 
   BODY: "SGD" # "ADAM"
-  LR: 0.1
+  LR: 0.001
   DECAY: 5e-4
   MOMENTUM: 0.9
 
