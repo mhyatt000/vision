@@ -1,6 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 import torch
 
+from .basic import Select, MLP
+#
 from .ffc import FFC, FFC_BNA, SpectralTransform, FFC_SE
 from .spatial_transform import LearnableSpatialTransformWrapper
 from .batch_norm import FrozenBatchNorm2d, NaiveSyncBatchNorm2d

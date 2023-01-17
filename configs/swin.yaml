@@ -1,9 +1,25 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "SWINT"
+  BODY: "SEQUENTIAL"
+
+  SEQ:
+    SEQUENCE:
+    - "SWINT"
+    - "SELECT"
+    - "CONV"
 
     # SWIN: 
+
+  CONV:
+    ICHANNEL: 768
+    OCHANNEL: 64
+    KERNEL: 8
+
+  MLP:
+    IDIM: 49152
+    HDIM: 512
+    ODIM: 64
 
 LOADER: 
   DATASET: "WBLOT"

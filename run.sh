@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# echo $PATH
-# cd ~/cs/vision;
-# git pull:
-# conda activate vision;
-
-if [$NODE0 == hostname]; then
+A="$NODE0"
+B=$(hostname)
+if [ "$A" == "$B" ]; then
     GPUS=2
 else
     GPUS=5

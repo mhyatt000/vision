@@ -689,6 +689,7 @@ class SwinTransformer(nn.Module):
         self._freeze_stages()
 
     def _freeze_stages(self):
+
         if self.frozen_stages >= 0:
             self.patch_embed.eval()
             for param in self.patch_embed.parameters():
@@ -705,12 +706,8 @@ class SwinTransformer(nn.Module):
                 for param in m.parameters():
                     param.requires_grad = False
 
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in backbone.
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
+    def init_weights(self):
+        """ Initialize the weights in backbone.  """
 
         def _init_weights(m):
             if isinstance(m, nn.Linear):

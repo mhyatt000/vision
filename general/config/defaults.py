@@ -35,32 +35,7 @@ _C.SCHEDULER = CN(
     ),
 )
 
-_C.MODEL = CN(
-    new_allowed=True,
-    init_dict=dict(
-        RPN_ONLY=False,
-        BOX_ON=True,
-        MASK_ON=False,
-        KEYPOINT_ON=False,
-        DEVICE="cuda",
-        META_ARCHITECTURE="GeneralizedRCNN",
-        RPN_ARCHITECTURE="RPN",
-        DEBUG=False,  # add debug flag
-        ONNX=False,  # add onnx flag
-        # If the WEIGHT starts with a catalog=//, like =R-50, the code will look for
-        # the path in paths_catalog. Else, it will use it as the specified absolute
-        # path
-        WEIGHT="",
-        PRETRAIN_NAME="",  # If LINEAR_PROB= True, only the last linear layers in rpn and roi_head are trainable
-        LINEAR_PROB=False,
-        MULTITASK=CN(new_allowed=True),  # Multitask Training / Test specific parameters
-    ),
-)
-
-# workaround for now
-_C.MODEL.FFCR = MODEL.FFCR
-
-
+_C.MODEL = MODEL
 
 _C.LOADER = CN(
     new_allowed=True,

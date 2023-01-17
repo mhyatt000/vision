@@ -1,9 +1,17 @@
 from general.config import cfg
+import torch
+from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from . import backbone, head, lang, layers, rpn
-from .backbone import resnet, swint, vit, ffcresnet, iresnet
+from .backbone import ffcresnet, iresnet, resnet, swint, vit
 from .vlrcnn import VLRCNN
+from .layers import basic
+
+def sequence():
+    """allows user to define a sequence of models"""
+    return nn.Sequential(*[models[mod]() for mod in cfg.MODEL.SEQ.SEQUENCE])
+
 
 models = {
     "VLRCNN": VLRCNN,
@@ -12,6 +20,10 @@ models = {
     "VIT": vit.VIT,
     "FFCR": ffcresnet.FFCR,
     "IRESNET": iresnet.IResNet,
+    "SEQUENTIAL": sequence,
+    "MLP" : basic._MLP,
+    "SELECT" : basic.Select,
+    "CONV" : basic.CONV2D,
 }
 
 

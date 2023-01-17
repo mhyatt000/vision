@@ -27,6 +27,7 @@ class _NewEmptyTensorOp(torch.autograd.Function):
 
 
 class Conv2d(torch.nn.Conv2d):
+
     def forward(self, x):
         if x.numel() > 0:
             return super(Conv2d, self).forward(x)

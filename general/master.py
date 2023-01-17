@@ -14,6 +14,8 @@ from general.data.loader import build_loaders
 
 distributed.init_process_group("nccl")
 
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 def setup_seed(seed, deterministic=True):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -30,6 +32,7 @@ def main():
     print("running master")
 
     setup_seed(seed=cfg.SEED, deterministic=False)
+    print(cfg.rank, cfg.world_size)
     torch.cuda.set_device(cfg.rank)
 
     E = Experiment()
