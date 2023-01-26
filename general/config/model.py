@@ -53,13 +53,12 @@ MODEL.CONV = CN(
 MODEL.FFCR = CN(
     new_allowed=True,
     init_dict=dict(
-        BODY="50",
+        BODY=50,
         LAYERS=[3, 4, 6, 3],
         OUT_DIM=64,
         USE_SE=False,
     ),
 )
-
 
 temp = CN(
     new_allowed=True,

@@ -32,13 +32,12 @@ def main():
     print("running master")
 
     setup_seed(seed=cfg.SEED, deterministic=False)
-    print(cfg.rank, cfg.world_size)
+    # print(cfg.rank, cfg.world_size)
     torch.cuda.set_device(cfg.rank)
 
     E = Experiment()
     E.run()
 
-    # model._set_static_graph()
 
 if __name__ == "__main__":
     main()

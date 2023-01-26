@@ -348,13 +348,13 @@ def FFCRX101_32x8d(**kwargs):
 
 
 models = {
-    "18": FFCR18,
-    "26": FFCR26,
-    "34": FFCR34,
-    "50": FFCR50,
-    "101": FFCR101,
-    "152": FFCR152,
-    "200": FFCR200,
+    18: FFCR18,
+    26: FFCR26,
+    34: FFCR34,
+    50: FFCR50,
+    101: FFCR101,
+    152: FFCR152,
+    200: FFCR200,
 }
 
 

@@ -36,7 +36,7 @@ def build_model():
             device_ids=[cfg.rank],
             output_device=cfg.rank,
             # broadcast_buffers=False,
-            find_unused_parameters=True,
+            # find_unused_parameters=True,
         )
 
     if cfg.EXP.TRAIN:
