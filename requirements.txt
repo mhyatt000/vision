@@ -11,3 +11,4 @@ transformers
 scikit-learn
 matplotlib
 plotly
+mkdocs

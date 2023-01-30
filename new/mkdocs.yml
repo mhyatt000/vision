@@ -1,0 +1,38 @@
+site_name: "MLEX: Machine Learning EXperiment"
+site_url: null
+repo_url: https://github.com/mhyatt000/vision
+repo_name: mhyatt000/vision
+
+
+
+theme: 
+  name: material # readthedocs
+  features:
+  - content.code.copy
+  - navigation.tabs
+    # - navigation.sections
+
+  palette:
+    primary: teal
+
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+
+nav: 
+- Home: index.md
+- Installation: install.md
+- Usage: usage.md
+- MLEX: 
+  - Overview: mlex/overview.md
+  - Config: mlex/config.md
+  - Model:
+    - Catalogue: mlex/model/catalogue.md
+    - Layers: mlex/model/layers.md
+  - Data: mlex/data.md
+  - Helpers: 
+    - Experiment: mlex/helpers/experiment.md
+    - Trainer: mlex/helpers/trainer.md
+- TODO: todo.md
