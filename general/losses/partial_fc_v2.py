@@ -51,13 +51,6 @@ class PartialFC_V2(torch.nn.Module):
             self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
         )
 
-        """ so that each GPU can have at least one class 
-        unfortunately, not sure that it helps training
-        if self.num_local == 0:
-            self.num_local = 1
-            self.class_start = random.randint(0,cfg.LOSS.PFC.NCLASSES)
-        end """
-
         self.num_sample = int(self.sample_rate * self.num_local)
         self.last_batch_size = 0
 
@@ -149,12 +142,12 @@ class PartialFC_V2(torch.nn.Module):
             weight = self.weight
 
         with torch.cuda.amp.autocast(self.fp16):
-            norm_embeddings = normalize(embeddings).cpu()
-            norm_weight_activated = normalize(weight).cpu()
+            norm_embeddings = normalize(embeddings)
+            norm_weight_activated = normalize(weight)
             logits = linear(norm_embeddings, norm_weight_activated)
         if self.fp16:
             logits = logits.float()
-        logits = logits.clamp(-1, 1).cuda()
+        logits = logits.clamp(-1, 1)
 
         logits = self.margin_softmax(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)
