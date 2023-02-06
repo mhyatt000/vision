@@ -25,7 +25,7 @@ models = {
     "MLP" : basic._MLP,
     "SELECT" : basic.Select,
     "CONV" : basic.CONV2D,
-    "CUSTOM": CUSTOM[cfg.MODEL.CUSTOM.KEY],
+    # "CUSTOM": CUSTOM[cfg.MODEL.CUSTOM.KEY],
 }
 
 
