@@ -65,7 +65,7 @@ class Trainer:
 
         # state
         self.epoch, self.istep = 0, 0
-        self.losses, self.accs = [], [0]
+        self.losses, self.accs = [], []
         self.best_epoch = 0
 
         # try to load from snapshot ... must be last
@@ -111,6 +111,15 @@ class Trainer:
                     milestone_target = i + 1
     """
 
+    def calc_accuracy(self,Yh,Y):
+
+        if cfg.LOSS.BODY != "CE":
+            return 
+        with torch.no_grad():
+            acc = (torch.argmax(Yh, dim=1)== torch.argmax(Y, dim=1)).sum()/Yh.shape[0]
+            print(acc)
+            self.accs.append(acc)
+
 
     def back_pass(self,loss):
         if cfg.AMP:
@@ -128,15 +137,17 @@ class Trainer:
         else:
             self.optimizer.step()
         self.optimizer.zero_grad()
-        self.scheduler.step()
+        for _ in cfg.SOLVER.GRAD_ACC_EVERY:
+            self.scheduler.step()
 
-    def step_grad_acc(self, X,Y):
+    def step(self, X,Y):
         """training step with adaptive gradient accumulation"""
 
         self.istep += 1
 
         Yh = self.model(X)
         loss = self.criterion(Yh, Y) 
+        self.calc_accuracy(Yh,Y)
 
         self.loss = float(loss.detach())
         self.losses.append(self.loss)
@@ -150,23 +161,10 @@ class Trainer:
         else: 
             self.backpropagation()
 
-    def step(self, X, Y):
-
-        Yh = self.model(X)
-        loss = self.criterion(Yh, Y)
-
-        self.loss = float(loss.detach())
-        self.losses.append(self.loss)
-
-        self.back_pass(loss)
-        self.backpropagation()
-
     def rebuild_loader(self):
-        """docstring"""
+        """rebuild a loader with half the batch_size ... hasnt been working tho"""
 
         torch.cuda.empty_cache()
-        import time
-        time.sleep(2)
         cfg.LOADER.BATCH_SIZE = cfg.LOADER.BATCH_SIZE // 2
         cfg.SOLVER.GRAD_ACC_EVERY *= 2
         self.loader = build_loaders()['train']
@@ -185,8 +183,8 @@ class Trainer:
         # @torch.autocast(cfg.AMP)
         @prog(nsteps)
         def _step(X, Y):
-            self.step_grad_acc(X, Y)
-            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
+            self.step(X, Y)
+            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:4f if self.accs else None} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
             return desc
 
         try: 
@@ -201,4 +199,3 @@ class Trainer:
             raise ex # TODO: shouldnt this work?
             self.rebuild_loader()
             self.run()
-

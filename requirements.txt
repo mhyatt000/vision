@@ -3,6 +3,7 @@
 
 
 yacs
+tqdm
 kornia
 scipy
 einops

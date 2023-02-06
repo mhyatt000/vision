@@ -45,6 +45,14 @@ def show_loss(loss, lr=None, *args, **kwargs):
     # plt.xticks([i * epoch_size for i in epochs], epochs)
 
 
+@mkfig("accuracy.png")
+def show_loss(acc,  *args, **kwargs):
+    """plots loss over time"""
+
+    X = [i for i, _ in enumerate(acc)]
+    plt.plot(X, loss, label="accuracy")
+
+
 def calc_confusion(Y, Yh):
     """calculate confusion matrix"""
 

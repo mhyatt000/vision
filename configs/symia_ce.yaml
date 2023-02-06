@@ -26,19 +26,10 @@ SOLVER:
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
 
+  GRAD_ACC_EVERY: 8
+
 LOSS: 
-  BODY: "AAM" # aam uses pfc sampler
-
-  AAM:
-    S: 64.0
-    M: [1.0, 0.0, 0.4]
-    INTER_THRESH: 0
-
-  PFC: 
-    EMBED_DIM: 64
-    NC: 5
-    NCLASSES: 5
-    SAMPLE_RATE:  1.0
+  BODY: "CE" 
 
 OPTIM: 
   BODY: "SGD" # "ADAM"
