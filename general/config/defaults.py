@@ -22,7 +22,7 @@ _C.EXP = CN(
     init_dict=dict(
         BODY=None,
         TRAIN= True,
-        EVAL= False,
+        TEST= False,
     ),
 )
 
@@ -40,6 +40,8 @@ _C.MODEL = MODEL
 _C.LOADER = CN(
     new_allowed=True,
     init_dict=dict(
+        LEAVE_OUT=None
+        SWAP=None,
         X=False,
 
         NUM_WORKERS=4, # Number of data loading threads
@@ -739,6 +741,7 @@ _C.SOLVER = CN(
         BACKBONE_BODY_LR_FACTOR=1.0,
         BIAS_LR_FACTOR=2,
         GRAD_CLIP=0.0,
+        GRAD_ACC_EVERY = 1, # accumulate every epoch if possible
         # D2 gradient clip
         CLIP_GRADIENTS=CN(
             init_dict=dict(

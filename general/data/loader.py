@@ -12,12 +12,11 @@ ds = {
 }
 
 
-def build_loaders(swap=None):
+def build_loaders():
     """custom dataloader"""
 
     print("building loader...\n")
     print(cfg.LOADER, "\n")
-    leaveout = cfg.LOADER.LEAVE_OUT
 
     dataset = ds[cfg.LOADER.DATASET]()
 
@@ -27,20 +26,21 @@ def build_loaders(swap=None):
             dataset,
             split,
         )
-        if swap:
+        if cfg.LOADER.SWAP:
             datasets = datasets[::-1]
     else:
         datasets = [dataset, ds[cfg.LOADER.DATASET]()]
 
     def leave_out_collate(data):
-        X, Y = [x for x, y in data if y != leaveout], [y for x, y in data if y != leaveout]
+        X = [x for x, y in data if y != cfg.LOADER.LEAVE_OUT]
+        Y = [y for x, y in data if y != cfg.LOADER.LEAVE_OUT]
         missing = cfg.LOADER.BATCH_SIZE - len(Y)
         # copy randomly to fill the gaps ... it should be random cuz random sampler
         if missing:
             X, Y = X + X[:missing], Y + Y[:missing]
         return torch.stack(X), torch.stack(Y)
 
-    collate_fn = leave_out_collate if leaveout else None
+    collate_fn = leave_out_collate if cfg.LOADER.LEAVE_OUT else None
     loaders = {}
     splits = ["train", "test"]
 

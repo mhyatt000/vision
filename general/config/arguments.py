@@ -29,6 +29,7 @@ file = (cfg.config_name or input("config file: ")) + ".yaml"
 
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
 cfg.config_file = os.path.join(cfg.ROOT, "configs", file)
+cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
 
 if cfg.config_file:
     cfg.merge_from_file(cfg.config_file)

@@ -36,7 +36,7 @@ LOSS:
     EMBED_DIM: 64
     NC: 5
     NCLASSES: 5
-    SAMPLE_RATE: 0.2 # 1.0
+    SAMPLE_RATE:  1.0
 
 OPTIM: 
   BODY: "SGD" # "ADAM"
@@ -44,6 +44,10 @@ OPTIM:
   DECAY: 5e-4
   MOMENTUM: 0.9
 
-TRAINER:
+EXP:
   TRAIN: True
-  VAL: True
+  TEST: True
+  PLOTS:
+    # - "CONFUSION"
+  - "TSNE"
+  - "DPRIME"

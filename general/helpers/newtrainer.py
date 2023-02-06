@@ -1,4 +1,6 @@
 import os
+from general.toolbox.tqdm import prog
+from general.results import plot
 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -24,24 +26,6 @@ def gather(x):
     return torch.cat(_gather)
 
 
-printnode = not (cfg.rank and cfg.distributed)
-
-
-def prog(length):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            if not hasattr(wrapper, "tqdm"):
-                wrapper.tqdm = tqdm(total=length) #, leave=False)
-            result = func(*args, **kwargs)
-            wrapper.tqdm.set_description(result)
-            wrapper.tqdm.update()
-
-            return result
-
-        return wrapper if printnode else func  # no tqdm if not printnode
-
-    return decorator
-
 
 class Trainer:
     """manages and abstracts options from the training loop"""
@@ -58,11 +42,12 @@ class Trainer:
 
         self.optimizer = make_optimizer(params)
         self.scheduler = make_scheduler(self.optimizer)
-        self.amp = GradScaler(growth_interval=100)  # default is 2k
+        self.scaler = GradScaler(growth_interval=100)  # default is 2k
         self.ckp = Checkpointer(self)
 
         self.loader = loader
-        # self.loaders = build_loaders()
+
+        self.clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
         """what is ema"""
 
@@ -79,7 +64,7 @@ class Trainer:
         # self.milestone_tgt = 0
 
         # state
-        self.epoch, self.batch = 0, 0
+        self.epoch, self.istep = 0, 0
         self.losses, self.accs = [], [0]
         self.best_epoch = 0
 
@@ -91,10 +76,11 @@ class Trainer:
         """update after the training loop like housekeeping"""
 
         self.patient()
+        plot.show_loss(self.losses)
         self.ckp.save()
 
         self.epoch += 1
-        self.batch = 0
+        # self.istep = 0 # istep just keeps incrementing
 
     def patient(self):
         """given the eval result should we terminate the loop"""
@@ -125,6 +111,53 @@ class Trainer:
                     milestone_target = i + 1
     """
 
+
+    def back_pass(self,loss):
+        if cfg.AMP:
+            self.scaler.scale(loss.to(cfg.DEVICE)).backward()
+        else:
+            loss.backward()
+
+    def backpropagation(self):
+        if cfg.AMP:
+            self.scaler.unscale_(self.optimizer) # must unscale before clipping
+        self.clip()
+        if cfg.AMP:
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            self.optimizer.step()
+        self.optimizer.zero_grad()
+        self.scheduler.step()
+
+    def step_grad_acc(self, X,Y):
+        """training step with adaptive gradient accumulation"""
+
+        self.istep += 1
+        try: 
+            Yh = self.model(X)
+            loss = self.criterion(Yh, Y) / self.n_grad_acc
+
+            self.loss = float(loss.detatch())
+            self.losses.append(self.loss)
+
+            self.back_pass(loss)
+
+            # only update every k steps
+            if self.istep % cfg.SOLVER.GRAD_ACC_EVERY:
+                return
+            else: 
+                self.backpropagation()
+
+        except CUDAOOM as ex: # should only break on the first step
+            cfg.LOADER.BATCH_SIZE /= 2
+            cfg.SOLVER.GRAD_ACC *= 2
+
+            loader = rebuild_loader(loader) 
+            # rebuild the same loader w sam hparam 
+            # half the batch size
+        
+
     def step(self, X, Y):
 
         Yh = self.model(X)
@@ -132,11 +165,11 @@ class Trainer:
         clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
         if cfg.AMP:
-            self.amp.scale(loss.to(cfg.DEVICE)).backward()
-            self.amp.unscale_(self.optimizer)
+            self.scaler.scale(loss.to(cfg.DEVICE)).backward()
+            self.scaler.unscale_(self.optimizer) # must unscale before clipping
             clip()
-            self.amp.step(self.optimizer)
-            self.amp.update()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
             self.optimizer.zero_grad()
 
         else:
@@ -147,13 +180,22 @@ class Trainer:
 
         self.scheduler.step()
 
-        # TODO: make robust ... if amp then use amp else regular
+        # TODO: make robust ... if useamp then use scaler else regular
         # TODO make msg messenger obj to handle reporting
         # and documenting (maybe a graph?)
 
         self.loss = float(loss)
         self.losses.append(self.loss)
-        self.scheduler.step()
+
+    def rebuild_loader(self):
+        """docstring"""
+
+        cfg.LOADER.BATCH_SIZE /= 2
+        cfg.SOLVER.GRAD_ACC_EVERY *= 2
+        loader = build_loaders()['train']
+        # rebuild the same loader w sam hparam 
+        # half the batch size
+    
 
     def run(self):
         """trains model"""
@@ -166,15 +208,19 @@ class Trainer:
         # @torch.autocast(cfg.AMP)
         @prog(nsteps)
         def _step(X, Y):
-            self.step(X, Y)
-            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.amp.get_scale():.1e} '
+            self.step_grad_acc(X, Y)
+            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
             return desc
 
-        for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH):
+        try: 
+            for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH):
+                if cfg.distributed:
+                    self.loader.sampler.set_epoch(self.epoch)
+                for X, Y in self.loader:
+                    _step(X, Y)
+                self.update()
 
-            if cfg.distributed:
-                self.loader.sampler.set_epoch(self.epoch)
-            for X, Y in self.loader:
-                _step(X, Y)
+        except CUDAOOM as ex:
+            self.loader = self.rebuild_loader(self.loader)
+            self.run()
 
-            self.update()
