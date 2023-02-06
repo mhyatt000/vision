@@ -116,7 +116,7 @@ class Trainer:
         if cfg.LOSS.BODY != "CE":
             return 
         with torch.no_grad():
-            acc = (torch.argmax(Yh, dim=1)== torch.argmax(Y, dim=1)).sum()/Yh.shape[0]
+            acc = float((torch.argmax(Yh, dim=1)== torch.argmax(Y, dim=1)).sum()/Yh.shape[0])
             print(acc)
             self.accs.append(acc)
 
