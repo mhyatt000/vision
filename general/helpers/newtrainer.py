@@ -134,65 +134,42 @@ class Trainer:
         """training step with adaptive gradient accumulation"""
 
         self.istep += 1
-        try: 
-            Yh = self.model(X)
-            loss = self.criterion(Yh, Y) / self.n_grad_acc
 
-            self.loss = float(loss.detatch())
-            self.losses.append(self.loss)
+        Yh = self.model(X)
+        loss = self.criterion(Yh, Y) 
 
-            self.back_pass(loss)
+        self.loss = float(loss.detach())
+        self.losses.append(self.loss)
+        loss /= cfg.SOLVER.GRAD_ACC_EVERY
 
-            # only update every k steps
-            if self.istep % cfg.SOLVER.GRAD_ACC_EVERY:
-                return
-            else: 
-                self.backpropagation()
+        self.back_pass(loss)
 
-        except CUDAOOM as ex: # should only break on the first step
-            cfg.LOADER.BATCH_SIZE /= 2
-            cfg.SOLVER.GRAD_ACC *= 2
-
-            loader = rebuild_loader(loader) 
-            # rebuild the same loader w sam hparam 
-            # half the batch size
-        
+        # only update every k steps
+        if self.istep % cfg.SOLVER.GRAD_ACC_EVERY:
+            return
+        else: 
+            self.backpropagation()
 
     def step(self, X, Y):
 
         Yh = self.model(X)
         loss = self.criterion(Yh, Y)
-        clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
-        if cfg.AMP:
-            self.scaler.scale(loss.to(cfg.DEVICE)).backward()
-            self.scaler.unscale_(self.optimizer) # must unscale before clipping
-            clip()
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
-            self.optimizer.zero_grad()
-
-        else:
-            loss.backward()
-            clip()
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-
-        self.scheduler.step()
-
-        # TODO: make robust ... if useamp then use scaler else regular
-        # TODO make msg messenger obj to handle reporting
-        # and documenting (maybe a graph?)
-
-        self.loss = float(loss)
+        self.loss = float(loss.detach())
         self.losses.append(self.loss)
+
+        self.back_pass(loss)
+        self.backpropagation()
 
     def rebuild_loader(self):
         """docstring"""
 
-        cfg.LOADER.BATCH_SIZE /= 2
+        torch.cuda.empty_cache()
+        import time
+        time.sleep(2)
+        cfg.LOADER.BATCH_SIZE = cfg.LOADER.BATCH_SIZE // 2
         cfg.SOLVER.GRAD_ACC_EVERY *= 2
-        loader = build_loaders()['train']
+        self.loader = build_loaders()['train']
         # rebuild the same loader w sam hparam 
         # half the batch size
     
@@ -220,7 +197,8 @@ class Trainer:
                     _step(X, Y)
                 self.update()
 
-        except CUDAOOM as ex:
-            self.loader = self.rebuild_loader(self.loader)
+        except torch.cuda.OutOfMemoryError as ex:
+            raise ex # TODO: shouldnt this work?
+            self.rebuild_loader()
             self.run()
 

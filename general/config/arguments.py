@@ -42,5 +42,5 @@ dist_print = False
 if not dist_print:
     set_dist_print(cfg.rank <= 0)
 
-cfg.freeze()
+# cfg.freeze() # some of the experiments need it to be mutable
 print('CONFIG:', cfg.config_file, "\n")

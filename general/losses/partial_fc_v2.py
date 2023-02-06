@@ -1,14 +1,12 @@
 import math
-import random
 from typing import Callable
 
-from general.config import cfg
 import torch
 from torch import distributed
 from torch.nn.functional import linear, normalize
 
+from general.config import cfg
 from .arcloss import CombinedMarginLoss
-
 
 class PartialFC_V2(torch.nn.Module):
     """
@@ -32,36 +30,51 @@ class PartialFC_V2(torch.nn.Module):
 
     _version = 2
 
-    def __init__(self):
+    def __init__(
+        self,
+        margin_loss: Callable,
+        embedding_size: int,
+        num_classes: int,
+        sample_rate: float = 1.0,
+        fp16: bool = False,
+    ):
+        """
+        Paramenters:
+        -----------
+        embedding_size: int
+            The dimension of embedding, required
+        num_classes: int
+            Total number of classes, required
+        sample_rate: float
+            The rate of negative centers participating in the calculation, default is 1.0.
+        """
         super(PartialFC_V2, self).__init__()
-
         assert distributed.is_initialized(), "must initialize distributed before create this"
         self.rank = distributed.get_rank()
         self.world_size = distributed.get_world_size()
 
         self.dist_cross_entropy = DistCrossEntropy()
-        self.embedding_size = cfg.LOSS.PFC.EMBED_DIM
-        self.sample_rate: float = cfg.LOSS.PFC.SAMPLE_RATE
-        self.fp16 = cfg.AMP
-
-        self.num_local: int = cfg.LOSS.PFC.NCLASSES // self.world_size + int(
-            self.rank < cfg.LOSS.PFC.NCLASSES % self.world_size
+        self.embedding_size = embedding_size
+        self.sample_rate: float = sample_rate
+        self.fp16 = fp16
+        self.num_local: int = num_classes // self.world_size + int(
+            self.rank < num_classes % self.world_size
         )
-        self.class_start = cfg.LOSS.PFC.NCLASSES // self.world_size * self.rank + min(
-            self.rank, cfg.LOSS.PFC.NCLASSES % self.world_size
+        self.class_start: int = num_classes // self.world_size * self.rank + min(
+            self.rank, num_classes % self.world_size
         )
+        self.num_sample: int = int(self.sample_rate * self.num_local)
+        self.last_batch_size: int = 0
 
-        self.num_sample = int(self.sample_rate * self.num_local)
-        self.last_batch_size = 0
+        self.is_updated: bool = True
+        self.init_weight_update: bool = True
+        self.weight = torch.nn.Parameter(torch.normal(0, 0.01, (self.num_local, embedding_size)))
 
-        self.is_updated = True
-        self.init_weight_update = True
-
-        self.weight = torch.nn.Parameter(
-            torch.normal(0, 0.01, (self.num_local, cfg.LOSS.PFC.EMBED_DIM))
-        )
-
-        self.margin_softmax = CombinedMarginLoss()
+        # margin_loss
+        if isinstance(margin_loss, Callable):
+            self.margin_softmax = margin_loss
+        else:
+            raise
 
     def sample(self, labels, index_positive):
         """
@@ -75,7 +88,6 @@ class PartialFC_V2(torch.nn.Module):
         optimizer: torch.optim.Optimizer
             pass
         """
-
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).cuda()
             if self.num_sample - positive.size(0) >= 0:
@@ -108,7 +120,6 @@ class PartialFC_V2(torch.nn.Module):
         loss: torch.Tensor
             pass
         """
-
         local_labels.squeeze_()
         local_labels = local_labels.long()
 
@@ -142,12 +153,12 @@ class PartialFC_V2(torch.nn.Module):
             weight = self.weight
 
         with torch.cuda.amp.autocast(self.fp16):
-            norm_embeddings = normalize(embeddings)
-            norm_weight_activated = normalize(weight)
+            norm_embeddings = normalize(embeddings).cpu()
+            norm_weight_activated = normalize(weight).cpu()
             logits = linear(norm_embeddings, norm_weight_activated)
         if self.fp16:
             logits = logits.float()
-        logits = logits.clamp(-1, 1)
+        logits = logits.clamp(-1, 1).cuda()
 
         logits = self.margin_softmax(logits, labels)
         loss = self.dist_cross_entropy(logits, labels)

@@ -7,6 +7,7 @@ from . import backbone, head, lang, layers, rpn
 from .backbone import ffcresnet, iresnet, resnet, swint, vit
 from .vlrcnn import VLRCNN
 from .layers import basic
+from .custom import CUSTOM
 
 def sequence():
     """allows user to define a sequence of models"""
@@ -24,6 +25,7 @@ models = {
     "MLP" : basic._MLP,
     "SELECT" : basic.Select,
     "CONV" : basic.CONV2D,
+    "CUSTOM": CUSTOM[cfg.MODEL.CUSTOM.KEY],
 }
 
 

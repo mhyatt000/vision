@@ -10,6 +10,7 @@ import torch
 
 warnings.filterwarnings("ignore")
 
+
 def mkfig(fname):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -17,11 +18,13 @@ def mkfig(fname):
             result = func(*args, **kwargs, fig=fig, ax=ax)
 
             plt.legend()
-            plt.savefig(os.path.join(cfg.path,fname))
-            plt.close('all')
+            plt.savefig(os.path.join(cfg.path, fname))
+            plt.close("all")
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -29,7 +32,9 @@ def mkfig(fname):
 def show_loss(loss, lr=None, *args, **kwargs):
     """plots loss over time"""
 
-    epoch_size = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
+    epoch_size = cfg.LOADER.SIZE // (
+        cfg.LOADER.BATCH_SIZE * cfg.world_size * cfg.SOLVER.GRAD_ACC_EVERY
+    )
     #   # len(loss) // cfg.SOLVER.MAX_EPOCH
     X = [i for i, _ in enumerate(loss)]
     plt.plot(X, loss, label="loss")
@@ -37,7 +42,7 @@ def show_loss(loss, lr=None, *args, **kwargs):
         plt.plot(X, lr, label="learning rate")
 
     epochs = list(range(cfg.SOLVER.MAX_EPOCH))
-    plt.xticks([i * epoch_size for i in epochs], epochs)
+    # plt.xticks([i * epoch_size for i in epochs], epochs)
 
 
 def calc_confusion(Y, Yh):
@@ -116,8 +121,8 @@ def calc_dprime(Y, Yh):
         ppairs = [angle(i, j) for i, j in zip(pos[:n], pos[n : 2 * n])]
         npairs = [angle(i, j) for i, j in zip(pos[:n], neg[n : 2 * n])]
 
-        phist[c] = phist[c] + ppairs
-        nhist[c] = nhist[c] + npairs
+        phist[c] =  ppairs
+        nhist[c] =  npairs
 
     pall, nall = [], []
     for c in C:

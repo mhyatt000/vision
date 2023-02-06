@@ -71,7 +71,7 @@ class Checkpointer:
         for k, v in snap.items():
             try:
                 getattr(self.trainer, k.lower()).load_state_dict(v)
-            except:
+            except Exception as ex:
                 setattr(self.trainer, k.lower(), v)
 
         print(f"Resuming training from snapshot at epoch {self.trainer.epoch}")

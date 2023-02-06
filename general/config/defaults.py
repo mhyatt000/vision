@@ -40,7 +40,7 @@ _C.MODEL = MODEL
 _C.LOADER = CN(
     new_allowed=True,
     init_dict=dict(
-        LEAVE_OUT=None
+        LEAVE_OUT=None,
         SWAP=None,
         X=False,
 

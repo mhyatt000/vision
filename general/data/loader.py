@@ -1,5 +1,3 @@
-from tqdm import tqdm
-
 from general.config import cfg
 import torch
 from torch.utils.data import DataLoader, random_split

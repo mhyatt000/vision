@@ -7,14 +7,24 @@ from general.config import cfg
 import torch
 from torch.utils.data import Dataset
 import torchvision
+from torchvision import transforms
 from torchvision.io import read_image
 import torchvision.transforms.functional as F
+
+transform = transforms.Compose(
+    [
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]
+)
 
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
 
-    def __init__(self, root="western_blots", transform=None, target_transform=None):
+    def __init__(self, root="western_blots", transform=transform, target_transform=None):
         super(WBLOT, self).__init__()
 
         try:
