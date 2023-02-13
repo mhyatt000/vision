@@ -12,9 +12,9 @@ This package is a work in progress. Here is what's on the TODO list:
     read jobs folder
 
 ```bash
-mlex job add <name>     # add experiment <name> to the job list
-mlex job del <name>     # remove experiment <name> from the job list
-mlex job run            # run all pending jobs, then remove them from the list
+malex job add <name>     # add experiment <name> to the job list
+malex job del <name>     # remove experiment <name> from the job list
+malex job run            # run all pending jobs, then remove them from the list
 ```
 
 !!! bug "TODO"
