@@ -3,12 +3,8 @@ DEVICE: 'cuda' # TODO add implicit GPU detection
 MODEL:
   BODY: "RESNET"
 
-  RESNET: "ResNet50Conv5ROIFeatureExtractor"
-
-  FFCR:
-    BODY: '50'
-    NUM_CLASSES: 16
-    USE_SE: False
+  RESNET: "FROM_SCRATCH"
+  ODIM: 5
 
 LOADER: 
   NCLASSES: 5 # change other configs to NCLASSES
@@ -33,7 +29,8 @@ OPTIM:
   BETAS: [0.5, 0.999]
   DECAY: 5e-4
 
-TRAINER:
+EXP:
   TRAIN: True
-  VAL: True
-
+  TEST: True
+  PLOTS:
+  - "CONFUSION"

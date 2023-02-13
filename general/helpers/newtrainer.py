@@ -72,11 +72,16 @@ class Trainer:
         self.ckp.load()
         print()
 
-    def update(self):
+    def update_step(self):
+        """docstring"""
+
+        plot.show_loss(self.losses)
+        plot.show_accuracy(self.accs)
+
+    def update_epoch(self):
         """update after the training loop like housekeeping"""
 
         self.patient()
-        plot.show_loss(self.losses)
         self.ckp.save()
 
         self.epoch += 1
@@ -114,10 +119,10 @@ class Trainer:
     def calc_accuracy(self,Yh,Y):
 
         if cfg.LOSS.BODY != "CE":
+            self.accs.append(-1)
             return 
         with torch.no_grad():
             acc = float((torch.argmax(Yh, dim=1)== torch.argmax(Y, dim=1)).sum()/Yh.shape[0])
-            print(acc)
             self.accs.append(acc)
 
 
@@ -137,7 +142,7 @@ class Trainer:
         else:
             self.optimizer.step()
         self.optimizer.zero_grad()
-        for _ in cfg.SOLVER.GRAD_ACC_EVERY:
+        for _ in range(cfg.SOLVER.GRAD_ACC_EVERY):
             self.scheduler.step()
 
     def step(self, X,Y):
@@ -176,7 +181,7 @@ class Trainer:
         """trains model"""
 
         print("begin training loop...")
-        # loader = self.loaders["train"]
+        self.update_step()
 
         nsteps = (cfg.SOLVER.MAX_EPOCH - self.epoch)*len(self.loader)
 
@@ -184,7 +189,7 @@ class Trainer:
         @prog(nsteps)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:4f if self.accs else None} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
+            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.4f} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
             return desc
 
         try: 
@@ -193,7 +198,8 @@ class Trainer:
                     self.loader.sampler.set_epoch(self.epoch)
                 for X, Y in self.loader:
                     _step(X, Y)
-                self.update()
+                    self.update_step()
+                self.update_epoch()
 
         except torch.cuda.OutOfMemoryError as ex:
             raise ex # TODO: shouldnt this work?

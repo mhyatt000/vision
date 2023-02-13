@@ -4,7 +4,7 @@ from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from . import backbone, head, lang, layers, rpn
-from .backbone import ffcresnet, iresnet, resnet, swint, vit
+from .backbone import ffcresnet, iresnet, resnet, swint, vit, srnet, resnet_from_scratch
 from .vlrcnn import VLRCNN
 from .layers import basic
 from . import custom 
@@ -20,7 +20,8 @@ def CUSTOM():
 models = {
     "VLRCNN": VLRCNN,
     "SWINT": swint.SwinTransformer,
-    "RESNET": resnet.ResNet,
+    "RESNET": resnet.ResNet, 
+    "RESNET_FROM_SCRATCH": resnet_from_scratch.ResNet, 
     "VIT": vit.VIT,
     "FFCR": ffcresnet.FFCR,
     "IRESNET": iresnet.IResNet,
@@ -28,6 +29,7 @@ models = {
     "MLP" : basic._MLP,
     "SELECT" : basic.Select,
     "CONV" : basic.CONV2D,
+    "SRNET": srnet.SRNet,
     "CUSTOM": CUSTOM,
 }
 

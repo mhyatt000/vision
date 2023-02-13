@@ -21,8 +21,7 @@ Custom implementations may be written in user code and hooked in via the
 from collections import namedtuple
 
 from general.config import cfg
-from general.models.layers import (Conv2d, DFConv2d, FrozenBatchNorm2d,
-                                   NaiveSyncBatchNorm2d, SELayer)
+from general.models.layers import Conv2d, DFConv2d, FrozenBatchNorm2d, NaiveSyncBatchNorm2d, SELayer
 from general.models.layers.util import group_norm
 from general.utils.registry import Registry
 import torch
@@ -86,10 +85,6 @@ ResNet152FPNStagesTo5 = tuple(
 class ResNet(nn.Module):
     def __init__(self):
         super(ResNet, self).__init__()
-
-        # If we want to use the cfg in forward(), then we should make a copy
-        # of it and store it for later use:
-        # self.cfg = cfg.clone()
 
         # Translate string names to implementations
         norm_level = None
@@ -386,7 +381,7 @@ class Bottleneck(nn.Module):
 
         self.se = SELayer(out_channels) if with_se and not with_dcn else None
 
-        for l in [ self.conv1, self.conv3 ]:
+        for l in [self.conv1, self.conv3]:
             nn.init.kaiming_uniform_(l.weight, a=1)
 
     def forward(self, x):
@@ -647,3 +642,10 @@ _STAGE_SPECS = Registry(
         "R-152-FPN": ResNet152FPNStagesTo5,
     }
 )
+
+if __name__ == '__main__': 
+    r = ResNet()
+    t = torch.Tensor(1,3,225,225)
+    t = r(t)
+    for x in t:
+        print(x.shape)

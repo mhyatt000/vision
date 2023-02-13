@@ -11,20 +11,20 @@ import torch
 warnings.filterwarnings("ignore")
 
 
-def mkfig(fname):
+def mkfig(fname, legend=True):
     def decorator(func):
         def wrapper(*args, **kwargs):
             fig, ax = plt.subplots()
             result = func(*args, **kwargs, fig=fig, ax=ax)
 
-            plt.legend()
+            if legend:
+                plt.legend()
+            plt.tight_layout()
             plt.savefig(os.path.join(cfg.path, fname))
             plt.close("all")
 
             return result
-
         return wrapper
-
     return decorator
 
 
@@ -46,11 +46,9 @@ def show_loss(loss, lr=None, *args, **kwargs):
 
 
 @mkfig("accuracy.png")
-def show_loss(acc,  *args, **kwargs):
-    """plots loss over time"""
-
-    X = [i for i, _ in enumerate(acc)]
-    plt.plot(X, loss, label="accuracy")
+def show_accuracy(acc,  *args, **kwargs):
+    """plots accuracy over time"""
+    plt.plot([i for i, _ in enumerate(acc)], acc, color='r', label="accuracy")
 
 
 def calc_confusion(Y, Yh):
@@ -65,44 +63,37 @@ def calc_confusion(Y, Yh):
     return confusion, acc
 
 
-def show_confusion(Y, Yh):
+
+@mkfig("confusion.png", legend=False)
+def show_confusion(Y, Yh, *args, **kwargs):
     """builds confusion matrix"""
 
     confusion, acc = calc_confusion(Y, Yh)
 
     plt.rcParams.update({"font.size": 18})
-    fig, ax = plt.subplots(figsize=(7.5, 7.5))
-    ax.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
+    plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
 
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):
-            ax.text(x=j, y=i, s=int(confusion[i, j]), va="center", ha="center", size="xx-large")
+            plt.text(x=j, y=i, s=int(confusion[i, j]), va="center", ha="center", size="xx-large")
 
-    ax.set(
-        xlabel="Predictions",
-        ylabel="Ground Truth",
-        title=f"Confusion Matrix | {cfg.config_name}",
-    )
-    plt.savefig(os.path.join(ckp.path, "confusion.png"))
-    plt.close()
+    # plt.title(f"Confusion Matrix")
+    plt.xlabel("Predictions")
+    plt.ylabel("Ground Truth")
 
 
-def show_tsne(Y, Yh):
+@mkfig("embed.png")
+def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
+    # ax = fig.add_subplot(projection="3d")
 
     tsne = TSNE(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
-    fig, ax = plt.subplots()
-    # ax = fig.add_subplot(projection="3d")
-
     scatter = ax.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
-
     ax.legend(*scatter.legend_elements())
-    plt.savefig(os.path.join(cfg.path, "embed.png"))
-    plt.close()
 
 
 def calc_dprime(Y, Yh):
@@ -141,32 +132,18 @@ def calc_dprime(Y, Yh):
     return pall, nall, dprime
 
 
-def show_dprime(Y, Yh):
+@mkfig("dprime.png")
+def show_dprime(Y, Yh, *args, **kwargs):
     """docstring"""
 
     pall, nall, dprime = calc_dprime(Y, Yh)
 
-    fig, ax = plt.subplots()
-    ax.hist(pall, label="positive", bins=30, alpha=0.5)
-    ax.hist(nall, label="negative", bins=30, alpha=0.5)
-    ax.set(
-        title=f"Population Distance (d_prime={round(dprime,4)})",
-        xlabel="angle",
-        ylabel="frequency",
-    )
-    plt.legend()
-    plt.savefig(os.path.join(cfg.path, "dist.png"))
-    plt.close()
+    plt.hist(pall, label="positive", bins=30, alpha=0.5)
+    plt.hist(nall, label="negative", bins=30, alpha=0.5)
 
-
-def show_acc(Y, Yh):
-    """shows accuracy / time in a png"""
-
-    fig, ax = plt.subplots()
-    ax.plot([i for i in range(len(self.accs))], self.accs)
-    ax.set(title="accuracy / time", xlabel="epochs", ylabel="accuracy")
-    plt.savefig(os.path.join(cfg.path, "acc.png"))
-    plt.close()
+    plt.title( f"Population Distance (d_prime={round(dprime,4)})")
+    plt.xlabel("angle")
+    plt.ylabel("frequency")
 
 
 PLOTS = {

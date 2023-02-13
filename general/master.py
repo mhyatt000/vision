@@ -13,7 +13,6 @@ from general.models.backbone import ffcresnet
 from general.data.loader import build_loaders
 
 distributed.init_process_group("nccl")
-
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def setup_seed(seed, deterministic=True):

@@ -1,24 +1,21 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "FFCR"
-
-  FFCR:
-    BODY: '50'
-    LAYERS: [3,4,6,3]
-    OUT_DIM: 5
-    USE_SE: False
+  BODY: "RESNET_FROM_SCRATCH"
+  ODIM: 5
 
 LOADER: 
   DATASET: "WBLOT"
-  NCLASSES: 5
   BATCH_SIZE: 128
   SHUFFLE: True
-  USE_SPLIT: True
-  SPLIT: [0,1]
+  SPLIT: True
+  NCLASSES: 5 
+  SIZE: 38200
+
+  LEAVE_OUT: null
 
 SOLVER:
-  MAX_EPOCH: 30
+  MAX_EPOCH: 20
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   SEED: 0 # default ... why in solver
@@ -32,6 +29,8 @@ OPTIM:
   BETAS: [0.5, 0.999]
   DECAY: 5e-4
 
-TRAINER:
-  TRAIN: False
-  VAL: True
+EXP:
+  TRAIN: True
+  TEST: True
+  PLOTS:
+  - "CONFUSION"

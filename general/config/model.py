@@ -24,6 +24,8 @@ MODEL = CN(
         #
         #
         BODY="RESNET",
+        #
+        ODIM=1,
     ),
 )
 
@@ -57,13 +59,12 @@ MODEL.FFCR = CN(
         LAYERS=[3, 4, 6, 3],
         OUT_DIM=64,
         USE_SE=False,
-    ),
+    )
 )
 
 temp = CN(
     new_allowed=True,
     init_dict=dict(
         temp=None,
-    ),
+    )
 )
-

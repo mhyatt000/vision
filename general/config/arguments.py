@@ -25,7 +25,8 @@ cfg.config_name = args.config_name
 # for k,v in args.__dict__.items():
 # setattr(cfg,k,v)
 
-file = (cfg.config_name or input("config file: ")) + ".yaml"
+cfg.config_name = (cfg.config_name or input("config file: ")) 
+file = cfg.config_name + ".yaml"
 
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
 cfg.config_file = os.path.join(cfg.ROOT, "configs", file)
@@ -37,6 +38,12 @@ if cfg.config_file:
 cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 cfg.rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
+
+# TODO: implicit gpu detection
+# import torch
+# if not torch.cuda.is_available():
+    # cfg.DEVICE = 'cpu'
+    # cfg.world_size = 1
 
 dist_print = False
 if not dist_print:
