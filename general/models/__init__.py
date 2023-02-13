@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from . import backbone, head, lang, layers, rpn
+from . import backbone, head, layers, rpn # lang
 from .backbone import ffcresnet, iresnet, resnet, swint, vit, srnet, resnet_from_scratch
 from .vlrcnn import VLRCNN
 from .layers import basic
