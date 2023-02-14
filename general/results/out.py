@@ -11,4 +11,5 @@ def get_path():
         f"{'LO'+cfg.LOADER.LEAVE_OUT if cfg.LOADER.LEAVE_OUT is not None else ''}_{cfg.seed}.{swap}",
     ]
     out = [o for o in out if o]
+    print(out)
     return os.path.join(out)

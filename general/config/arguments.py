@@ -27,7 +27,7 @@ cfg.config_name = args.config_name
 
 cfg.config_name = (cfg.config_name or input("config file: ")) 
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
-cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_file}.yaml")
+cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_name}.yaml")
 cfg.merge_from_file(cfg.config_file)
 
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)

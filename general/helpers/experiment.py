@@ -14,8 +14,10 @@ class Experiment:
         loaders = build_loaders()
         self.trainer = Trainer(model, loaders["train"])
         self.tester = Tester(self.trainer.model, loaders["test"])
+        print('built exp')
 
     def run(self):
+        print('run')
         if cfg.EXP.TRAIN:
             self.trainer.run()
         if cfg.EXP.TEST:
@@ -44,4 +46,5 @@ EXPERIMENTS = {
 
 
 def build_experiment():
+    print(cfg.EXP)
     return EXPERIMENTS[cfg.EXP.BODY]()

@@ -6,7 +6,7 @@ import torch
 from torch import distributed
 from tqdm import tqdm
 
-from general.helpers import build_experiment
+from general.helpers.experiment import build_experiment
 from general.config import cfg
 
 distributed.init_process_group("nccl")
@@ -32,12 +32,14 @@ def main():
     torch.cuda.set_device(cfg.rank)
 
     E = build_experiment()
+    print(E)
     E.run()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as ex:
-        print(ex)
-        quit()
+    main()
+    # try:
+        # main()
+    # except Exception as ex:
+        # print(ex)
+        # quit()
