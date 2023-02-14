@@ -14,5 +14,4 @@ def get_path():
         f"{cfg.config_name}",
     ]
     out = [o for o in out if o]
-    print(out)
     return os.path.join(*out)
