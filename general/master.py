@@ -32,7 +32,6 @@ def main():
     torch.cuda.set_device(cfg.rank)
 
     E = build_experiment()
-    print(E)
     E.run()
 
 

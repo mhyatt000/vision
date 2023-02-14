@@ -15,12 +15,15 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_EPOCH: 20 # you said 200 but 20 is on arcface
+  MAX_EPOCH: 30 # you said 200 but 20 is on arcface
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
 
 LOSS: 
   BODY: "CE" 
+
+SCHEDULER:
+  BODY: "STEP"
 
 OPTIM: 
   BODY: "SGD" # "ADAM"

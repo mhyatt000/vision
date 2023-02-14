@@ -36,16 +36,12 @@ class PolyScheduler(_LRScheduler):
             )
             return [self.base_lr * alpha for _ in self.optimizer.param_groups]
 
+schedulers = {
+    "STEP": lambda optim: StepLR(optim, step_size=1, gamma=cfg.SCHEDULER.GAMMA),
+    "POLY": PolyScheduler,
+}
+
 
 def make_scheduler(optimizer):
-
-    schedulers = {
-        "Step": lambda optim: StepLR(optim, step_size=1, gamma=0.95),
-        "Poly": PolyScheduler,
-    }
-
+    print(cfg.SCHEDULER)
     return schedulers[cfg.SCHEDULER.BODY](optimizer)
-
-
-# 1/10 every 10 epochs is 0.8
-# 1/3 every 10 epochs is 0.9

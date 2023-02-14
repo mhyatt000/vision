@@ -189,7 +189,7 @@ class Trainer:
         @prog(nsteps)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.4f} | lr: {self.scheduler.get_last_lr()[0]:.4f} | amp: {self.scaler.get_scale():.1e} '
+            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.4f} | lr: {self.scheduler.get_last_lr()[0]:.6f} | amp: {self.scaler.get_scale():.1e} '
             return desc
 
         try: 

@@ -30,7 +30,8 @@ _C.EXP = CN(
 _C.SCHEDULER = CN(
     new_allowed=True,
     init_dict=dict(
-        BODY= "Poly",
+        BODY= "POLY",
+        GAMMA=0.99,
         WARMUP= 0,
     ),
 )
