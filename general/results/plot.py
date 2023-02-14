@@ -71,7 +71,7 @@ def show_confusion(Y, Yh, *args, **kwargs):
 
     confusion, acc = calc_confusion(Y, Yh)
 
-    plt.rcParams.update({"font.size": 18})
+    # plt.rcParams.update({"font.size": 18}) # way too big...
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
 
     for i in range(confusion.shape[0]):

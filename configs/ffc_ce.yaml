@@ -10,12 +10,14 @@ MODEL:
     USE_SE: False
 
 LOADER: 
-  NCLASSES: 5
   DATASET: "WBLOT"
   BATCH_SIZE: 128
   SHUFFLE: True
-  USE_SPLIT: True
-  SPLIT: [0,1]
+  SPLIT: True
+  NCLASSES: 5
+  SIZE: 38200
+
+  LEAVE_OUT: null
 
 SOLVER:
   MAX_EPOCH: 20
@@ -32,6 +34,9 @@ OPTIM:
   BETAS: [0.5, 0.999]
   DECAY: 5e-4
 
-TRAINER:
-  TRAIN: False
-  VAL: True
+EXP:
+  TRAIN: True
+  TEST: True
+  PLOTS:
+  - "CONFUSION"
+
