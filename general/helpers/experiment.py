@@ -33,7 +33,7 @@ class Split5x2Experiment(Experiment):
     def run():
         for split in range(5):
             for swap in [0, 1]:
-                set_seed(cfg.seed + split)
+                set_seed(cfg.SEED + split)
                 cfg.LOADER.SWAP = swap
                 super().__init__()
                 super().run()
