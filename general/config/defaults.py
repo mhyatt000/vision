@@ -41,7 +41,7 @@ _C.LOADER = CN(
     new_allowed=True,
     init_dict=dict(
         LEAVE_OUT=None,
-        SWAP=None,
+        SWAP=0,
         X=False,
 
         NUM_WORKERS=4, # Number of data loading threads
