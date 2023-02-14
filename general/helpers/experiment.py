@@ -23,7 +23,7 @@ class Experiment:
 
 
 class Split5x2Experiment(Experiment):
-    """docstring"""
+    """5 Seeds of 2-fold cross validation"""
 
     def __init__(self):
         pass
@@ -35,3 +35,13 @@ class Split5x2Experiment(Experiment):
                 cfg.LOADER.SWAP = swap
                 super().__init__()
                 super().run()
+
+
+EXPERIMENTS = {
+    "DEFAULT": Experiment,
+    "5x2": Split5x2Experiment,
+}
+
+
+def build_experiment():
+    return EXPERIMENTS[cfg.EXP.BODY]()

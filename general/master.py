@@ -6,11 +6,8 @@ import torch
 from torch import distributed
 from tqdm import tqdm
 
-from general.helpers import Experiment
-from general.models import build_model
+from general.helpers import build_experiment
 from general.config import cfg
-from general.models.backbone import ffcresnet
-from general.data.loader import build_loaders
 
 distributed.init_process_group("nccl")
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
@@ -34,7 +31,7 @@ def main():
     # print(cfg.rank, cfg.world_size)
     torch.cuda.set_device(cfg.rank)
 
-    E = Experiment()
+    E = build_experiment()
     E.run()
 
 

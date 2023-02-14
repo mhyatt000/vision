@@ -1,5 +1,6 @@
 import os
 
+from general.results import out as results
 from general.config import cfg
 import torch
 
@@ -26,8 +27,7 @@ class Checkpointer:
         self.criterion = self.trainer.criterion
 
         # paths
-        self.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
-        self.psnap = os.path.join(self.path, "snapshot.pt")
+        self.psnap = lambda : os.path.join(results.get_path(), "snapshot.pt")
 
         # state
         self.remember = [
@@ -52,18 +52,18 @@ class Checkpointer:
         snap.update({a.upper(): getattr(self.trainer, a).state_dict() for a in self.states})
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         snap["MODEL"] = mod.state_dict()
-        torch.save(snap, self.psnap)
+        torch.save(snap, self.psnap())
 
     def load(self):
 
-        if not os.path.exists(self.psnap):
+        if not os.path.exists(self.psnap()):
             print("No snapshot found")
-            mkdir(self.path)
+            mkdir(results.get_path())
             return
 
         print("Loading Snapshot")
 
-        snap = torch.load(self.psnap)
+        snap = torch.load(self.psnap())
 
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         mod.load_state_dict(snap["MODEL"])
@@ -75,4 +75,4 @@ class Checkpointer:
                 setattr(self.trainer, k.lower(), v)
 
         print(f"Resuming training from snapshot at epoch {self.trainer.epoch}")
-        print(self.psnap)
+        print(self.psnap())

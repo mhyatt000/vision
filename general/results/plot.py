@@ -4,6 +4,7 @@ from statistics import mean, variance
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 
+from general.results import out
 from general.config import cfg
 import os
 import torch
@@ -20,7 +21,7 @@ def mkfig(fname, legend=True):
             if legend:
                 plt.legend()
             plt.tight_layout()
-            plt.savefig(os.path.join(cfg.path, fname))
+            plt.savefig(os.path.join(out.get_path(), fname))
             plt.close("all")
 
             return result

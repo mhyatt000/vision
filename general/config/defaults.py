@@ -20,7 +20,7 @@ _C = CN(
 _C.EXP = CN( 
     new_allowed=True,
     init_dict=dict(
-        BODY=None,
+        BODY="DEFAULT",
         TRAIN= True,
         TEST= False,
     ),
