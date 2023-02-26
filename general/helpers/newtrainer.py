@@ -1,9 +1,8 @@
 import os
-from general.toolbox.tqdm import prog
+from general.toolbox import gpu, tqdm
 from general.results import plot
 
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
 from general.config import cfg
 from general.data import build_loaders, build_loaderx
@@ -68,6 +67,7 @@ class Trainer:
         self.losses, self.accs = [], []
         self.best_epoch = 0
 
+        print(gpu.gpu_utilization())
         # try to load from snapshot ... must be last
         self.ckp.load()
         print()
@@ -142,8 +142,7 @@ class Trainer:
         else:
             self.optimizer.step()
         self.optimizer.zero_grad()
-        for _ in range(cfg.SOLVER.GRAD_ACC_EVERY):
-            self.scheduler.step()
+        self.scheduler.step()
 
     def step(self, X,Y):
         """training step with adaptive gradient accumulation"""
@@ -186,14 +185,14 @@ class Trainer:
         nsteps = (cfg.SOLVER.MAX_EPOCH - self.epoch)*len(self.loader)
 
         # @torch.autocast(cfg.AMP)
-        @prog(nsteps)
+        @tqdm.prog(nsteps)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f'{self.epoch}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.4f} | lr: {self.scheduler.get_last_lr()[0]:.6f} | amp: {self.scaler.get_scale():.1e} '
+            desc = f'{self.epoch+1}/{cfg.SOLVER.MAX_EPOCH} | loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.4f} | lr: {self.scheduler.get_last_lr()[0]:.6f} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}'
             return desc
 
         try: 
-            for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH):
+            for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):
                 if cfg.distributed:
                     self.loader.sampler.set_epoch(self.epoch)
                 for X, Y in self.loader:

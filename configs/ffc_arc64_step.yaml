@@ -44,6 +44,9 @@ OPTIM:
   DECAY: 5e-4
   MOMENTUM: 0.9
 
+SCHEDULER: 
+  BODY: "STEP"
+
 EXP:
   TRAIN: True
   TEST: True

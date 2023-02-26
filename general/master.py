@@ -36,9 +36,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # try:
-        # main()
-    # except Exception as ex:
-        # print(ex)
-        # quit()
+    try:
+        main()
+    except KeyboardInterrupt as ex:
+        print(ex)
+        quit()

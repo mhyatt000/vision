@@ -1,30 +1,29 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "CUSTOM"
-  CUSTOM:
-    KEY: "symia"
+  BODY: "FFCR"
 
   FFCR:
-    BODY: 50
+    BODY: '26'
     LAYERS: [3,4,6,3]
-    OUT_DIM: 64 # 5 classes but its  embed dim
+    OUT_DIM: 5
     USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 128 # is possible
+  BATCH_SIZE: 256
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
   SIZE: 38200
-  
-  LEAVE_OUT: null # could be 0..5
+
+  LEAVE_OUT: null
 
 SOLVER:
-  MAX_EPOCH: 20 # you said 200 but 20 is on arcface
+  MAX_EPOCH: 120
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
+  SEED: 0 # default ... why in solver
 
   GRAD_ACC_EVERY: 8
 
@@ -32,15 +31,17 @@ LOSS:
   BODY: "CE" 
 
 OPTIM: 
-  BODY: "SGD" # "ADAM"
-  LR: 0.1
+  BODY: "ADAM"
+  LR: 0.01
+  BETAS: [0.5, 0.999]
   DECAY: 5e-4
-  MOMENTUM: 0.9
+
+SCHEDULER:
+  BODY: "STEP"
 
 EXP:
   TRAIN: True
   TEST: True
   PLOTS:
-    # - "CONFUSION"
-  - "TSNE"
-  - "DPRIME"
+  - "CONFUSION"
+

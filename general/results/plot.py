@@ -91,10 +91,10 @@ def show_tsne(Y, Yh, *args, **kwargs):
     tsne = TSNE(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
-    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
+    scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
-    ax.legend(*scatter.legend_elements())
+    plt.legend(*scatter.legend_elements())
 
 
 def calc_dprime(Y, Yh):

@@ -1,9 +1,8 @@
 import os
 from general.results import plot
-from general.toolbox.tqdm import prog
+from general.toolbox import tqdm 
 
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
 from general.config import cfg
 from general.data import build_loaders, build_loaderx
@@ -39,7 +38,7 @@ class Tester:
 
         allY, allYh = [],[]
 
-        @prog(len(self.loader), desc="Embed")
+        @tqdm.prog(len(self.loader), desc="Embed")
         def _embed(X,Y):
             X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
             Yh = self.model(X).view((Y.shape[0], -1))

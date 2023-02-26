@@ -1,7 +1,9 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "FFCR"
+  BODY: "CUSTOM"
+  CUSTOM:
+    KEY: "ffc_arc64"
 
   FFCR:
     BODY: 50
@@ -25,29 +27,19 @@ SOLVER:
   CHECKPOINT_PER_EPOCH: 1.0
 
 LOSS: 
-  BODY: "AAM" # aam uses pfc sampler
-
-  AAM:
-    S: 64.0
-    M: [1.0, 0.0, 0.4]
-    INTER_THRESH: 0
-
-  PFC: 
-    EMBED_DIM: 64
-    NC: 5
-    NCLASSES: 5
-    SAMPLE_RATE:  1.0
+  BODY: "CE" 
 
 OPTIM: 
   BODY: "SGD" # "ADAM"
-  LR: 0.02 # suggested 0.02 for 1 gpu ... otherwise 0.1 for 64 gpus
+  LR: 0.001 # extra low since its already trained a bit
   DECAY: 5e-4
   MOMENTUM: 0.9
+
+SCHEDULER:
+  BODY: "STEP"
 
 EXP:
   TRAIN: True
   TEST: True
   PLOTS:
-    # - "CONFUSION"
-  - "TSNE"
-  - "DPRIME"
+  - "CONFUSION"

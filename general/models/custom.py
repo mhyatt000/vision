@@ -24,9 +24,9 @@ class FROM():
 
 
 
-class SYMIA_FINETUNE(ffcresnet.FFCResNet):
+class FFC_ARC64_FINETUNE(ffcresnet.FFCResNet):
     def __init__(self):
-        super(SYMIA_FINETUNE, self).__init__(
+        super(FFC_ARC64_FINETUNE, self).__init__(
             block=ffcresnet.Bottleneck,
             layers=cfg.MODEL.FFCR.LAYERS,
             outdim=cfg.MODEL.FFCR.OUT_DIM or 1000,
@@ -39,7 +39,7 @@ class SYMIA_FINETUNE(ffcresnet.FFCResNet):
             use_se=cfg.MODEL.FFCR.USE_SE or False,
         )
 
-        snap = torch.load(os.path.join(cfg.ROOT, "experiments", "symia", "snapshot.pt"))
+        snap = torch.load(os.path.join(cfg.ROOT, "experiments", "ffc_arc64", "snapshot.pt"))
         self.load_state_dict(snap["MODEL"])
 
         self.fc = nn.Sequential(
@@ -50,5 +50,5 @@ class SYMIA_FINETUNE(ffcresnet.FFCResNet):
 
 
 CUSTOM = {
-    "symia": SYMIA_FINETUNE,
+    "ffc_arc64": FFC_ARC64_FINETUNE,
 }

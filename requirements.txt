@@ -13,3 +13,5 @@ scikit-learn
 matplotlib
 plotly
 mkdocs
+nvidia-ml-py3
+
