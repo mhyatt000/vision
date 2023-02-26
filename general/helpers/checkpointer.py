@@ -74,5 +74,5 @@ class Checkpointer:
             except Exception as ex:
                 setattr(self.trainer, k.lower(), v)
 
-        print(f"Resuming training from snapshot at epoch {self.trainer.epoch}")
+        print(f"Resuming training from snapshot at epoch {self.trainer.epoch+1}")
         print(self.psnap())
