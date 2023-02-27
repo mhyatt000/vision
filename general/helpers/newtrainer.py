@@ -168,10 +168,12 @@ class Trainer:
     def rebuild_loader(self):
         """rebuild a loader with half the batch_size ... hasnt been working tho"""
 
-        torch.cuda.empty_cache()
-        cfg.LOADER.BATCH_SIZE = cfg.LOADER.BATCH_SIZE // 2
-        cfg.SOLVER.GRAD_ACC_EVERY *= 2
-        self.loader = build_loaders()['train']
+        # TODO: batch_size or GPU batch_size?
+        # torch.cuda.empty_cache()
+        # cfg.LOADER.BATCH_SIZE = cfg.LOADER.BATCH_SIZE // 2
+        # cfg.SOLVER.GRAD_ACC_EVERY *= 2
+        # self.loader = build_loaders()['train']
+
         # rebuild the same loader w sam hparam 
         # half the batch size
     

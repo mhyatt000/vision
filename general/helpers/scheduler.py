@@ -5,7 +5,7 @@ from general.config import cfg
 class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
 
-        nbatch = cfg.LOADER.SIZE // (cfg.LOADER.BATCH_SIZE * cfg.world_size)
+        nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE 
         self.max_steps = nbatch * cfg.SOLVER.MAX_EPOCH 
         self.warmup_steps = nbatch * cfg.SCHEDULER.WARMUP
 

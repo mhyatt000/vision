@@ -45,7 +45,7 @@ def build_loaderx(num_workers=2):
 
     train_loader = DataLoaderX(
         dataset=train_set,
-        batch_size=cfg.LOADER.BATCH_SIZE,
+        batch_size=cfg.LOADER.GPU_BATCH_SIZE,
         sampler=sampler,
         num_workers=num_workers,
         pin_memory=True,

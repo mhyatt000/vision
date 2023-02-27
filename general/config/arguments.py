@@ -36,11 +36,7 @@ cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ els
 cfg.rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
-# TODO: implicit gpu detection
-# import torch
-# if not torch.cuda.is_available():
-    # cfg.DEVICE = 'cpu'
-    # cfg.world_size = 1
+cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
 dist_print = False
 if not dist_print:

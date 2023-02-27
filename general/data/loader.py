@@ -32,7 +32,7 @@ def build_loaders():
     def leave_out_collate(data):
         X = [x for x, y in data if y != cfg.LOADER.LEAVE_OUT]
         Y = [y for x, y in data if y != cfg.LOADER.LEAVE_OUT]
-        missing = cfg.LOADER.BATCH_SIZE - len(Y)
+        missing = cfg.LOADER.GPU_BATCH_SIZE - len(Y)
         # copy randomly to fill the gaps ... it should be random cuz random sampler
         if missing:
             X, Y = X + X[:missing], Y + Y[:missing]
@@ -46,7 +46,7 @@ def build_loaders():
         sampler = DistributedSampler(dataset) if cfg.distributed else None
         loader = DataLoader(
             dataset,
-            batch_size=cfg.LOADER.BATCH_SIZE,
+            batch_size=cfg.LOADER.GPU_BATCH_SIZE,
             sampler=sampler,
             shuffle=(sampler == None),
             drop_last=True,
