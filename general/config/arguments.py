@@ -32,6 +32,7 @@ cfg.merge_from_file(cfg.config_file)
 
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
 
+
 cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 # used to be RANK but LOCAL_RANK is needed for multinode... hope it does not break
 cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
@@ -46,4 +47,5 @@ if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
 
 # cfg.freeze() # some of the experiments need it to be mutable
+print(f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS']}")
 print('CONFIG:', cfg.config_file, "\n")

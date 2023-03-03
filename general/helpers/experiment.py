@@ -12,7 +12,7 @@ class Experiment:
         model = build_model()
         loaders = build_loaders()
         self.trainer = Trainer(model, loaders["train"])
-        self.tester = Tester(self.trainer.model, loaders["test"])
+        self.tester = Tester(self.trainer.model, loaders["test"], trainloader=loaders['train'])
 
     def run(self):
         if cfg.EXP.TRAIN:
