@@ -1,13 +1,13 @@
-import warnings
+import os
 from statistics import mean, variance
+import warnings
 
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
-
-from general.results import out
-from general.config import cfg
-import os
 import torch
+
+from general.config import cfg
+from general.results import out
 
 warnings.filterwarnings("ignore")
 
@@ -25,7 +25,9 @@ def mkfig(fname, legend=True):
             plt.close("all")
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -47,9 +49,9 @@ def show_loss(loss, lr=None, *args, **kwargs):
 
 
 @mkfig("accuracy.png")
-def show_accuracy(acc,  *args, **kwargs):
+def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
-    plt.plot([i for i, _ in enumerate(acc)], acc, color='r', label="accuracy")
+    plt.plot([i for i, _ in enumerate(acc)], acc, color="r", label="accuracy")
 
 
 def calc_confusion(Y, Yh):
@@ -64,12 +66,48 @@ def calc_confusion(Y, Yh):
     return confusion, acc
 
 
+def make_centers(Y, Yh):
+    """makes cls centers from training set"""
+
+    to_rad = lambda a, b: torch.acos(
+        torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
+    )
+    angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
+
+    C = set(range(cfg.LOADER.NCLASSES))
+    Y = Y.view(-1)
+
+    centers = [torch.mean(Yh[(Y == c).view(-1)], 0) for c in C]
+    return centers
+
+
+def arc_confusion(Y, Yh, centers):
+    """confusion matrix with arc embeddings"""
+
+    to_rad = lambda a, b: torch.acos(
+        torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
+    )
+    angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
+
+    Yh = [[angle(yh, c) for c in centers] for yh in Yh]
+    # TODO: if dist is over threshold then put in other category
+
+    confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
+    Y, Yh = torch.argmax(Y, 1), torch.argmax(Yh, 1)
+    for y, yh in zip(Y.view(-1), Yh.view(-1)):
+        confusion[y, yh] += 1
+
+    acc = confusion.diag().sum() / confusion.sum(1).sum()
+    return confusion, acc
+
 
 @mkfig("confusion.png", legend=False)
-def show_confusion(Y, Yh, *args, **kwargs):
+def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
 
-    confusion, acc = calc_confusion(Y, Yh)
+    confusion, acc = (
+        calc_confusion(Y, Yh) if cfg.LOSS.BODY == "CE" else arc_confusion(Y, Yh, centers)
+    )
 
     # plt.rcParams.update({"font.size": 18}) # way too big...
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
@@ -83,7 +121,7 @@ def show_confusion(Y, Yh, *args, **kwargs):
     plt.ylabel("Ground Truth")
 
 
-@mkfig("tsne.png")
+@mkfig("embed.png")
 def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
@@ -94,13 +132,6 @@ def show_tsne(Y, Yh, *args, **kwargs):
     scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
-    plt.legend(*scatter.legend_elements())
-
-@mkfig("embed.png")
-def show_embed(Y,Yh,*args, **kwargs):
-    """only works for 2 dimensions"""
-
-    scatter = plt.scatter(Yh[:, 0].cpu().numpy(), Yh[:, 1].cpu().numpy(), c=Y.view(-1).tolist(), alpha=0.3)
     plt.legend(*scatter.legend_elements())
 
 
@@ -128,15 +159,15 @@ def calc_dprime(Y, Yh):
         ppairs = [angle(i, j) for i, j in zip(pos[:n], pos[n : 2 * n])]
         npairs = [angle(i, j) for i, j in zip(pos[:n], neg[n : 2 * n])]
 
-        phist[c] =  ppairs
-        nhist[c] =  npairs
+        phist[c] = ppairs
+        nhist[c] = npairs
 
     pall, nall = [], []
     for c in C:
         pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
         nall += [float(x) for x in nhist[c][:1000]]
 
-    dprime = (2**0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
+    dprime = (2 ** 0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
     return pall, nall, dprime
 
 
@@ -149,7 +180,7 @@ def show_dprime(Y, Yh, *args, **kwargs):
     plt.hist(pall, label="positive", bins=30, alpha=0.5)
     plt.hist(nall, label="negative", bins=30, alpha=0.5)
 
-    plt.title( f"Population Distance (d_prime={round(dprime,4)})")
+    plt.title(f"Population Distance (d_prime={round(dprime,4)})")
     plt.xlabel("angle")
     plt.ylabel("frequency")
 
@@ -159,5 +190,4 @@ PLOTS = {
     "CONFUSION": show_confusion,
     "TSNE": show_tsne,
     "DPRIME": show_dprime,
-    "EMBED": show_embed,
 }

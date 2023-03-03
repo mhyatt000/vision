@@ -27,18 +27,21 @@ def gather(x):
 class Tester:
     """manages and abstracts options from evaluation"""
 
-    def __init__(self, model, loader):
+    def __init__(self, model, loader, trainloader):
 
         # essentials
         self.model = model
         self.loader = loader
+        self.trainloader = trainloader
 
-    def embed(self):
+    def embed(self, loader):
         """docstring"""
 
         allY, allYh = [],[]
 
-        @tqdm.prog(len(self.loader), desc="Embed")
+        # TODO: fix this so its clean in toolbox.tqdm.py
+        # decorator was to fix printnode problem but its clunky
+        @tqdm.prog(len(loader), desc="Embed")
         def _embed(X,Y):
             X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
             Yh = self.model(X).view((Y.shape[0], -1))
@@ -47,7 +50,7 @@ class Tester:
             allYh.append(Yh)
 
         with torch.no_grad():
-            for X, Y in self.loader:
+            for X, Y in loader:
                 _embed(X,Y)
 
         return torch.cat(allY), torch.cat(allYh)
@@ -55,7 +58,10 @@ class Tester:
     def run(self):
         """docstring"""
 
-        Y,Yh = self.embed()
+        Y,Yh = self.embed(self.trainloader)
+        centers = plot.make_centers(Y,Yh)
+
+        Y,Yh = self.embed(self.loader)
         for p in cfg.EXP.PLOTS:
             plot.PLOTS[p](Y,Yh)
         
