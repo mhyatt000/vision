@@ -2,8 +2,7 @@ from general.config import cfg
 from general.data.loader import build_loaders
 from general.models import build_model
 from .tester import Tester
-
-from .newtrainer import Trainer
+from .trainer import Trainer
 
 
 class Experiment:

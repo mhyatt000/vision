@@ -1,12 +1,21 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "SRNET"
-  ODIM: 64
+  BODY: "CUSTOM"
+
+  CUSTOM:
+    KEY: "ffc_arc64"
+    ODIM: 2
+
+  FFCR:
+    BODY: 50
+    LAYERS: [3,4,6,3]
+    OUT_DIM: 64 # 5 classes but its  embed dim
+    USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 128 # is possible
+  BATCH_SIZE: 512 # is possible
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
@@ -28,21 +37,21 @@ LOSS:
     INTER_THRESH: 0
 
   PFC: 
-    EMBED_DIM: 64
+    EMBED_DIM: 2
     NC: 5
     NCLASSES: 5
     SAMPLE_RATE:  1.0
 
 OPTIM: 
   BODY: "SGD" # "ADAM"
-  LR: 0.1
+  LR: 0.002 # extra low since its already trained a bit
   DECAY: 5e-4
   MOMENTUM: 0.9
 
 EXP:
-  TRAIN: True
+  TRAIN: False # True
   TEST: True
   PLOTS:
-    # - "CONFUSION"
   - "TSNE"
   - "DPRIME"
+  - "EMBED"

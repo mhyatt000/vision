@@ -9,7 +9,7 @@ from tqdm import tqdm
 from general.helpers.experiment import build_experiment
 from general.config import cfg
 
-distributed.init_process_group("nccl")
+distributed.init_process_group("nccl") # , cfg.world_rank, cfg.world_size)
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 def setup_seed(seed, deterministic=True):

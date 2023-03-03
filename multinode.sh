@@ -1,10 +1,22 @@
 #!/bin/bash
 
-git add -A ; git commit -m 'deploy' ; git push ;
+# Read the lines of the file into an array
+mapfile -t NODES < $PBS_NODEFILE
+IDXS=("${!NODES[@]}")
 
-clear;
-ssh $NODE1 ~/cs/vision/node.sh 0 2 $HEAD $1 && \ 
-    ssh $NODE2 ~/cs/vision/node.sh 1 6 $HEAD $1 ;
+RZV=${NODES[0]} # rendezvous
 
-# ssh $NODE1 ~/cs/vision/run.sh && ssh $NODE2 ~/cs/vision/run.sh;
+# Print the array to the console
+printf '%s\n' "${NODES[@]}"
+
+for i in "${IDXS[@]}"; do
+  (ssh "${NODES[$i]}"  torchrun --nproc_per_node=4 --nnodes=2 --node_rank=$i \
+    --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=$RZV:29500 \
+    ~/cs/vision/general/master.py --config-name $1 ) &
+  done
+
+wait
+exit 0
+
+# git add -A ; git commit -m 'deploy' ; git push ;
 

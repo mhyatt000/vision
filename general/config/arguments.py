@@ -33,14 +33,17 @@ cfg.merge_from_file(cfg.config_file)
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
 
 cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-cfg.rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
+# used to be RANK but LOCAL_RANK is needed for multinode... hope it does not break
+cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
+cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
 cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
+print(f'Rank: {cfg.world_rank} online')
 dist_print = False
 if not dist_print:
-    set_dist_print(cfg.rank <= 0)
+    set_dist_print(cfg.world_rank <= 0)
 
 # cfg.freeze() # some of the experiments need it to be mutable
 print('CONFIG:', cfg.config_file, "\n")

@@ -9,7 +9,7 @@ def prog(length, desc=None):
     only if this is a node that can print to stdout
     iterates the bar on each call ... nice for loops
     """
-    printnode = not (cfg.rank and cfg.distributed)
+    printnode = not (cfg.world_rank and cfg.distributed)
     def decorator(func):
         def wrapper(*args, **kwargs):
             if not hasattr(wrapper, "tqdm"):

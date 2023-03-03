@@ -83,7 +83,7 @@ def show_confusion(Y, Yh, *args, **kwargs):
     plt.ylabel("Ground Truth")
 
 
-@mkfig("embed.png")
+@mkfig("tsne.png")
 def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
@@ -94,6 +94,13 @@ def show_tsne(Y, Yh, *args, **kwargs):
     scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
+    plt.legend(*scatter.legend_elements())
+
+@mkfig("embed.png")
+def show_embed(Y,Yh,*args, **kwargs):
+    """only works for 2 dimensions"""
+
+    scatter = plt.scatter(Yh[:, 0].cpu().numpy(), Yh[:, 1].cpu().numpy(), c=Y.view(-1).tolist(), alpha=0.3)
     plt.legend(*scatter.legend_elements())
 
 
@@ -152,4 +159,5 @@ PLOTS = {
     "CONFUSION": show_confusion,
     "TSNE": show_tsne,
     "DPRIME": show_dprime,
+    "EMBED": show_embed,
 }

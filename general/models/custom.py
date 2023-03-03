@@ -43,7 +43,7 @@ class FFC_ARC64_FINETUNE(ffcresnet.FFCResNet):
         self.load_state_dict(snap["MODEL"])
 
         self.fc = nn.Sequential(
-            nn.Linear(self.fc.in_features, 5),
+            nn.Linear(self.fc.in_features, cfg.MODEL.CUSTOM.ODIM),
             nn.Softmax(),
             )
         

@@ -31,15 +31,17 @@ class Checkpointer:
 
         # state
         self.remember = [
+            "nstep",
             "epoch",
             "losses",
             "accs",
             # "best",
             # "best_epoch",
         ]
+
         self.states = [
-            "criterion",
-            "optimizer",
+            # "criterion",
+            # "optimizer",
             "scaler",
             "scheduler",
         ]
@@ -67,12 +69,16 @@ class Checkpointer:
 
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         mod.load_state_dict(snap["MODEL"])
-        del snap["MODEL"]
         for k, v in snap.items():
-            try:
-                getattr(self.trainer, k.lower()).load_state_dict(v)
-            except Exception as ex:
-                setattr(self.trainer, k.lower(), v)
+            if k.lower() in self.remember+self.states:
+                if not type(v) in [list,int]: # try:
+                    temp = getattr(self.trainer, k.lower())
+                    temp.load_state_dict(v)
+                    setattr(self.trainer,k.lower(),temp)
+                else: # except Exception as ex:
+                    # raise ex
+                    setattr(self.trainer, k.lower(), v)
+        del snap
 
-        print(f"Resuming training from snapshot at epoch {self.trainer.epoch+1}")
+        print(f"Resuming training from snapshot at step {self.trainer.nstep+1}")
         print(self.psnap())

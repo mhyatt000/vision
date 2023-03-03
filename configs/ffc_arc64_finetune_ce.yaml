@@ -2,8 +2,10 @@ DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
   BODY: "CUSTOM"
+
   CUSTOM:
     KEY: "ffc_arc64"
+    ODIM: 5
 
   FFCR:
     BODY: 50
