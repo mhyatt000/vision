@@ -1,0 +1,24 @@
+Jobid: 10128681
+qsub -A EVITA -I -n 1 -q single-gpu -t 60
+Fri Mar 03 21:13:17 2023 +0000 (UTC) submitted with cwd set to: /lus/swift/home/mhyatt000/cs/vision
+jobid 10128681 submitted from terminal /dev/pts/82
+Fri Mar 03 21:13:32 2023 +0000 (UTC) 
+Fri Mar 03 21:13:32 2023 +0000 (UTC) Command: '/usr/bin/ssh' 'thetagpu06-gpu0' '/usr/bin/cobalt-launcher.py' '--nf' '/var/tmp/cobalt.10128681' '--jobid' '10128681' '--cwd' '/lus/swift/home/mhyatt000/cs/vision' '--env' 'COBALT_JOBID=10128681' '/bin/sleep' '3600'
+Fri Mar 03 21:13:32 2023 +0000 (UTC) 
+Fri Mar 03 21:13:32 2023 +0000 (UTC) Environment:
+Fri Mar 03 21:13:32 2023 +0000 (UTC) SHELL=/bin/bash
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_NODEFILE=/tmp/tmpzdVKKn
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_PARTNAME=thetagpu06-gpu0
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_JOBID=10128681
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_STARTTIME=1677878002
+Fri Mar 03 21:13:32 2023 +0000 (UTC) LOGNAME=mhyatt000
+Fri Mar 03 21:13:32 2023 +0000 (UTC) USER=mhyatt000
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_ENDTIME=1677881602
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_PARTSIZE=1
+Fri Mar 03 21:13:32 2023 +0000 (UTC) HOME=/home/mhyatt000
+Fri Mar 03 21:13:32 2023 +0000 (UTC) COBALT_JOBSIZE=1
+Fri Mar 03 21:13:32 2023 +0000 (UTC) 
+Fri Mar 03 21:13:32 2023 +0000 (UTC) Info: stdin received from /dev/null
+Fri Mar 03 21:13:32 2023 +0000 (UTC) Info: stdout sent to /lus/swift/home/mhyatt000/cs/vision/10128681.output
+Fri Mar 03 21:13:32 2023 +0000 (UTC) Info: stderr sent to /lus/swift/home/mhyatt000/cs/vision/10128681.error
+Fri Mar 03 21:13:32 2023 +0000 (UTC) 

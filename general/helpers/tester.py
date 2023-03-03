@@ -63,5 +63,4 @@ class Tester:
 
         Y,Yh = self.embed(self.loader)
         for p in cfg.EXP.PLOTS:
-            plot.PLOTS[p](Y,Yh)
-        
+            plot.PLOTS[p](Y,Yh, centers)

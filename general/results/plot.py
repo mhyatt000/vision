@@ -95,8 +95,8 @@ def arc_confusion(Y, Yh, centers):
     Yh = torch.argmin(Yh, 1)
 
     confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
-    for y, yh in zip(Y.view(-1), Yh.view(-1)):
-        confusion[y, yh] += 1
+    for y, yh in zip(Y.cpu().view(-1), Yh.cpu().view(-1)):
+        confusion[int(y.item()), int(yh.item())] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
     return confusion, acc
