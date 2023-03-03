@@ -10,7 +10,7 @@ MODEL:
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 128 # is possible
+  BATCH_SIZE:  128 
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
@@ -22,6 +22,7 @@ SOLVER:
   MAX_EPOCH: 20 # you said 200 but 20 is on arcface
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
+  CHECKPOINT_PERIOD: 100
 
 LOSS: 
   BODY: "AAM" # aam uses pfc sampler
@@ -45,9 +46,9 @@ OPTIM:
   BETAS: [0.9, 0.99]
 
 EXP:
-  TRAIN: True
+  TRAIN: False # True
   TEST: True
   PLOTS:
-    # - "CONFUSION"
+  - "CONFUSION"
   - "TSNE"
   - "DPRIME"

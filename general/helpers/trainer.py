@@ -77,6 +77,7 @@ class Trainer:
         self.nstep += 1
 
         if self.nstep % cfg.SOLVER.CHECKPOINT_PERIOD == 0:
+            print(True)
             plot.show_loss(self.losses)
             plot.show_accuracy(self.accs)
             self.ckp.save()
@@ -194,7 +195,6 @@ class Trainer:
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):
         while self.nstep < cfg.SOLVER.MAX_ITER:
 
-            # epoch
             if cfg.distributed:
                 self.loader.sampler.set_epoch(self.epoch)
             for X, Y in self.loader:
