@@ -89,11 +89,12 @@ def arc_confusion(Y, Yh, centers):
     )
     angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
 
-    Yh = [[angle(yh, c) for c in centers] for yh in Yh]
+    Yh = torch.Tensor([[angle(yh, c) for c in centers] for yh in Yh])
     # TODO: if dist is over threshold then put in other category
+    # # Y = torch.argmax(Y, 1) # not needed to argmax em
+    Yh = torch.argmin(Yh, 1)
 
     confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
-    Y, Yh = torch.argmax(Y, 1), torch.argmax(Yh, 1)
     for y, yh in zip(Y.view(-1), Yh.view(-1)):
         confusion[y, yh] += 1
 
@@ -191,3 +192,53 @@ PLOTS = {
     "TSNE": show_tsne,
     "DPRIME": show_dprime,
 }
+
+if __name__ == "__main__":
+
+    Y = torch.Tensor(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 1],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+        ]
+    )
+    Y = torch.argmax(Y, dim=-1)
+
+    Yh = torch.Tensor(
+        [
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 1],
+        ]*4
+    )
+
+    print(Y)
+    print(Yh)
+
+    centers = make_centers(Y, Yh)
+    acc, conf = arc_confusion(Y, Yh, centers)
+
+
+    print(acc)
+    print(conf)
+
+    

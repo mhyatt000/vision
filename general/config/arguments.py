@@ -47,5 +47,5 @@ if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
 
 # cfg.freeze() # some of the experiments need it to be mutable
-print(f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS']}")
+print(f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS'] if 'OMP_NUM_THREADS' in os.environ else -1}")
 print('CONFIG:', cfg.config_file, "\n")
