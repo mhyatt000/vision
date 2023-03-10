@@ -15,7 +15,7 @@ from general.results import out
 warnings.filterwarnings("ignore")
 
 
-def convert_json(obj):
+def to_json(obj):
     """Convert obj to a version which can be serialized with JSON."""
 
     if is_json_serializable(obj):
@@ -59,6 +59,7 @@ def mkfig(fname, legend=None):
 
 
 def serialize(k, v, mode="w"):
+    v = to_json(v)
     fname = os.path.join(out.get_path(), "results.json")
     try:
         with open(fname, "r") as file:
@@ -314,6 +315,8 @@ if __name__ == "__main__":
 
     Y = torch.rand((20, 5))
     Y = torch.argmax(Y, dim=-1)
+
+    
 
     Yh = torch.rand((20, 64))
 
