@@ -4,6 +4,8 @@
 import os
 
 default_paths = ["./DATASET", "./OUTPUT", "./data", "./MODEL"]
+
+
 def try_to_find(file, return_dir=False, search_path=default_paths):
     """looks for a dataset in a set of folders"""
 

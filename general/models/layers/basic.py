@@ -62,7 +62,9 @@ class CONV2D(nn.Conv2d):
             cfg.MODEL.CONV.KERNEL,
         )
         self.reshape = (
-            (lambda x: x.view(x.shape[0], -1)) if cfg.MODEL.CONV.RESHAPE else nn.Identity()
+            (lambda x: x.view(x.shape[0], -1))
+            if cfg.MODEL.CONV.RESHAPE
+            else nn.Identity()
         )
 
     def forward(self, x):

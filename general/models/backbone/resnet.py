@@ -21,7 +21,13 @@ Custom implementations may be written in user code and hooked in via the
 from collections import namedtuple
 
 from general.config import cfg
-from general.models.layers import Conv2d, DFConv2d, FrozenBatchNorm2d, NaiveSyncBatchNorm2d, SELayer
+from general.models.layers import (
+    Conv2d,
+    DFConv2d,
+    FrozenBatchNorm2d,
+    NaiveSyncBatchNorm2d,
+    SELayer,
+)
 from general.models.layers.util import group_norm
 from general.utils.registry import Registry
 import torch
@@ -310,13 +316,19 @@ class Bottleneck(nn.Module):
                         ceil_mode=True,
                         count_include_pad=False,
                     ),
-                    nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, bias=False),
+                    nn.Conv2d(
+                        in_channels, out_channels, kernel_size=1, stride=1, bias=False
+                    ),
                     norm_func(out_channels),
                 )
             else:
                 self.downsample = nn.Sequential(
                     Conv2d(
-                        in_channels, out_channels, kernel_size=1, stride=down_stride, bias=False
+                        in_channels,
+                        out_channels,
+                        kernel_size=1,
+                        stride=down_stride,
+                        bias=False,
                     ),
                     norm_func(out_channels),
                 )
@@ -376,7 +388,9 @@ class Bottleneck(nn.Module):
 
         self.bn2 = norm_func(bottleneck_channels)
 
-        self.conv3 = Conv2d(bottleneck_channels, out_channels, kernel_size=1, bias=False)
+        self.conv3 = Conv2d(
+            bottleneck_channels, out_channels, kernel_size=1, bias=False
+        )
         self.bn3 = norm_func(out_channels)
 
         self.se = SELayer(out_channels) if with_se and not with_dcn else None
@@ -418,16 +432,25 @@ class BaseStem(nn.Module):
         self.stem_3x3 = cfg.MODEL.RESNETS.USE_STEM3X3
 
         if self.stem_3x3:
-            self.conv1 = Conv2d(3, out_channels, kernel_size=3, stride=2, padding=1, bias=False)
+            self.conv1 = Conv2d(
+                3, out_channels, kernel_size=3, stride=2, padding=1, bias=False
+            )
             self.bn1 = norm_func(out_channels)
             self.conv2 = Conv2d(
-                out_channels, out_channels, kernel_size=3, stride=2, padding=1, bias=False
+                out_channels,
+                out_channels,
+                kernel_size=3,
+                stride=2,
+                padding=1,
+                bias=False,
             )
             self.bn2 = norm_func(out_channels)
             for l in [self.conv1, self.conv2]:
                 nn.init.kaiming_uniform_(l.weight, a=1)
         else:
-            self.conv1 = Conv2d(3, out_channels, kernel_size=7, stride=2, padding=3, bias=False)
+            self.conv1 = Conv2d(
+                3, out_channels, kernel_size=7, stride=2, padding=3, bias=False
+            )
             self.bn1 = norm_func(out_channels)
 
             for l in [
@@ -643,9 +666,9 @@ _STAGE_SPECS = Registry(
     }
 )
 
-if __name__ == '__main__': 
+if __name__ == "__main__":
     r = ResNet()
-    t = torch.Tensor(1,3,225,225)
+    t = torch.Tensor(1, 3, 225, 225)
     t = r(t)
     for x in t:
         print(x.shape)

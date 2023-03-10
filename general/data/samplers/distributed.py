@@ -25,7 +25,9 @@ class DistributedSampler(Sampler):
         rank (optional): Rank of the current process within num_replicas.
     """
 
-    def __init__(self, dataset, num_replicas=None, rank=None, shuffle=True, use_random=False):
+    def __init__(
+        self, dataset, num_replicas=None, rank=None, shuffle=True, use_random=False
+    ):
 
         if num_replicas is None:
             if not dist.is_available():

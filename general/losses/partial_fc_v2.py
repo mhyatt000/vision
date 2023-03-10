@@ -8,6 +8,7 @@ from torch.nn.functional import linear, normalize
 from general.config import cfg
 from .arcloss import CombinedMarginLoss
 
+
 class PartialFC_V2(torch.nn.Module):
     """
     https://arxiv.org/abs/2203.15565
@@ -49,7 +50,9 @@ class PartialFC_V2(torch.nn.Module):
             The rate of negative centers participating in the calculation, default is 1.0.
         """
         super(PartialFC_V2, self).__init__()
-        assert distributed.is_initialized(), "must initialize distributed before create this"
+        assert (
+            distributed.is_initialized()
+        ), "must initialize distributed before create this"
         self.rank = distributed.get_rank()
         self.world_size = distributed.get_world_size()
 
@@ -68,7 +71,9 @@ class PartialFC_V2(torch.nn.Module):
 
         self.is_updated: bool = True
         self.init_weight_update: bool = True
-        self.weight = torch.nn.Parameter(torch.normal(0, 0.01, (self.num_local, embedding_size)))
+        self.weight = torch.nn.Parameter(
+            torch.normal(0, 0.01, (self.num_local, embedding_size))
+        )
 
         # margin_loss
         if isinstance(margin_loss, Callable):
@@ -132,9 +137,12 @@ class PartialFC_V2(torch.nn.Module):
         ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
 
         _gather_embeddings = [
-            torch.zeros((batch_size, self.embedding_size)).cuda() for _ in range(self.world_size)
+            torch.zeros((batch_size, self.embedding_size)).cuda()
+            for _ in range(self.world_size)
         ]
-        _gather_labels = [torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)]
+        _gather_labels = [
+            torch.zeros(batch_size).long().cuda() for _ in range(self.world_size)
+        ]
 
         _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
         distributed.all_gather(_gather_labels, local_labels)
@@ -143,7 +151,9 @@ class PartialFC_V2(torch.nn.Module):
         labels = torch.cat(_gather_labels)
 
         labels = labels.view(-1, 1)
-        index_positive = (self.class_start <= labels) & (labels < self.class_start + self.num_local)
+        index_positive = (self.class_start <= labels) & (
+            labels < self.class_start + self.num_local
+        )
         labels[~index_positive] = -1
         labels[index_positive] -= self.class_start
 
@@ -204,7 +214,9 @@ class DistCrossEntropyFunc(torch.autograd.Function):
         """
         (index, logits, label) = ctx.saved_tensors
         batch_size = logits.size(0)
-        one_hot = torch.zeros(size=[index.size(0), logits.size(1)], device=logits.device)
+        one_hot = torch.zeros(
+            size=[index.size(0), logits.size(1)], device=logits.device
+        )
         one_hot.scatter_(1, label[index], 1)
         logits[index] -= one_hot
         logits.div_(batch_size)
@@ -237,7 +249,9 @@ class AllGatherFunc(torch.autograd.Function):
         dist_ops = [
             distributed.reduce(grad_out, rank, distributed.ReduceOp.SUM, async_op=True)
             if i == rank
-            else distributed.reduce(grad_list[i], i, distributed.ReduceOp.SUM, async_op=True)
+            else distributed.reduce(
+                grad_list[i], i, distributed.ReduceOp.SUM, async_op=True
+            )
             for i in range(distributed.get_world_size())
         ]
         for _op in dist_ops:

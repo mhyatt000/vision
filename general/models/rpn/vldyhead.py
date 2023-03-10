@@ -4,27 +4,43 @@ import pdb
 from general.config import cfg
 from general.models.backbone.fbnet import *
 from general.models.lang.clip_model import DropPath, LayerNorm, QuickGELU
+
 # from general.engine.inference import  create_positive_map_label_to_token_from_positive_map
-from general.models.layers import (DYReLU, FrozenBatchNorm2d,
-                                   ModulatedDeformConv, NaiveSyncBatchNorm2d,
-                                   Scale, SELayer)
+from general.models.layers import (
+    DYReLU,
+    FrozenBatchNorm2d,
+    ModulatedDeformConv,
+    NaiveSyncBatchNorm2d,
+    Scale,
+    SELayer,
+)
 from general.structures.boxlist_ops import cat_boxlist
-from general.utils.fuse_helper import (AttentionT2I, BertLMPredictionHead,
-                                       BiAttentionBlock,
-                                       BiAttentionBlockForCheckpoint,
-                                       FeatureResizer, _make_conv, _make_coord,
-                                       _make_mlp, func_attention)
+from general.utils.fuse_helper import (
+    AttentionT2I,
+    BertLMPredictionHead,
+    BiAttentionBlock,
+    BiAttentionBlockForCheckpoint,
+    FeatureResizer,
+    _make_conv,
+    _make_coord,
+    _make_mlp,
+    func_attention,
+)
 from timm.models.layers import DropPath, trunc_normal_
 import torch
 from torch import nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from transformers.modeling_utils import apply_chunking_to_forward
+
 # from transformers.models.bert import modeling_bert as hfbert
-from transformers.models.bert.modeling_bert import (BertAttention, BertConfig,
-                                                    BertIntermediate,
-                                                    BertOutput,
-                                                    BertPreTrainedModel)
+from transformers.models.bert.modeling_bert import (
+    BertAttention,
+    BertConfig,
+    BertIntermediate,
+    BertOutput,
+    BertPreTrainedModel,
+)
 
 from ..utils import cat, concat_box_prediction_layers, permute_and_flatten
 from .anchor_generator import make_anchor_generator_complex
@@ -36,9 +52,9 @@ def create_positive_map_label_to_token_from_positive_map(positive_map, plus=0):
 
     positive_map_label_to_token = {}
     for i in range(len(positive_map)):
-        positive_map_label_to_token[i + plus] = torch.nonzero(positive_map[i], as_tuple=True)[
-            0
-        ].tolist()
+        positive_map_label_to_token[i + plus] = torch.nonzero(
+            positive_map[i], as_tuple=True
+        )[0].tolist()
     return positive_map_label_to_token
 
 
@@ -53,7 +69,7 @@ class h_sigmoid(nn.Module):
 
 
 class BoxCoder(object):
-    def __init__(self ):
+    def __init__(self):
         self.cfg = cfg
 
     def encode(self, gt_boxes, anchors):
@@ -270,7 +286,7 @@ class DyConv(torch.nn.Module):
 
 
 class BertEncoderLayer(BertPreTrainedModel):
-    def __init__( self, clamp_min_for_underflow=False, clamp_max_for_overflow=False):
+    def __init__(self, clamp_min_for_underflow=False, clamp_max_for_overflow=False):
         super().__init__()
         self.cfg = cfg
 
@@ -278,7 +294,10 @@ class BertEncoderLayer(BertPreTrainedModel):
         self.seq_len_dim = 1
 
         from maskrcnn_benchmark.modeling.rpn.modeling_bert import (
-            BertAttention, BertIntermediate, BertOutput)
+            BertAttention,
+            BertIntermediate,
+            BertOutput,
+        )
 
         self.attention = BertAttention(
             cfg, clamp_min_for_underflow, clamp_max_for_overflow
@@ -519,7 +538,7 @@ class VLFuse(torch.nn.Module):
             self.lang_dim = 1024
 
     def forward(self, x):
-        """ forward pass """
+        """forward pass"""
 
         visual_features = x["visual"]
         language_dict_features = x["lang"]
@@ -660,7 +679,6 @@ class VLFuse(torch.nn.Module):
 
 
 class VLDyHead(torch.nn.Module):
-
     def __init__(self):
         super(VLDyHead, self).__init__()
 
@@ -766,7 +784,9 @@ class VLDyHead(torch.nn.Module):
 
         # soft token head
         if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_TOKEN_LOSS:
-            self.token_logits = nn.Conv2d( channels, num_anchors * num_tokens, kernel_size=1)
+            self.token_logits = nn.Conv2d(
+                channels, num_anchors * num_tokens, kernel_size=1
+            )
             # ABLATION
             # self.token_logits = nn.Conv2d(channels, num_anchors * num_tokens, kernel_size=1, bias=False)
             # self.bias = nn.Parameter(torch.zeros(channels), requires_grad=True)
@@ -1010,7 +1030,6 @@ class VLDyHead(torch.nn.Module):
 
 
 class VLDyHeadModule(torch.nn.Module):
-
     def __init__(self):
         super(VLDyHeadModule, self).__init__()
 

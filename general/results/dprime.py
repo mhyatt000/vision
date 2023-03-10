@@ -30,7 +30,11 @@ for box, color in zip(bplot["boxes"], colors):
     box.set_facecolor(color)
 
 plt.xticks([1, 2, 3, 4, 5], names)
-ax.set(xlabel="Leave Out", ylabel="d_prime", title="Distribution of d_prime in 5x2 training split")
+ax.set(
+    xlabel="Leave Out",
+    ylabel="d_prime",
+    title="Distribution of d_prime in 5x2 training split",
+)
 
 fig.tight_layout()
 plt.savefig(os.path.join(home, "figures", "MDP.png"))

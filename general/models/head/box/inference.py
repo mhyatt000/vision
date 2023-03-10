@@ -32,7 +32,7 @@ class PostProcessor(nn.Module):
         self.nms = nms
         self.detections_per_img = detections_per_img
         if box_coder is None:
-            box_coder = BoxCoder(weights=(10., 10., 5., 5.))
+            box_coder = BoxCoder(weights=(10.0, 10.0, 5.0, 5.0))
         self.box_coder = box_coder
 
     @custom_fwd(cast_inputs=torch.float32)
@@ -58,11 +58,15 @@ class PostProcessor(nn.Module):
 
         extra_fields = [{} for box in boxes]
         if boxes[0].has_field("cbox"):
-            concat_cboxes = torch.cat([a.get_field('cbox').bbox for a in boxes], dim=0)
-            concat_cscores = torch.cat([a.get_field('cbox').get_field('scores') for a in boxes], dim=0)
-            for cbox, cscore, extra_field in zip(concat_cboxes.split(boxes_per_image, dim=0),
-                                                 concat_cscores.split(boxes_per_image, dim=0),
-                                                 extra_fields):
+            concat_cboxes = torch.cat([a.get_field("cbox").bbox for a in boxes], dim=0)
+            concat_cscores = torch.cat(
+                [a.get_field("cbox").get_field("scores") for a in boxes], dim=0
+            )
+            for cbox, cscore, extra_field in zip(
+                concat_cboxes.split(boxes_per_image, dim=0),
+                concat_cscores.split(boxes_per_image, dim=0),
+                extra_fields,
+            ):
                 extra_field["cbox"] = cbox
                 extra_field["cscore"] = cscore
 
@@ -79,7 +83,9 @@ class PostProcessor(nn.Module):
         for prob, boxes_per_img, image_shape, extra_field in zip(
             class_prob, proposals, image_shapes, extra_fields
         ):
-            boxlist = self.prepare_boxlist(boxes_per_img, prob, image_shape, extra_field)
+            boxlist = self.prepare_boxlist(
+                boxes_per_img, prob, image_shape, extra_field
+            )
             boxlist = boxlist.clip_to_image(remove_empty=False)
             boxlist = self.filter_results(boxlist, num_classes)
             results.append(boxlist)
@@ -114,7 +120,7 @@ class PostProcessor(nn.Module):
         # if we had multi-class NMS, we could perform this directly on the boxlist
         boxes = boxlist.bbox.reshape(-1, num_classes * 4)
         scores = boxlist.get_field("scores").reshape(-1, num_classes)
-        if boxlist.has_field('cbox'):
+        if boxlist.has_field("cbox"):
             cboxes = boxlist.get_field("cbox").reshape(-1, 4)
             cscores = boxlist.get_field("cscore")
         else:

@@ -20,7 +20,9 @@ class Background(data.Dataset):
             and returns a transformed version. E.g, ``transforms.ToTensor``
     """
 
-    def __init__(self, ann_file, root, remove_images_without_annotations=None, transforms=None):
+    def __init__(
+        self, ann_file, root, remove_images_without_annotations=None, transforms=None
+    ):
         self.root = root
 
         with open(ann_file, "r") as f:

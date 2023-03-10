@@ -4,12 +4,14 @@ import itertools
 from general.config import cfg
 import torch
 
-from .lr_scheduler import (WarmupCosineAnnealingLR, WarmupMultiStepLR,
-                           WarmupReduceLROnPlateau)
+from .lr_scheduler import (
+    WarmupCosineAnnealingLR,
+    WarmupMultiStepLR,
+    WarmupReduceLROnPlateau,
+)
 
 
 def make_optimizer(model):
-
     def maybe_add_full_model_gradient_clipping(optim):  # optim: the optimizer class
         # detectron2 doesn't have full model gradient clipping now
 
@@ -57,14 +59,16 @@ def make_optimizer(model):
             params, lr, momentum=cfg.SOLVER.MOMENTUM
         )
     elif cfg.SOLVER.OPTIMIZER == "ADAMW":
-        optimizer = maybe_add_full_model_gradient_clipping(torch.optim.AdamW)(params, lr)
+        optimizer = maybe_add_full_model_gradient_clipping(torch.optim.AdamW)(
+            params, lr
+        )
 
     return optimizer
 
 
 def make_lr_scheduler(optimizer):
 
-    """ add cfg to solver files """
+    """add cfg to solver files"""
     _kwargs = dict(
         warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
         warmup_iters=cfg.SOLVER.WARMUP_ITERS,
@@ -75,17 +79,14 @@ def make_lr_scheduler(optimizer):
         assert len(cfg.SOLVER.MULTI_MAX_EPOCH) == len(cfg.SOLVER.STEPS)
         lr_scheduler = []
 
-        for stage_step, stage_max_epoch in zip(cfg.SOLVER.STEPS, cfg.SOLVER.MULTI_MAX_ITER):
+        for stage_step, stage_max_epoch in zip(
+            cfg.SOLVER.STEPS, cfg.SOLVER.MULTI_MAX_ITER
+        ):
             milestones = []
             for step in stage_step:
                 milestones.append(round(step * stage_max_epoch))
             lr_scheduler.append(
-                WarmupMultiStepLR(
-                    optimizer,
-                    milestones,
-                    cfg.SOLVER.GAMMA,
-                    **_kwargs
-                )
+                WarmupMultiStepLR(optimizer, milestones, cfg.SOLVER.GAMMA, **_kwargs)
             )
         return lr_scheduler
 

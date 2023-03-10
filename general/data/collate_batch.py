@@ -37,13 +37,19 @@ class BatchCollator(object):
             # we batch the positive maps here
             # Since in general each batch element will have a different number of boxes,
             # we collapse a single batch dimension to avoid padding. This is sufficient for our purposes.
-            max_len = max([v.get_field("positive_map").shape[1] for v in transposed_batch[1]])
-            nb_boxes = sum([v.get_field("positive_map").shape[0] for v in transposed_batch[1]])
+            max_len = max(
+                [v.get_field("positive_map").shape[1] for v in transposed_batch[1]]
+            )
+            nb_boxes = sum(
+                [v.get_field("positive_map").shape[0] for v in transposed_batch[1]]
+            )
             batched_pos_map = torch.zeros((nb_boxes, max_len), dtype=torch.bool)
             cur_count = 0
             for v in transposed_batch[1]:
                 cur_pos = v.get_field("positive_map")
-                batched_pos_map[cur_count : cur_count + len(cur_pos), : cur_pos.shape[1]] = cur_pos
+                batched_pos_map[
+                    cur_count : cur_count + len(cur_pos), : cur_pos.shape[1]
+                ] = cur_pos
                 cur_count += len(cur_pos)
 
             assert cur_count == len(batched_pos_map)
@@ -53,13 +59,19 @@ class BatchCollator(object):
             # we batch the positive maps here
             # Since in general each batch element will have a different number of boxes,
             # we collapse a single batch dimension to avoid padding. This is sufficient for our purposes.
-            max_len = max([v.get_field("positive_map_eval").shape[1] for v in transposed_batch[1]])
-            nb_boxes = sum([v.get_field("positive_map_eval").shape[0] for v in transposed_batch[1]])
+            max_len = max(
+                [v.get_field("positive_map_eval").shape[1] for v in transposed_batch[1]]
+            )
+            nb_boxes = sum(
+                [v.get_field("positive_map_eval").shape[0] for v in transposed_batch[1]]
+            )
             batched_pos_map = torch.zeros((nb_boxes, max_len), dtype=torch.bool)
             cur_count = 0
             for v in transposed_batch[1]:
                 cur_pos = v.get_field("positive_map_eval")
-                batched_pos_map[cur_count : cur_count + len(cur_pos), : cur_pos.shape[1]] = cur_pos
+                batched_pos_map[
+                    cur_count : cur_count + len(cur_pos), : cur_pos.shape[1]
+                ] = cur_pos
                 cur_count += len(cur_pos)
 
             assert cur_count == len(batched_pos_map)

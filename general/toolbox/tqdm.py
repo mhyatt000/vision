@@ -1,6 +1,7 @@
 from tqdm import tqdm
 from general.config import cfg
 
+
 def prog(length, desc=None):
     """
     creates a tqdm progress bar for the wrapped function when it is called
@@ -10,15 +11,18 @@ def prog(length, desc=None):
     iterates the bar on each call ... nice for loops
     """
     printnode = not (cfg.world_rank and cfg.distributed)
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             if not hasattr(wrapper, "tqdm"):
-                wrapper.tqdm = tqdm(total=length, desc=desc) #, leave=False)
+                wrapper.tqdm = tqdm(total=length, desc=desc)  # , leave=False)
             result = func(*args, **kwargs)
             if result:
                 wrapper.tqdm.set_description(result)
             wrapper.tqdm.update()
 
             return result
+
         return wrapper if printnode else func  # no tqdm if not printnode
+
     return decorator

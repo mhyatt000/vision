@@ -7,6 +7,7 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from general.config import cfg
 
+
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
         super(PreNorm, self).__init__()
@@ -78,7 +79,10 @@ class Transformer(nn.Module):
                 nn.ModuleList(
                     [
                         PreNorm(
-                            dim, Attention(dim, heads=heads, dim_head=dim_head, dropout=dropout)
+                            dim,
+                            Attention(
+                                dim, heads=heads, dim_head=dim_head, dropout=dropout
+                            ),
                         ),
                         PreNorm(dim, MLP(dim, mlp_dim, dropout=dropout)),
                     ]
@@ -111,6 +115,7 @@ ViT-Large   24      1024            4096        16      307M
 ViT-Huge    32      1280            5120        16      632M
 """
 
+
 class VIT(nn.Module):
     """vision transformer"""
 
@@ -131,7 +136,7 @@ class VIT(nn.Module):
         dim_head=64,
     ):
         super(VIT, self).__init__()
-        
+
         size = {
             "B": {"layers": 12, "dim": 768, "mlp_dim": 3072, "heads": 12},
             "L": {"layers": 24, "dim": 1024, "mlp_dim": 4096, "heads": 16},
@@ -140,9 +145,8 @@ class VIT(nn.Module):
 
         if cfg.MODEL.VIT.SIZE:
             size = size[cfg.MODEL.VIT.SIZE]
-            for k,v in size.items():
-                setattr(self,k,v)
-
+            for k, v in size.items():
+                setattr(self, k, v)
 
         ex = f"Image dimensions must be divisible by the patch size {img_size}%{patch_size}!= {img_size}%{patch_size}"
         assert img_size % patch_size == 0, ex
@@ -152,13 +156,13 @@ class VIT(nn.Module):
         ex = "pool type must be either cls (cls token) or mean (mean pooling)"
         assert pool in {"cls", "mean"}, ex
 
-
-        print(patch_dim,dim)
-
+        print(patch_dim, dim)
 
         # flattens image patches ... w*h  -> n*pw*ph
         self.to_patch_embedding = nn.Sequential(
-            Rearrange("b c (h p1) (w p2) -> b (h w) (p1 p2 c)", p1=patch_size, p2=patch_size),
+            Rearrange(
+                "b c (h p1) (w p2) -> b (h w) (p1 p2 c)", p1=patch_size, p2=patch_size
+            ),
             nn.Linear(patch_dim, dim),
         )
 

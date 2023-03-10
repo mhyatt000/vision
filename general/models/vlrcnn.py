@@ -48,7 +48,9 @@ class VLRCNN(nn.Module):
         """
 
         if cfg.MODEL.LINEAR_PROB:
-            assert cfg.MODEL.BACKBONE.FREEZE, "For linear probing, backbone should be frozen!"
+            assert (
+                cfg.MODEL.BACKBONE.FREEZE
+            ), "For linear probing, backbone should be frozen!"
             if hasattr(self.backbone, "fpn"):
                 assert cfg.MODEL.FPN.FREEZE, "For linear probing, FPN should be frozen!"
         self.linear_prob = cfg.MODEL.LINEAR_PROB
@@ -65,13 +67,16 @@ class VLRCNN(nn.Module):
                 p.requires_grad = False
 
         self.use_mlm_loss = cfg.MODEL.DYHEAD.FUSE_CONFIG.MLM_LOSS
-        self.mlm_loss_for_only_positives = cfg.MODEL.DYHEAD.FUSE_CONFIG.MLM_LOSS_FOR_ONLY_POSITIVES
+        self.mlm_loss_for_only_positives = (
+            cfg.MODEL.DYHEAD.FUSE_CONFIG.MLM_LOSS_FOR_ONLY_POSITIVES
+        )
 
         if cfg.GLIPKNOW.KNOWLEDGE_FILE:
-            from maskrcnn_benchmark.data.datasets.tsv import \
-                load_from_yaml_file
+            from maskrcnn_benchmark.data.datasets.tsv import load_from_yaml_file
 
-            self.class_name_to_knowledge = load_from_yaml_file(cfg.GLIPKNOW.KNOWLEDGE_FILE)
+            self.class_name_to_knowledge = load_from_yaml_file(
+                cfg.GLIPKNOW.KNOWLEDGE_FILE
+            )
             self.class_name_list = sorted([k for k in self.class_name_to_knowledge])
 
     def train(self, mode=True):

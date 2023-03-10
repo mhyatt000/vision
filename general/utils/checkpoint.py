@@ -45,7 +45,9 @@ class Checkpointer(object):
             data["optimizer"] = self.optimizer.state_dict()
         if self.scheduler is not None:
             if isinstance(self.scheduler, list):
-                data["scheduler"] = [scheduler.state_dict() for scheduler in self.scheduler]
+                data["scheduler"] = [
+                    scheduler.state_dict() for scheduler in self.scheduler
+                ]
             else:
                 data["scheduler"] = self.scheduler.state_dict()
         data.update(kwargs)
@@ -85,7 +87,9 @@ class Checkpointer(object):
             if "scheduler" in checkpoint and self.scheduler:
                 self.logger.info("Loading scheduler from {}".format(f))
                 if isinstance(self.scheduler, list):
-                    for scheduler, state_dict in zip(self.scheduler, checkpoint.pop("scheduler")):
+                    for scheduler, state_dict in zip(
+                        self.scheduler, checkpoint.pop("scheduler")
+                    ):
                         scheduler.load_state_dict(state_dict)
                 else:
                     self.scheduler.load_state_dict(checkpoint.pop("scheduler"))

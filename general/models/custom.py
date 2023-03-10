@@ -23,7 +23,6 @@ class FROM():
 """
 
 
-
 class FFC_ARC64_FINETUNE(ffcresnet.FFCResNet):
     def __init__(self):
         super(FFC_ARC64_FINETUNE, self).__init__(
@@ -39,14 +38,15 @@ class FFC_ARC64_FINETUNE(ffcresnet.FFCResNet):
             use_se=cfg.MODEL.FFCR.USE_SE or False,
         )
 
-        snap = torch.load(os.path.join(cfg.ROOT, "experiments", "ffc_arc64", "snapshot.pt"))
+        snap = torch.load(
+            os.path.join(cfg.ROOT, "experiments", "ffc_arc64", "snapshot.pt")
+        )
         self.load_state_dict(snap["MODEL"])
 
         self.fc = nn.Sequential(
             nn.Linear(self.fc.in_features, cfg.MODEL.CUSTOM.ODIM),
             nn.Softmax(),
-            )
-        
+        )
 
 
 CUSTOM = {

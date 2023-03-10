@@ -5,7 +5,6 @@ import torch
 
 
 class ModelEma:
-
     def __init__(self, model, decay=0.9999, device=""):
 
         self.ema = deepcopy(model)

@@ -55,7 +55,9 @@ def all_gather(data):
 
     # obtain Tensor size of each rank
     local_size = torch.tensor([tensor.numel()], device=device, dtype=torch.long)
-    size_list = [torch.tensor([0], device=device, dtype=torch.long) for _ in range(world_size)]
+    size_list = [
+        torch.tensor([0], device=device, dtype=torch.long) for _ in range(world_size)
+    ]
     if cpu_group is None:
         dist.all_gather(size_list, local_size)
     else:
@@ -73,7 +75,9 @@ def all_gather(data):
     for _ in size_list:
         tensor_list.append(torch.empty((max_size,), dtype=torch.uint8, device=device))
     if local_size != max_size:
-        padding = torch.empty(size=(max_size - local_size,), dtype=torch.uint8, device=device)
+        padding = torch.empty(
+            size=(max_size - local_size,), dtype=torch.uint8, device=device
+        )
         tensor = torch.cat((tensor, padding), dim=0)
     if cpu_group is None:
         dist.all_gather(tensor_list, tensor)
@@ -119,6 +123,7 @@ def reduce_dict(input_dict, average=True):
 
 def set_dist_print(is_master):
     setup_for_distributed(is_master)
+
 
 def setup_for_distributed(is_master):
     """
@@ -223,7 +228,9 @@ def init_distributed_mode(args):
 
     torch.cuda.set_device(args.gpu)
     args.dist_backend = "nccl"
-    print("| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True)
+    print(
+        "| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True
+    )
 
     dist.init_process_group(
         backend=args.dist_backend,

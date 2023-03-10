@@ -34,10 +34,14 @@ class HFPTTokenizer(object):
             self.tokenizer.sep_token = self.tokenizer.eos_token
 
     def get_eot_token(self):
-        return self.tokenizer.encode(self.tokenizer.sep_token, add_special_tokens=False)[0]
+        return self.tokenizer.encode(
+            self.tokenizer.sep_token, add_special_tokens=False
+        )[0]
 
     def get_sot_token(self):
-        return self.tokenizer.encode(self.tokenizer.cls_token, add_special_tokens=False)[0]
+        return self.tokenizer.encode(
+            self.tokenizer.cls_token, add_special_tokens=False
+        )[0]
 
     def get_eot_token_list(self):
         return self.tokenizer.encode(self.tokenizer.sep_token, add_special_tokens=False)
@@ -71,9 +75,9 @@ class HFPTTokenizer(object):
             seqend = self.get_eot_token_list()
             max_length = max_length - 1
 
-        tokens = self.tokenizer(texts, padding=padding, truncation=True, max_length=max_length)[
-            "input_ids"
-        ]
+        tokens = self.tokenizer(
+            texts, padding=padding, truncation=True, max_length=max_length
+        )["input_ids"]
 
         for i in range(len(tokens)):
             tokens[i] = seqstart + tokens[i] + seqend

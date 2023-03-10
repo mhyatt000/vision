@@ -70,7 +70,9 @@ class BasicBlock(nn.Module):
             norm_layer=norm_layer,
             enable_lfu=lfu,
         )
-        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        self.se_block = (
+            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        )
 
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
@@ -142,7 +144,9 @@ class Bottleneck(nn.Module):
             ratio_gout=ratio_gout,
             enable_lfu=lfu,
         )
-        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        self.se_block = (
+            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        )
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -192,7 +196,9 @@ class FFCResNet(nn.Module):
         self.base_width = width_per_group
         self.lfu = lfu
         self.use_se = use_se
-        self.conv1 = nn.Conv2d(3, inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, inplanes, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.bn1 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -231,7 +237,9 @@ class FFCResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5):
+    def _make_layer(
+        self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5
+    ):
         norm_layer = self._norm_layer
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion or ratio_gin == 0:

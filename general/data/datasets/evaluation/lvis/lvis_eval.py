@@ -11,12 +11,13 @@ import pycocotools.mask as mask_util
 import torch
 import torch._six
 
-import maskrcnn_benchmark.utils.mdetr_dist  as dist
+import maskrcnn_benchmark.utils.mdetr_dist as dist
 
 from maskrcnn_benchmark.utils.mdetr_dist import all_gather
 
 
 from .lvis import LVIS
+
 
 def merge(img_ids, eval_imgs):
     all_img_ids = all_gather(img_ids)
@@ -55,8 +56,12 @@ class Params:
         self.cat_ids = []
         # np.arange causes trouble.  the data point on arange is slightly
         # larger than the true value
-        self.iou_thrs = np.linspace(0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True)
-        self.rec_thrs = np.linspace(0.0, 1.00, int(np.round((1.00 - 0.0) / 0.01)) + 1, endpoint=True)
+        self.iou_thrs = np.linspace(
+            0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True
+        )
+        self.rec_thrs = np.linspace(
+            0.0, 1.00, int(np.round((1.00 - 0.0) / 0.01)) + 1, endpoint=True
+        )
         self.max_dets = 300
         self.area_rng = [
             [0 ** 2, 1e5 ** 2],
@@ -202,8 +207,12 @@ class LVISEval:
 
         cat_ids = self.params.cat_ids if self.params.cat_ids else None
 
-        gts = self.lvis_gt.load_anns(self.lvis_gt.get_ann_ids(img_ids=self.params.img_ids, cat_ids=cat_ids))
-        dts = self.lvis_dt.load_anns(self.lvis_dt.get_ann_ids(img_ids=self.params.img_ids, cat_ids=cat_ids))
+        gts = self.lvis_gt.load_anns(
+            self.lvis_gt.get_ann_ids(img_ids=self.params.img_ids, cat_ids=cat_ids)
+        )
+        dts = self.lvis_dt.load_anns(
+            self.lvis_dt.get_ann_ids(img_ids=self.params.img_ids, cat_ids=cat_ids)
+        )
         # convert ground truth to mask if iou_type == 'segm'
         if self.params.iou_type == "segm":
             self._to_mask(gts, self.lvis_gt)
@@ -265,7 +274,9 @@ class LVISEval:
         self._prepare()
 
         self.ious = {
-            (img_id, cat_id): self.compute_iou(img_id, cat_id) for img_id in self.params.img_ids for cat_id in cat_ids
+            (img_id, cat_id): self.compute_iou(img_id, cat_id)
+            for img_id in self.params.img_ids
+            for cat_id in cat_ids
         }
 
         # loop through images, area range, max detection number
@@ -285,8 +296,16 @@ class LVISEval:
             gt = self._gts[img_id, cat_id]
             dt = self._dts[img_id, cat_id]
         else:
-            gt = [_ann for _cat_id in self.params.cat_ids for _ann in self._gts[img_id, cat_id]]
-            dt = [_ann for _cat_id in self.params.cat_ids for _ann in self._dts[img_id, cat_id]]
+            gt = [
+                _ann
+                for _cat_id in self.params.cat_ids
+                for _ann in self._gts[img_id, cat_id]
+            ]
+            dt = [
+                _ann
+                for _cat_id in self.params.cat_ids
+                for _ann in self._dts[img_id, cat_id]
+            ]
         return gt, dt
 
     def compute_iou(self, img_id, cat_id):
@@ -338,7 +357,11 @@ class LVISEval:
         dt = [dt[i] for i in dt_idx]
 
         # load computed ious
-        ious = self.ious[img_id, cat_id][:, gt_idx] if len(self.ious[img_id, cat_id]) > 0 else self.ious[img_id, cat_id]
+        ious = (
+            self.ious[img_id, cat_id][:, gt_idx]
+            if len(self.ious[img_id, cat_id]) > 0
+            else self.ious[img_id, cat_id]
+        )
 
         num_thrs = len(self.params.iou_thrs)
         num_gt = len(gt)
@@ -388,7 +411,9 @@ class LVISEval:
         # For LVIS we will ignore any unmatched detection if that category was
         # not exhaustively annotated in gt.
         dt_ig_mask = [
-            d["area"] < area_rng[0] or d["area"] > area_rng[1] or d["category_id"] in self.img_nel[d["image_id"]]
+            d["area"] < area_rng[0]
+            or d["area"] > area_rng[1]
+            or d["category_id"] in self.img_nel[d["image_id"]]
             for d in dt
         ]
         dt_ig_mask = np.array(dt_ig_mask).reshape((1, num_dt))  # 1 X num_dt
@@ -502,7 +527,9 @@ class LVISEval:
                         if pr[i] > pr[i - 1]:
                             pr[i - 1] = pr[i]
 
-                    rec_thrs_insert_idx = np.searchsorted(rc, self.params.rec_thrs, side="left")
+                    rec_thrs_insert_idx = np.searchsorted(
+                        rc, self.params.rec_thrs, side="left"
+                    )
 
                     pr_at_recall = [0.0] * num_recalls
 
@@ -511,7 +538,9 @@ class LVISEval:
                             pr_at_recall[_idx] = pr[pr_idx]
                     except Exception:
                         pass
-                    precision[iou_thr_idx, :, cat_idx, area_idx] = np.array(pr_at_recall)
+                    precision[iou_thr_idx, :, cat_idx, area_idx] = np.array(
+                        pr_at_recall
+                    )
 
         self.eval = {
             "params": self.params,
@@ -522,8 +551,14 @@ class LVISEval:
             "dt_pointers": dt_pointers,
         }
 
-    def _summarize(self, summary_type, iou_thr=None, area_rng="all", freq_group_idx=None):
-        aidx = [idx for idx, _area_rng in enumerate(self.params.area_rng_lbl) if _area_rng == area_rng]
+    def _summarize(
+        self, summary_type, iou_thr=None, area_rng="all", freq_group_idx=None
+    ):
+        aidx = [
+            idx
+            for idx, _area_rng in enumerate(self.params.area_rng_lbl)
+            if _area_rng == area_rng
+        ]
 
         if summary_type == "ap":
             s = self.eval["precision"]
@@ -606,7 +641,9 @@ class LVISEval:
                 iou_thr = float(key[2:]) / 100
                 iou = "{:0.2f}".format(iou_thr)
             else:
-                iou = "{:0.2f}:{:0.2f}".format(self.params.iou_thrs[0], self.params.iou_thrs[-1])
+                iou = "{:0.2f}:{:0.2f}".format(
+                    self.params.iou_thrs[0], self.params.iou_thrs[-1]
+                )
 
             if len(key) > 2 and key[2] in ["r", "c", "f"]:
                 cat_group_name = key[2]
@@ -618,8 +655,16 @@ class LVISEval:
             else:
                 area_rng = "all"
 
-            print(template.format(title, _type, iou, area_rng, max_dets, cat_group_name, value))
-            out_strings.append(template.format(title, _type, iou, area_rng, max_dets, cat_group_name, value))
+            print(
+                template.format(
+                    title, _type, iou, area_rng, max_dets, cat_group_name, value
+                )
+            )
+            out_strings.append(
+                template.format(
+                    title, _type, iou, area_rng, max_dets, cat_group_name, value
+                )
+            )
         return out_strings
 
     def get_results(self):
@@ -661,7 +706,9 @@ class LvisEvaluator(object):
             lvis_eval.evaluate()
             eval_imgs = lvis_eval.eval_imgs
             eval_imgs = np.asarray(eval_imgs).reshape(
-                len(lvis_eval.params.cat_ids), len(lvis_eval.params.area_rng), len(lvis_eval.params.img_ids)
+                len(lvis_eval.params.cat_ids),
+                len(lvis_eval.params.area_rng),
+                len(lvis_eval.params.img_ids),
             )
 
             self.eval_imgs[iou_type].append(eval_imgs)
@@ -669,7 +716,9 @@ class LvisEvaluator(object):
     def synchronize_between_processes(self):
         for iou_type in self.iou_types:
             self.eval_imgs[iou_type] = np.concatenate(self.eval_imgs[iou_type], 2)
-            create_common_lvis_eval(self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type])
+            create_common_lvis_eval(
+                self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type]
+            )
 
     def accumulate(self):
         for lvis_eval in self.coco_eval.values():
@@ -730,7 +779,10 @@ class LvisEvaluator(object):
             labels = prediction["labels"].tolist()
 
             rles = [
-                mask_util.encode(np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F"))[0] for mask in masks
+                mask_util.encode(
+                    np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F")
+                )[0]
+                for mask in masks
             ]
             for rle in rles:
                 rle["counts"] = rle["counts"].decode("utf-8")
@@ -753,7 +805,9 @@ def _merge_lists(listA, listB, maxN, key):
     result = []
     indA, indB = 0, 0
     while (indA < len(listA) or indB < len(listB)) and len(result) < maxN:
-        if (indB < len(listB)) and (indA >= len(listA) or key(listA[indA]) < key(listB[indB])):
+        if (indB < len(listB)) and (
+            indA >= len(listA) or key(listA[indA]) < key(listB[indB])
+        ):
             result.append(listB[indB])
             indB += 1
         else:
@@ -783,15 +837,21 @@ class LvisEvaluatorFixedAP(object):
                 if cat not in self.by_cat:
                     self.by_cat[cat] = []
 
-                cur = sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk]
-                self.by_cat[cat] = _merge_lists(self.by_cat[cat], cur, self.topk, key=lambda x: x["score"])
+                cur = sorted(cat_anns, key=lambda x: x["score"], reverse=True)[
+                    : self.topk
+                ]
+                self.by_cat[cat] = _merge_lists(
+                    self.by_cat[cat], cur, self.topk, key=lambda x: x["score"]
+                )
         else:
             by_id = defaultdict(list)
             for ann in cur_results:
                 by_id[ann["image_id"]].append(ann)
 
             for id_anns in by_id.values():
-                self.results.extend(sorted(id_anns, key=lambda x: x["score"], reverse=True)[:300])
+                self.results.extend(
+                    sorted(id_anns, key=lambda x: x["score"], reverse=True)[:300]
+                )
 
     def synchronize_between_processes(self):
         if self.fixed_ap:
@@ -849,7 +909,9 @@ class LvisEvaluatorFixedAP(object):
         for cat, cat_anns in self.by_cat.items():
             if len(cat_anns) < self.topk:
                 missing_dets_cats.add(cat)
-            results.extend(sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk])
+            results.extend(
+                sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk]
+            )
         if missing_dets_cats:
             print(
                 f"\n===\n"
@@ -894,15 +956,21 @@ class LvisDumper(object):
                 if cat not in self.by_cat:
                     self.by_cat[cat] = []
 
-                cur = sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk]
-                self.by_cat[cat] = _merge_lists(self.by_cat[cat], cur, self.topk, key=lambda x: x["score"])
+                cur = sorted(cat_anns, key=lambda x: x["score"], reverse=True)[
+                    : self.topk
+                ]
+                self.by_cat[cat] = _merge_lists(
+                    self.by_cat[cat], cur, self.topk, key=lambda x: x["score"]
+                )
         else:
             by_id = defaultdict(list)
             for ann in cur_results:
                 by_id[ann["image_id"]].append(ann)
 
             for id_anns in by_id.values():
-                self.results.extend(sorted(id_anns, key=lambda x: x["score"], reverse=True)[:300])
+                self.results.extend(
+                    sorted(id_anns, key=lambda x: x["score"], reverse=True)[:300]
+                )
 
     def synchronize_between_processes(self):
         if self.fixed_ap:
@@ -962,7 +1030,9 @@ class LvisDumper(object):
         for cat, cat_anns in self.by_cat.items():
             if len(cat_anns) < self.topk:
                 missing_dets_cats.add(cat)
-            results.extend(sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk])
+            results.extend(
+                sorted(cat_anns, key=lambda x: x["score"], reverse=True)[: self.topk]
+            )
         if missing_dets_cats:
             print(
                 f"\n===\n"
@@ -993,6 +1063,7 @@ def create_common_lvis_eval(lvis_eval, img_ids, eval_imgs):
 
     lvis_eval.eval_imgs = eval_imgs
     lvis_eval.params.img_ids = img_ids
+
 
 def lvis_evaluation():
     pass

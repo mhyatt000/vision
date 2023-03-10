@@ -48,4 +48,3 @@ def build_tokenizer():
 
     else:
         return AutoTokenizer.from_pretrained(cfg.MODEL.LANG.TOKENIZER)
-

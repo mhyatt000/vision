@@ -66,7 +66,7 @@ def sync_random_seed(seed=None, device="cuda"):
     """
 
     if seed is None:
-        seed = np.random.randint(2**31)
+        seed = np.random.randint(2 ** 31)
     assert isinstance(seed, int)
 
     rank, world_size = get_dist_info()
@@ -119,7 +119,9 @@ class DistributedSampler(_DistributedSampler):
 
         # add extra samples to make it evenly divisible
         # in case that indices is shorter than half of total_size
-        indices = (indices * math.ceil(self.total_size / len(indices)))[: self.total_size]
+        indices = (indices * math.ceil(self.total_size / len(indices)))[
+            : self.total_size
+        ]
         assert len(indices) == self.total_size
 
         # subsample

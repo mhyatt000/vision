@@ -25,6 +25,23 @@ def mkfig(fname, legend=None):
     plt.close("all")
 
 
+def serialize(k, v, mode="w"):
+    fname = os.path.join(out.get_path(), "results.json")
+    with open(fname, "r") as file:
+        data = json.load(file)
+
+    if mode == "w":
+        data[k] = v
+    if mode == "a":
+        try:
+            data[k].append(v)
+        except:
+            data[k] = [v]
+
+    with open(fname, "w") as file:
+        json.dump(data, file)
+
+
 def show_loss(loss, lr=None, *args, **kwargs):
     """plots loss over time"""
 
@@ -38,12 +55,14 @@ def show_loss(loss, lr=None, *args, **kwargs):
     # plt.xticks([i * epoch_size for i in epochs], epochs)
 
     mkfig("loss.png")
+    serialize("losses", loss)
 
 
 def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
     plt.plot([i for i, _ in enumerate(acc)], acc, color="r", label="accuracy")
     mkfig("accuracy.png")
+    serialize("accuracy", acc)
 
 
 def calc_confusion(Y, Yh):
@@ -55,6 +74,7 @@ def calc_confusion(Y, Yh):
         confusion[y, yh] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
+    serialize("confusion_from_cross_entropy", confusion)
     return confusion, acc
 
 
@@ -91,6 +111,7 @@ def arc_confusion(Y, Yh, centers):
         confusion[int(y.item()), int(yh.item())] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
+    serialize("confusion_from_centers", confusion)
     return confusion, acc
 
 
@@ -124,20 +145,30 @@ def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
 
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):
-            plt.text(x=j, y=i, s=int(confusion[i, j]), va="center", ha="center", size="xx-large")
+            plt.text(
+                x=j,
+                y=i,
+                s=int(confusion[i, j]),
+                va="center",
+                ha="center",
+                size="xx-large",
+            )
 
     # plt.title(f"Confusion Matrix")
     plt.xlabel("Predictions")
     plt.ylabel("Ground Truth")
 
     mkfig("rknn.png")
+    serialize("confusion_from_rknn", confusion)
 
 
 def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
 
     confusion, acc = (
-        calc_confusion(Y, Yh) if cfg.LOSS.BODY == "CE" else arc_confusion(Y, Yh, centers)
+        calc_confusion(Y, Yh)
+        if cfg.LOSS.BODY == "CE"
+        else arc_confusion(Y, Yh, centers)
     )
 
     # plt.rcParams.update({"font.size": 18}) # way too big...
@@ -145,7 +176,14 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
 
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):
-            plt.text(x=j, y=i, s=int(confusion[i, j]), va="center", ha="center", size="xx-large")
+            plt.text(
+                x=j,
+                y=i,
+                s=int(confusion[i, j]),
+                va="center",
+                ha="center",
+                size="xx-large",
+            )
 
     # plt.title(f"Confusion Matrix")
     plt.xlabel("Predictions")
@@ -169,13 +207,17 @@ def show_tsne(Y, Yh, *args, **kwargs):
 
 def show_pca(Y, Yh, *args, **kwargs):
     """docstring"""
-    # ax = fig.add_subplot(projection="3d")
 
-    pca = PCA(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
+    fig, ax = plt.subplots()
+    ax = fig.add_subplot(projection="3d")
+
+    ncomponents = 3  # 2
+    pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = pca.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
-    scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
-    # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
+    scatter = plt.scatter(
+        *[Yh[:, i] for i in range(ncomponents)], c=Y.view(-1).tolist(), alpha=0.3
+    )
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("pca.png")
@@ -196,7 +238,9 @@ def calc_dprime(Y, Yh):
 
         dist = lambda a, b: (a - b).pow(2).sum(-1).sqrt()
         angle = (
-            lambda a, b: torch.acos(torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b)))
+            lambda a, b: torch.acos(
+                torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
+            )
             * 180
             / 3.141592
         )
@@ -213,7 +257,10 @@ def calc_dprime(Y, Yh):
         pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
         nall += [float(x) for x in nhist[c][:1000]]
 
-    dprime = (2**0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
+    dprime = (2 ** 0.5 * abs(mean(pall) - mean(nall))) / (
+        (variance(pall) + variance(nall)) ** 0.2
+    )
+    serialize("dprime", dprime)
     return pall, nall, dprime
 
 
@@ -242,42 +289,10 @@ PLOTS = {
 
 if __name__ == "__main__":
 
-    Y = torch.Tensor(
-        [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 1],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 1],
-        ]
-    )
+    Y = torch.rand((20, 5))
     Y = torch.argmax(Y, dim=-1)
 
-    Yh = torch.Tensor(
-        [
-            [0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1],
-        ]
-        * 4
-    )
+    Yh = torch.rand((20, 64))
 
     print(Y)
     print(Yh)

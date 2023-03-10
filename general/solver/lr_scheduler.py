@@ -12,8 +12,7 @@ def assert_milestones(milestones):
 
     if not list(milestones) == sorted(milestones):
         raise ValueError(
-            "Milestones should be a list of" 
-            f" increasing integers. Got {milestones}"
+            "Milestones should be a list of" f" increasing integers. Got {milestones}"
         )
 
 
@@ -22,10 +21,8 @@ def assert_warmup(warmup_method):
 
     if warmup_method not in ("constant", "linear"):
         raise ValueError(
-            "Only 'constant' or 'linear' warmup_method accepted"
-            f"got {warmup_method}"
+            "Only 'constant' or 'linear' warmup_method accepted" f"got {warmup_method}"
         )
-
 
 
 # FIXME ideally this would be achieved with a CombinedLRScheduler,
@@ -71,15 +68,15 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
 
 class WarmupCosineAnnealingLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
-            self,
-            optimizer,
-            max_iters,
-            gamma=0.1,
-            warmup_factor=1.0 / 3,
-            warmup_iters=500,
-            warmup_method="linear",
-            eta_min = 0,
-            last_epoch=-1,
+        self,
+        optimizer,
+        max_iters,
+        gamma=0.1,
+        warmup_factor=1.0 / 3,
+        warmup_iters=500,
+        warmup_method="linear",
+        eta_min=0,
+        last_epoch=-1,
     ):
 
         assert_warmup(warmup_method)
@@ -101,33 +98,36 @@ class WarmupCosineAnnealingLR(torch.optim.lr_scheduler._LRScheduler):
             elif self.warmup_method == "linear":
                 alpha = float(self.last_epoch) / self.warmup_iters
                 warmup_factor = self.warmup_factor * (1 - alpha) + alpha
-            return [
-                base_lr
-                * warmup_factor
-                for base_lr in self.base_lrs
-            ]
+            return [base_lr * warmup_factor for base_lr in self.base_lrs]
         else:
             return [
                 self.eta_min
                 + (base_lr - self.eta_min)
-                * (1 + math.cos(math.pi * (self.last_epoch - self.warmup_iters) / self.max_iters)) / 2
+                * (
+                    1
+                    + math.cos(
+                        math.pi * (self.last_epoch - self.warmup_iters) / self.max_iters
+                    )
+                )
+                / 2
                 for base_lr in self.base_lrs
             ]
 
+
 class WarmupReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
     def __init__(
-            self,
-            optimizer,
-            max_iters,
-            gamma=0.1,
-            warmup_factor=1.0 / 3,
-            warmup_iters=500,
-            warmup_method="linear",
-            eta_min = 0,
-            last_epoch=-1,
-            patience = 5,
-            verbose = False,
-    ):    
+        self,
+        optimizer,
+        max_iters,
+        gamma=0.1,
+        warmup_factor=1.0 / 3,
+        warmup_iters=500,
+        warmup_method="linear",
+        eta_min=0,
+        last_epoch=-1,
+        patience=5,
+        verbose=False,
+    ):
 
         assert_warmup(warmup_method)
 
@@ -138,14 +138,25 @@ class WarmupReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
 
         if last_epoch == -1:
             for group in optimizer.param_groups:
-                group.setdefault('initial_lr', group['lr'])
+                group.setdefault("initial_lr", group["lr"])
         else:
             for i, group in enumerate(optimizer.param_groups):
-                if 'initial_lr' not in group:
-                    raise KeyError("param 'initial_lr' is not specified "
-                                   "in param_groups[{}] when resuming an optimizer".format(i))
-        self.base_lrs = list(map(lambda group: group['initial_lr'], optimizer.param_groups))
-        super(WarmupReduceLROnPlateau, self).__init__(optimizer, factor=gamma, patience=patience, mode='max', min_lr=eta_min, verbose = verbose)
+                if "initial_lr" not in group:
+                    raise KeyError(
+                        "param 'initial_lr' is not specified "
+                        "in param_groups[{}] when resuming an optimizer".format(i)
+                    )
+        self.base_lrs = list(
+            map(lambda group: group["initial_lr"], optimizer.param_groups)
+        )
+        super(WarmupReduceLROnPlateau, self).__init__(
+            optimizer,
+            factor=gamma,
+            patience=patience,
+            mode="max",
+            min_lr=eta_min,
+            verbose=verbose,
+        )
 
     def step(self, metrics=None):
         warmup_factor = 1
@@ -156,19 +167,15 @@ class WarmupReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
             elif self.warmup_method == "linear":
                 alpha = float(self.last_epoch) / self.warmup_iters
                 warmup_factor = self.warmup_factor * (1 - alpha) + alpha
-            
-            if self.last_epoch >= self.warmup_iters-1:
+
+            if self.last_epoch >= self.warmup_iters - 1:
                 warmup_factor = 1.0
-                
-            warmup_lrs = [
-                base_lr
-                * warmup_factor
-                for base_lr in self.base_lrs
-            ]
+
+            warmup_lrs = [base_lr * warmup_factor for base_lr in self.base_lrs]
 
             for param_group, lr in zip(self.optimizer.param_groups, warmup_lrs):
-                param_group['lr'] = lr
-            
+                param_group["lr"] = lr
+
             self.last_epoch += 1
         elif metrics:
             super().step(metrics)

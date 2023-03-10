@@ -8,7 +8,7 @@ OPTIM = {
 
 
 def make_optimizer(params):
-    #TODO: add support for *args where args are objects to be optimized
+    # TODO: add support for *args where args are objects to be optimized
     # ie: make_optim(*args, params):
     # assert not (args and params)
 
@@ -19,8 +19,8 @@ def make_optimizer(params):
     )
 
     if cfg.OPTIM.BODY == "SGD":
-        kwargs['momentum']=cfg.OPTIM.MOMENTUM
-    if cfg.OPTIM.BODY == 'ADAM':
-          kwargs['betas'] = cfg.OPTIM.BETAS
+        kwargs["momentum"] = cfg.OPTIM.MOMENTUM
+    if cfg.OPTIM.BODY == "ADAM":
+        kwargs["betas"] = cfg.OPTIM.BETAS
 
     return OPTIM[cfg.OPTIM.BODY](**kwargs)

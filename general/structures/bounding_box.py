@@ -19,8 +19,11 @@ class BoxList(object):
     def __init__(self, bbox, image_size, mode="xyxy"):
         device = bbox.device if isinstance(bbox, torch.Tensor) else torch.device("cpu")
         # only do as_tensor if isn't a "no-op", because it hurts JIT tracing
-        if (not isinstance(bbox, torch.Tensor)
-                or bbox.dtype != torch.float32 or bbox.device != device):
+        if (
+            not isinstance(bbox, torch.Tensor)
+            or bbox.dtype != torch.float32
+            or bbox.device != device
+        ):
             bbox = torch.as_tensor(bbox, dtype=torch.float32, device=device)
         if bbox.ndimension() != 2:
             raise ValueError(
@@ -41,9 +44,11 @@ class BoxList(object):
 
     # note: _jit_wrap/_jit_unwrap only work if the keys and the sizes don't change in between
     def _jit_unwrap(self):
-        return (self.bbox,) + tuple(f for f in (self.get_field(field)
-                                    for field in sorted(self.fields()))
-                                    if isinstance(f, torch.Tensor))
+        return (self.bbox,) + tuple(
+            f
+            for f in (self.get_field(field) for field in sorted(self.fields()))
+            if isinstance(f, torch.Tensor)
+        )
 
     def _jit_wrap(self, input_stream):
         self.bbox = input_stream[0]
@@ -241,16 +246,18 @@ class BoxList(object):
         return self
 
     def area(self):
-        if self.mode == 'xyxy':
+        if self.mode == "xyxy":
             TO_REMOVE = 1
             box = self.bbox
-            area = (box[:, 2] - box[:, 0] + TO_REMOVE) * (box[:, 3] - box[:, 1] + TO_REMOVE)
-        elif self.mode == 'xywh':
+            area = (box[:, 2] - box[:, 0] + TO_REMOVE) * (
+                box[:, 3] - box[:, 1] + TO_REMOVE
+            )
+        elif self.mode == "xywh":
             box = self.bbox
             area = box[:, 2] * box[:, 3]
         else:
             raise RuntimeError("Should not be here")
-            
+
         return area
 
     def copy_with_fields(self, fields):
@@ -268,20 +275,23 @@ class BoxList(object):
         s += "image_height={}, ".format(self.size[1])
         s += "mode={})".format(self.mode)
         return s
-    
+
     @staticmethod
     def concate_box_list(list_of_boxes):
-        boxes = torch.cat([i.bbox for i in list_of_boxes], dim = 0)
+        boxes = torch.cat([i.bbox for i in list_of_boxes], dim=0)
         extra_fields_keys = list(list_of_boxes[0].extra_fields.keys())
         extra_fields = {}
         for key in extra_fields_keys:
-            extra_fields[key] = torch.cat([i.extra_fields[key] for i in list_of_boxes], dim = 0)
+            extra_fields[key] = torch.cat(
+                [i.extra_fields[key] for i in list_of_boxes], dim=0
+            )
 
         final = list_of_boxes[0].copy_with_fields(extra_fields_keys)
 
         final.bbox = boxes
         final.extra_fields = extra_fields
         return final
+
 
 @torch.jit.unused
 def _onnx_clip_boxes_to_image(boxes, size):
@@ -301,10 +311,14 @@ def _onnx_clip_boxes_to_image(boxes, size):
     boxes_x = boxes[..., 0::2]
     boxes_y = boxes[..., 1::2]
 
-    boxes_x = torch.max(boxes_x, torch.tensor(0., dtype=torch.float).to(device))
-    boxes_x = torch.min(boxes_x, torch.tensor(size[1] - TO_REMOVE, dtype=torch.float).to(device))
-    boxes_y = torch.max(boxes_y, torch.tensor(0., dtype=torch.float).to(device))
-    boxes_y = torch.min(boxes_y, torch.tensor(size[0] - TO_REMOVE, dtype=torch.float).to(device))
+    boxes_x = torch.max(boxes_x, torch.tensor(0.0, dtype=torch.float).to(device))
+    boxes_x = torch.min(
+        boxes_x, torch.tensor(size[1] - TO_REMOVE, dtype=torch.float).to(device)
+    )
+    boxes_y = torch.max(boxes_y, torch.tensor(0.0, dtype=torch.float).to(device))
+    boxes_y = torch.min(
+        boxes_y, torch.tensor(size[0] - TO_REMOVE, dtype=torch.float).to(device)
+    )
 
     clipped_boxes = torch.stack((boxes_x, boxes_y), dim=dim)
     return clipped_boxes.reshape(boxes.shape)

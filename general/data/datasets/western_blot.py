@@ -24,7 +24,9 @@ transform = transforms.Compose(
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
 
-    def __init__(self, root="western_blots", transform=transform, target_transform=None):
+    def __init__(
+        self, root="western_blots", transform=transform, target_transform=None
+    ):
         super(WBLOT, self).__init__()
 
         try:
@@ -40,7 +42,13 @@ class WBLOT(Dataset):
         self.pix2pix = join(self.synth, "pix2pix")
         self.stylegan2ada = join(self.synth, "stylegan2ada")
 
-        self.datafolders = [self.real, self.cyclegan, self.ddpm, self.pix2pix, self.stylegan2ada]
+        self.datafolders = [
+            self.real,
+            self.cyclegan,
+            self.ddpm,
+            self.pix2pix,
+            self.stylegan2ada,
+        ]
 
         # init labels
         self.data = []

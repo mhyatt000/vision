@@ -17,12 +17,12 @@ _C = CN(
 )
 
 # experiment
-_C.EXP = CN( 
+_C.EXP = CN(
     new_allowed=True,
     init_dict=dict(
         BODY="DEFAULT",
-        TRAIN= True,
-        TEST= False,
+        TRAIN=True,
+        TEST=False,
     ),
 )
 
@@ -30,9 +30,9 @@ _C.EXP = CN(
 _C.SCHEDULER = CN(
     new_allowed=True,
     init_dict=dict(
-        BODY= "POLY",
+        BODY="POLY",
         GAMMA=0.99,
-        WARMUP= 0,
+        WARMUP=0,
     ),
 )
 
@@ -44,14 +44,13 @@ _C.LOADER = CN(
         LEAVE_OUT=None,
         SWAP=0,
         X=False,
-        BATCH_SIZE = None,
-        GPU_BATCH_SIZE = None,
-        NUM_WORKERS=4, # Number of data loading threads
-        # each collated batch_size % SIZE_DIVISIBILITY should == 0 
+        BATCH_SIZE=None,
+        GPU_BATCH_SIZE=None,
+        NUM_WORKERS=4,  # Number of data loading threads
+        # each collated batch_size % SIZE_DIVISIBILITY should == 0
         SIZE_DIVISIBILITY=0,
-        USE_RANDOM_SEED=False, # Use random sampler during training
+        USE_RANDOM_SEED=False,  # Use random sampler during training
         DISTRIBUTE_CHUNK_AMONG_NODE=False,
-
     ),
 )
 
@@ -512,7 +511,12 @@ _C.MODEL.RPN = CN(
         # For FPN, number of strides should match number of scales
         ANCHOR_STRIDE=(16,),
         ASPECT_RATIOS=(0.5, 1.0, 2.0),  # RPN anchor aspect ratios
-        ANCHOR_SHIFT=(0.0, 0.0, 0.0, 0.0),  # Anchor shift away ration from the center for r,t,l,d
+        ANCHOR_SHIFT=(
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ),  # Anchor shift away ration from the center for r,t,l,d
         USE_RELATIVE_SIZE=False,  # Use center to decide anchor size
         # Remove RPN anchors that go outside the image by RPN_STRADDLE_THRESH pixels
         # Set to -1 or a large value, e.g. 100000, to disable pruning anchors
@@ -727,13 +731,13 @@ _C.SEARCH = CN(
 # Solver
 # ---------------------------------------------------------------------------- #
 
-#NOTE: it seems like solver is a combo of loss, optim, and scheduler
+# NOTE: it seems like solver is a combo of loss, optim, and scheduler
 
 _C.SOLVER = CN(
     new_allowed=True,
     init_dict=dict(
         USE_AMP=False,
-        MAX_ITER=5000, # was 4e4 for GLIP
+        MAX_ITER=5000,  # was 4e4 for GLIP
         MULTI_MAX_ITER=(),  # set different max epoch for different stage
         MAX_EPOCH=0,  # any epoch number>0 will overwrite max_iter
         MULTI_MAX_EPOCH=(),  # set different max epoch for different stage
@@ -743,7 +747,7 @@ _C.SOLVER = CN(
         BACKBONE_BODY_LR_FACTOR=1.0,
         BIAS_LR_FACTOR=2,
         GRAD_CLIP=0.0,
-        GRAD_ACC_EVERY = 1, # accumulate every epoch if possible
+        GRAD_ACC_EVERY=1,  # accumulate every epoch if possible
         # D2 gradient clip
         CLIP_GRADIENTS=CN(
             init_dict=dict(

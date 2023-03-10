@@ -61,8 +61,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-class MetricLogger():
-
+class MetricLogger:
     def __init__(self, delimiter="\t"):
         self.meters = defaultdict(SmoothedValue)
         self.delimiter = delimiter
@@ -79,8 +78,9 @@ class MetricLogger():
             return self.meters[attr]
         if attr in self.__dict__:
             return self.__dict__[attr]
-        raise AttributeError("'{}' object has no attribute '{}'".format(
-            type(self).__name__, attr))
+        raise AttributeError(
+            "'{}' object has no attribute '{}'".format(type(self).__name__, attr)
+        )
 
     def __str__(self):
         loss_str = []
@@ -93,11 +93,7 @@ class MetricLogger():
 
 # haotian added tensorboard support
 class TensorboardLogger(MetricLogger):
-    def __init__(self,
-                 log_dir,
-                 start_iter=0,
-                 delimiter='\t'
-                 ):
+    def __init__(self, log_dir, start_iter=0, delimiter="\t"):
         super(TensorboardLogger, self).__init__(delimiter)
         self.iteration = start_iter
         self.writer = self._get_tensorboard_writer(log_dir)
@@ -108,13 +104,13 @@ class TensorboardLogger(MetricLogger):
             from tensorboardX import SummaryWriter
         except ImportError:
             raise ImportError(
-                'To use tensorboard please install tensorboardX '
-                '[ pip install tensorflow tensorboardX ].'
+                "To use tensorboard please install tensorboardX "
+                "[ pip install tensorflow tensorboardX ]."
             )
 
         if is_main_process():
             # timestamp = datetime.fromtimestamp(time.time()).strftime('%Y%m%d-%H:%M')
-            tb_logger = SummaryWriter('{}'.format(log_dir))
+            tb_logger = SummaryWriter("{}".format(log_dir))
             return tb_logger
         else:
             return None

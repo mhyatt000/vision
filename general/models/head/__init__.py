@@ -19,7 +19,10 @@ class ROIHeads(torch.nn.ModuleDict):
 
         if cfg.MODEL.MASK_ON and cfg.MODEL.ROI_MASK_HEAD.SHARE_BOX_FEATURE_EXTRACTOR:
             self.mask.feature_extractor = self.box.feature_extractor
-        if cfg.MODEL.KEYPOINT_ON and cfg.MODEL.ROI_KEYPOINT_HEAD.SHARE_BOX_FEATURE_EXTRACTOR:
+        if (
+            cfg.MODEL.KEYPOINT_ON
+            and cfg.MODEL.ROI_KEYPOINT_HEAD.SHARE_BOX_FEATURE_EXTRACTOR
+        ):
             self.keypoint.feature_extractor = self.box.feature_extractor
 
     def forward(
@@ -43,7 +46,10 @@ class ROIHeads(torch.nn.ModuleDict):
             mask_features = features
             # optimization: during training, if we share the feature extractor between
             # the box and the mask heads, then we can reuse the features already computed
-            if self.training and self.cfg.MODEL.ROI_MASK_HEAD.SHARE_BOX_FEATURE_EXTRACTOR:
+            if (
+                self.training
+                and self.cfg.MODEL.ROI_MASK_HEAD.SHARE_BOX_FEATURE_EXTRACTOR
+            ):
                 mask_features = x
             # During training, self.box() will return the unaltered proposals as "detections"
             # this makes the API consistent during training and testing
@@ -60,11 +66,16 @@ class ROIHeads(torch.nn.ModuleDict):
             keypoint_features = features
             # optimization: during training, if we share the feature extractor between
             # the box and the mask heads, then we can reuse the features already computed
-            if self.training and self.cfg.MODEL.ROI_KEYPOINT_HEAD.SHARE_BOX_FEATURE_EXTRACTOR:
+            if (
+                self.training
+                and self.cfg.MODEL.ROI_KEYPOINT_HEAD.SHARE_BOX_FEATURE_EXTRACTOR
+            ):
                 keypoint_features = x
             # During training, self.box() will return the unaltered proposals as "detections"
             # this makes the API consistent during training and testing
-            x, detections, loss_keypoint = self.keypoint(keypoint_features, detections, targets)
+            x, detections, loss_keypoint = self.keypoint(
+                keypoint_features, detections, targets
+            )
             losses.update(loss_keypoint)
         return x, detections, losses
 
@@ -81,8 +92,8 @@ def build_head():
     if cfg.MODEL.BOX_ON:
         heads.append(("box", BoxHead()))
     # if cfg.MODEL.MASK_ON:
-        # heads.append(("mask", build_roi_mask_head()))
+    # heads.append(("mask", build_roi_mask_head()))
     # if cfg.MODEL.KEYPOINT_ON:
-        # heads.append(("keypoint", build_roi_keypoint_head()))
+    # heads.append(("keypoint", build_roi_keypoint_head()))
 
     return ROIHeads(heads)

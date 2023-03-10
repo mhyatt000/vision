@@ -13,12 +13,21 @@ class GQADataset(ModulatedDataset):
 
 class GQAQuestionAnswering(torchvision.datasets.CocoDetection):
     def __init__(
-        self, img_folder, ann_file, transforms, return_masks, return_tokens, tokenizer, ann_folder
+        self,
+        img_folder,
+        ann_file,
+        transforms,
+        return_masks,
+        return_tokens,
+        tokenizer,
+        ann_folder,
     ):
         super(GQAQuestionAnswering, self).__init__(img_folder, ann_file)
 
         self._transforms = transforms
-        self.prepare = ConvertCocoPolysToMask(return_masks, return_tokens, tokenizer=tokenizer)
+        self.prepare = ConvertCocoPolysToMask(
+            return_masks, return_tokens, tokenizer=tokenizer
+        )
         with open(ann_folder / "gqa_answer2id.json", "r") as f:
             self.answer2id = json.load(f)
         with open(ann_folder / "gqa_answer2id_by_type.json", "r") as f:

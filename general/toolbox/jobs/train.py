@@ -26,6 +26,7 @@ from general.models import build_model
 
 # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
+
 def init_seed():
     """sets random seed for experiments"""
 
@@ -51,14 +52,14 @@ def ddp_destroy():
 
 
 def grad_hook(model):
-    """ adds gradient clipping """
+    """adds gradient clipping"""
 
     # if cfg.MODEL.VISION.RESET_BN:
-        # for name, param in model.named_buffers():
-            # if "running_mean" in name:
-                # nn.init.constant_(param, 0)
-            # if "running_var" in name:
-                # nn.init.constant_(param, 1)
+    # for name, param in model.named_buffers():
+    # if "running_mean" in name:
+    # nn.init.constant_(param, 0)
+    # if "running_var" in name:
+    # nn.init.constant_(param, 1)
 
     if cfg.SOLVER.GRAD_CLIP:
         clip_value = cfg.SOLVER.GRAD_CLIP

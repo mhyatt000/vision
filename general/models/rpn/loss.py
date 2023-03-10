@@ -6,7 +6,12 @@ from torch import nn
 from torch.nn import functional as F
 from transformers import AutoTokenizer
 
-from general.models.layers import IOULoss, SigmoidFocalLoss, TokenSigmoidFocalLoss, smooth_l1_loss
+from general.models.layers import (
+    IOULoss,
+    SigmoidFocalLoss,
+    TokenSigmoidFocalLoss,
+    smooth_l1_loss,
+)
 from general.models.matcher import Matcher
 from general.structures.boxlist_ops import boxlist_iou, cat_boxlist
 from general.utils.amp import custom_bwd, custom_fwd
@@ -59,7 +64,9 @@ class RPNLossComputation(object):
         labels = []
         regression_targets = []
         for anchors_per_image, targets_per_image in zip(anchors, targets):
-            matched_targets = self.match_targets_to_anchors(anchors_per_image, targets_per_image)
+            matched_targets = self.match_targets_to_anchors(
+                anchors_per_image, targets_per_image
+            )
 
             matched_idxs = matched_targets.get_field("matched_idxs")
             labels_per_image = matched_idxs >= 0
@@ -74,7 +81,9 @@ class RPNLossComputation(object):
             # compute regression targets
             if not matched_targets.bbox.shape[0]:
                 zeros = torch.zeros_like(labels_per_image)
-                regression_targets_per_image = torch.stack((zeros, zeros, zeros, zeros), dim=1)
+                regression_targets_per_image = torch.stack(
+                    (zeros, zeros, zeros, zeros), dim=1
+                )
             else:
                 regression_targets_per_image = self.box_coder.encode(
                     matched_targets.bbox, anchors_per_image.bbox
@@ -112,9 +121,13 @@ class RPNLossComputation(object):
         # same format as the labels. Note that the labels are computed for
         # all feature levels concatenated, so we keep the same representation
         # for the objectness and the box_regression
-        for objectness_per_level, box_regression_per_level in zip(objectness, box_regression):
+        for objectness_per_level, box_regression_per_level in zip(
+            objectness, box_regression
+        ):
             N, A, H, W = objectness_per_level.shape
-            objectness_per_level = objectness_per_level.permute(0, 2, 3, 1).reshape(N, -1)
+            objectness_per_level = objectness_per_level.permute(0, 2, 3, 1).reshape(
+                N, -1
+            )
             box_regression_per_level = box_regression_per_level.view(N, -1, 4, H, W)
             box_regression_per_level = box_regression_per_level.permute(0, 3, 4, 1, 2)
             box_regression_per_level = box_regression_per_level.reshape(N, -1, 4)
@@ -258,7 +271,9 @@ class FocalLossComputation(object):
 
         labels = labels.int()
 
-        retinanet_cls_loss = self.box_cls_loss_func(box_cls, labels) / (pos_inds.numel() + N)
+        retinanet_cls_loss = self.box_cls_loss_func(box_cls, labels) / (
+            pos_inds.numel() + N
+        )
 
         return retinanet_cls_loss, retinanet_regression_loss
 
@@ -342,10 +357,14 @@ class FCOSLossComputation(object):
                 object_sizes_of_interest[l]
             )
             expanded_object_sizes_of_interest.append(
-                object_sizes_of_interest_per_level[None].expand(len(points_per_level), -1)
+                object_sizes_of_interest_per_level[None].expand(
+                    len(points_per_level), -1
+                )
             )
 
-        expanded_object_sizes_of_interest = torch.cat(expanded_object_sizes_of_interest, dim=0)
+        expanded_object_sizes_of_interest = torch.cat(
+            expanded_object_sizes_of_interest, dim=0
+        )
         num_points_per_level = [len(points_per_level) for points_per_level in points]
         self.num_points_per_level = num_points_per_level
         points_all_level = torch.cat(points, dim=0)
@@ -374,7 +393,9 @@ class FCOSLossComputation(object):
 
         return labels_level_first, reg_targets_level_first
 
-    def compute_targets_for_locations(self, locations, targets, object_sizes_of_interest):
+    def compute_targets_for_locations(
+        self, locations, targets, object_sizes_of_interest
+    ):
         labels = []
         reg_targets = []
         xs, ys = locations[:, 0], locations[:, 1]
@@ -413,9 +434,9 @@ class FCOSLossComputation(object):
 
             max_reg_targets_per_im = reg_targets_per_im.max(dim=2)[0]
             # limit the regression range for each location
-            is_cared_in_the_level = (max_reg_targets_per_im >= object_sizes_of_interest[:, [0]]) & (
-                max_reg_targets_per_im <= object_sizes_of_interest[:, [1]]
-            )
+            is_cared_in_the_level = (
+                max_reg_targets_per_im >= object_sizes_of_interest[:, [0]]
+            ) & (max_reg_targets_per_im <= object_sizes_of_interest[:, [1]])
 
             locations_to_gt_area = area[None].repeat(len(locations), 1)
             locations_to_gt_area[is_in_boxes == 0] = INF
@@ -423,9 +444,13 @@ class FCOSLossComputation(object):
 
             # if there are still more than one objects for a location,
             # we choose the one with minimal area
-            locations_to_min_area, locations_to_gt_inds = locations_to_gt_area.min(dim=1)
+            locations_to_min_area, locations_to_gt_inds = locations_to_gt_area.min(
+                dim=1
+            )
 
-            reg_targets_per_im = reg_targets_per_im[range(len(locations)), locations_to_gt_inds]
+            reg_targets_per_im = reg_targets_per_im[
+                range(len(locations)), locations_to_gt_inds
+            ]
             labels_per_im = labels_per_im[locations_to_gt_inds]
             labels_per_im[locations_to_min_area == INF] = 0
 
@@ -467,8 +492,12 @@ class FCOSLossComputation(object):
         labels_flatten = []
         reg_targets_flatten = []
         for l in range(len(labels)):
-            box_cls_flatten.append(box_cls[l].permute(0, 2, 3, 1).reshape(-1, num_classes))
-            box_regression_flatten.append(box_regression[l].permute(0, 2, 3, 1).reshape(-1, 4))
+            box_cls_flatten.append(
+                box_cls[l].permute(0, 2, 3, 1).reshape(-1, num_classes)
+            )
+            box_regression_flatten.append(
+                box_regression[l].permute(0, 2, 3, 1).reshape(-1, 4)
+            )
             labels_flatten.append(labels[l].reshape(-1))
             reg_targets_flatten.append(reg_targets[l].reshape(-1, 4))
             centerness_flatten.append(centerness[l].reshape(-1))
@@ -528,7 +557,8 @@ class ATSSLossComputation(torch.nn.Module):
             or self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_DOT_PRODUCT_TOKEN_LOSS
         ):
             self.token_loss_func = TokenSigmoidFocalLoss(
-                cfg.MODEL.DYHEAD.FUSE_CONFIG.TOKEN_ALPHA, cfg.MODEL.DYHEAD.FUSE_CONFIG.TOKEN_GAMMA
+                cfg.MODEL.DYHEAD.FUSE_CONFIG.TOKEN_ALPHA,
+                cfg.MODEL.DYHEAD.FUSE_CONFIG.TOKEN_GAMMA,
             )
 
         self.lang = cfg.MODEL.LANG.BODY
@@ -541,7 +571,9 @@ class ATSSLossComputation(torch.nn.Module):
             if cfg.MODEL.DYHEAD.FUSE_CONFIG.MLM_LOSS:
                 print("Reuse token 'ðŁĴĳ</w>' (token_id = 49404) for mask token!")
                 self.tokenizer = CLIPTokenizerFast.from_pretrained(
-                    "openai/clip-vit-base-patch32", from_slow=True, mask_token="ðŁĴĳ</w>"
+                    "openai/clip-vit-base-patch32",
+                    from_slow=True,
+                    mask_token="ðŁĴĳ</w>",
                 )
             else:
                 self.tokenizer = CLIPTokenizerFast.from_pretrained(
@@ -557,17 +589,27 @@ class ATSSLossComputation(torch.nn.Module):
         ):
             if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS:
                 assert (
-                    self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS == False
+                    self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS
+                    == False
                 )
                 channels = cfg.MODEL.DYHEAD.CHANNELS
-                num_anchors = len(cfg.MODEL.RPN.ASPECT_RATIOS) * cfg.MODEL.RPN.SCALES_PER_OCTAVE
+                num_anchors = (
+                    len(cfg.MODEL.RPN.ASPECT_RATIOS) * cfg.MODEL.RPN.SCALES_PER_OCTAVE
+                )
                 shallow_input_dim = channels * num_anchors
-            elif self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS:
-                assert self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS == False
+            elif (
+                self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS
+            ):
+                assert (
+                    self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS
+                    == False
+                )
                 shallow_input_dim = cfg.MODEL.SWINT.OUT_CHANNELS[-2]
 
             shallow_log_scale = self.cfg.MODEL.DYHEAD.SHALLOW_LOG_SCALE
-            shallow_contrastive_hdim = cfg.MODEL.DYHEAD.FUSE_CONFIG.SHALLOW_CONTRASTIVE_HIDDEN_DIM
+            shallow_contrastive_hdim = (
+                cfg.MODEL.DYHEAD.FUSE_CONFIG.SHALLOW_CONTRASTIVE_HIDDEN_DIM
+            )
             # self.shallow_contrastive_projection_image = nn.Conv2d(channels, num_anchors * shallow_contrastive_hdim,
             #                                                       kernel_size=1)
             self.shallow_contrastive_projection_image = nn.Linear(
@@ -610,7 +652,9 @@ class ATSSLossComputation(torch.nn.Module):
 
         nb_pos = positive_map.sum(2) + 1e-6
 
-        box_to_token_loss = ((pos_term / nb_pos + neg_term)).masked_fill(~boxes_with_pos, 0).sum()
+        box_to_token_loss = (
+            ((pos_term / nb_pos + neg_term)).masked_fill(~boxes_with_pos, 0).sum()
+        )
 
         tokens_with_pos = positive_map.any(1)
         pos_term = positive_logits.sum(1)
@@ -656,7 +700,9 @@ class ATSSLossComputation(torch.nn.Module):
         y1_enclosing = torch.min(pred_y1, target_y1)
         x2_enclosing = torch.max(pred_x2, target_x2)
         y2_enclosing = torch.max(pred_y2, target_y2)
-        area_enclosing = (x2_enclosing - x1_enclosing) * (y2_enclosing - y1_enclosing) + 1e-7
+        area_enclosing = (x2_enclosing - x1_enclosing) * (
+            y2_enclosing - y1_enclosing
+        ) + 1e-7
 
         area_union = pred_area + target_area - area_intersect + 1e-7
         ious = area_intersect / area_union
@@ -704,7 +750,9 @@ class ATSSLossComputation(torch.nn.Module):
             if "original_od_label" in targets_per_im.fields():
                 gold_box_od_label = targets_per_im.get_field("original_od_label")
             if "positive_map_for_od_labels" in targets_per_im.fields():
-                od_label_of_token_per_im = targets_per_im.get_field("positive_map_for_od_labels")
+                od_label_of_token_per_im = targets_per_im.get_field(
+                    "positive_map_for_od_labels"
+                )
 
             # print(gold_box_od_label)
             # print(od_label_of_token_per_im)
@@ -714,7 +762,9 @@ class ATSSLossComputation(torch.nn.Module):
                     cur_tokens = targets_per_im.get_field("tokens_positive")
                 else:
                     cur_tokens = targets_per_im.get_field("tokens")
-                map = torch.zeros((len(cur_tokens), proj_tokens.shape[1]), dtype=torch.bool)
+                map = torch.zeros(
+                    (len(cur_tokens), proj_tokens.shape[1]), dtype=torch.bool
+                )
                 for j, tok_list in enumerate(cur_tokens):
                     for (beg, end) in tok_list:
                         beg_pos = tokenized.char_to_token(im_i, beg)
@@ -742,7 +792,8 @@ class ATSSLossComputation(torch.nn.Module):
             anchors_per_im = cat_boxlist(anchors[im_i])
 
             num_anchors_per_loc = (
-                len(self.cfg.MODEL.RPN.ASPECT_RATIOS) * self.cfg.MODEL.RPN.SCALES_PER_OCTAVE
+                len(self.cfg.MODEL.RPN.ASPECT_RATIOS)
+                * self.cfg.MODEL.RPN.SCALES_PER_OCTAVE
             )
             num_anchors_per_level = [
                 len(anchors_per_level.bbox) for anchors_per_level in anchors[im_i]
@@ -753,11 +804,20 @@ class ATSSLossComputation(torch.nn.Module):
             gt_cy = (bboxes_per_im[:, 3] + bboxes_per_im[:, 1]) / 2.0
             gt_points = torch.stack((gt_cx, gt_cy), dim=1)
 
-            anchors_cx_per_im = (anchors_per_im.bbox[:, 2] + anchors_per_im.bbox[:, 0]) / 2.0
-            anchors_cy_per_im = (anchors_per_im.bbox[:, 3] + anchors_per_im.bbox[:, 1]) / 2.0
+            anchors_cx_per_im = (
+                anchors_per_im.bbox[:, 2] + anchors_per_im.bbox[:, 0]
+            ) / 2.0
+            anchors_cy_per_im = (
+                anchors_per_im.bbox[:, 3] + anchors_per_im.bbox[:, 1]
+            ) / 2.0
             anchor_points = torch.stack((anchors_cx_per_im, anchors_cy_per_im), dim=1)
 
-            distances = (anchor_points[:, None, :] - gt_points[None, :, :]).pow(2).sum(-1).sqrt()
+            distances = (
+                (anchor_points[:, None, :] - gt_points[None, :, :])
+                .pow(2)
+                .sum(-1)
+                .sqrt()
+            )
 
             # Selecting candidates based on the center distance between anchor box and object
             candidate_idxs = []
@@ -766,9 +826,12 @@ class ATSSLossComputation(torch.nn.Module):
                 end_idx = star_idx + num_anchors_per_level[level]
                 distances_per_level = distances[star_idx:end_idx, :]
                 topk = min(
-                    self.cfg.MODEL.ATSS.TOPK * num_anchors_per_loc, num_anchors_per_level[level]
+                    self.cfg.MODEL.ATSS.TOPK * num_anchors_per_loc,
+                    num_anchors_per_level[level],
                 )
-                _, topk_idxs_per_level = distances_per_level.topk(topk, dim=0, largest=False)
+                _, topk_idxs_per_level = distances_per_level.topk(
+                    topk, dim=0, largest=False
+                )
                 candidate_idxs.append(topk_idxs_per_level + star_idx)
                 star_idx = end_idx
             candidate_idxs = torch.cat(candidate_idxs, dim=0)
@@ -785,10 +848,16 @@ class ATSSLossComputation(torch.nn.Module):
             for ng in range(num_gt):
                 candidate_idxs[:, ng] += ng * anchor_num
             e_anchors_cx = (
-                anchors_cx_per_im.view(1, -1).expand(num_gt, anchor_num).contiguous().view(-1)
+                anchors_cx_per_im.view(1, -1)
+                .expand(num_gt, anchor_num)
+                .contiguous()
+                .view(-1)
             )
             e_anchors_cy = (
-                anchors_cy_per_im.view(1, -1).expand(num_gt, anchor_num).contiguous().view(-1)
+                anchors_cy_per_im.view(1, -1)
+                .expand(num_gt, anchor_num)
+                .contiguous()
+                .view(-1)
             )
             candidate_idxs = candidate_idxs.view(-1)
             l = e_anchors_cx[candidate_idxs].view(-1, num_gt) - bboxes_per_im[:, 0]
@@ -828,7 +897,9 @@ class ATSSLossComputation(torch.nn.Module):
             if positive_map is not None and proj_tokens is not None:
                 map_labels_per_im = map[anchors_to_gt_indexs]
                 unmatched_labels = torch.zeros(
-                    map_labels_per_im.shape[1], dtype=torch.bool, device=map_labels_per_im.device
+                    map_labels_per_im.shape[1],
+                    dtype=torch.bool,
+                    device=map_labels_per_im.device,
                 )  # map: none False
                 map_labels_per_im[anchors_to_gt_values == -INF] = unmatched_labels
                 # move from cpu to gpu
@@ -841,7 +912,9 @@ class ATSSLossComputation(torch.nn.Module):
                 gold_box_od_label_per_im = gold_box_od_label[anchors_to_gt_indexs]
                 gold_box_od_label_per_im[anchors_to_gt_values == -INF] = -100
                 # move from cpu to gpu
-                gold_box_od_label_per_im = gold_box_od_label_per_im.to(cls_labels_per_im.device)
+                gold_box_od_label_per_im = gold_box_od_label_per_im.to(
+                    cls_labels_per_im.device
+                )
 
                 # print(gold_box_od_label_per_im[anchors_to_gt_values != -INF])
 
@@ -953,13 +1026,16 @@ class ATSSLossComputation(torch.nn.Module):
         if dot_product_logits is not None:
             dot_product_logits = torch.cat(dot_product_logits, dim=1)
 
-        centerness_flatten = [ct.permute(0, 2, 3, 1).reshape(N, -1, 1) for ct in centerness]
+        centerness_flatten = [
+            ct.permute(0, 2, 3, 1).reshape(N, -1, 1) for ct in centerness
+        ]
         centerness_flatten = torch.cat(centerness_flatten, dim=1).reshape(-1)
 
         labels_flatten = torch.cat(labels, dim=0)
         reg_targets_flatten = torch.cat(reg_targets, dim=0)
         anchors_flatten = torch.cat(
-            [cat_boxlist(anchors_per_image).bbox for anchors_per_image in anchors], dim=0
+            [cat_boxlist(anchors_per_image).bbox for anchors_per_image in anchors],
+            dim=0,
         )
 
         if positive_map is not None:
@@ -1015,7 +1091,9 @@ class ATSSLossComputation(torch.nn.Module):
                         new_positive_indices.append(positive_index)
                     # print([len(positive_index) for positive_index in positive_indices])
 
-                    max_len = max([len(positive_index) for positive_index in new_positive_indices])
+                    max_len = max(
+                        [len(positive_index) for positive_index in new_positive_indices]
+                    )
                     max_anchor_num = max_len
 
                     if world_size > 1:
@@ -1024,7 +1102,9 @@ class ATSSLossComputation(torch.nn.Module):
                             torch.zeros_like(num_anchors) for _ in range(world_size)
                         ]
                         torch.distributed.all_gather(num_anchors_full, num_anchors)
-                        max_anchor_num = max([anchor.item() for anchor in num_anchors_full])
+                        max_anchor_num = max(
+                            [anchor.item() for anchor in num_anchors_full]
+                        )
 
                     new_negative_pad_indices = []
                     # if not PAD_ZEROS, select random negative paddings
@@ -1040,7 +1120,9 @@ class ATSSLossComputation(torch.nn.Module):
                             import random
 
                             negative_pad_index = sorted(
-                                random.sample(negative_index, max_anchor_num - len(positive_index))
+                                random.sample(
+                                    negative_index, max_anchor_num - len(positive_index)
+                                )
                             )
                             new_negative_pad_indices.append(negative_pad_index)
 
@@ -1060,22 +1142,24 @@ class ATSSLossComputation(torch.nn.Module):
                     # if padding, need to create image masks to filter out the paddings
                     image_masks = None
                     if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_ZERO_PADS:
-                        image_masks = torch.zeros((bs, max_anchor_num), dtype=torch.long).to(
-                            text_masks.device
-                        )
+                        image_masks = torch.zeros(
+                            (bs, max_anchor_num), dtype=torch.long
+                        ).to(text_masks.device)
                         for i in range(bs):
                             image_masks[i, : len(new_positive_indices[i])] = 1
 
                     # NOTE: 2. Get Y (od_label_of_tokens)
                     # od_label_of_tokens: N x B x T
-                    od_label_of_tokens = torch.stack(od_label_of_tokens_labels, dim=0).long()
+                    od_label_of_tokens = torch.stack(
+                        od_label_of_tokens_labels, dim=0
+                    ).long()
                     od_label_of_tokens = gather_tensors(od_label_of_tokens)
 
                     # NOTE: 3. get F
                     # F: B*A x N*B*T
-                    mapping_predicted_box_to_all_text = predicted_box_od_label.view(-1).unsqueeze(
-                        1
-                    ) == od_label_of_tokens.view(-1).unsqueeze(0)
+                    mapping_predicted_box_to_all_text = predicted_box_od_label.view(
+                        -1
+                    ).unsqueeze(1) == od_label_of_tokens.view(-1).unsqueeze(0)
 
                     # NOTE: 4. we still need to calculate the mapping between predicted box to its corresponding text's mapping
                     # positive_map_box_to_self_text: B x A x T, leave this for vanilla contrastive alignment loss
@@ -1106,13 +1190,13 @@ class ATSSLossComputation(torch.nn.Module):
                     mapping_predicted_box_to_all_text = gather_tensors(
                         mapping_predicted_box_to_all_text
                     ).view(-1, mapping_predicted_box_to_all_text.size(-1))
-                    shallow_positive_map = (
-                        mapping_predicted_box_to_all_text  # This is the true positive map
-                    )
+                    shallow_positive_map = mapping_predicted_box_to_all_text  # This is the true positive map
                     shallow_positive_map = shallow_positive_map.unsqueeze(0)
 
                     # Get text attention masks
-                    text_attention_mask = torch.zeros((bs, 256), dtype=torch.long)  # B x 256
+                    text_attention_mask = torch.zeros(
+                        (bs, 256), dtype=torch.long
+                    )  # B x 256
                     for i in range(bs):
                         text_attention_mask[i, : len(text_masks[i])] = text_masks[i]
                     text_attention_mask = gather_tensors(
@@ -1125,7 +1209,9 @@ class ATSSLossComputation(torch.nn.Module):
                             (bs, max_anchor_num), dtype=torch.long
                         )  # B x max_anchor
                         for i in range(bs):
-                            image_attention_mask[i, : len(image_masks[i])] = image_masks[i]
+                            image_attention_mask[
+                                i, : len(image_masks[i])
+                            ] = image_masks[i]
                         image_attention_mask = gather_tensors(
                             image_attention_mask.bool().to(device)
                         )  # N x B x max_anchor
@@ -1136,7 +1222,9 @@ class ATSSLossComputation(torch.nn.Module):
                 )
 
                 shallow_normalized_img_embs = []
-                if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS:
+                if (
+                    self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_BACKBONE_SHALLOW_CONTRASTIVE_LOSS
+                ):
                     # choice 1：use features from SWINT backbone layer (c4) before vl fusion
                     from general.models.layers.roi_align import ROIAlignV2
 
@@ -1146,7 +1234,9 @@ class ATSSLossComputation(torch.nn.Module):
                         rois = convert_to_roi_format(
                             cat_boxlist(anchors[i])[new_positive_indices[i]]
                         )
-                        roi_feature = pooler(shallow_img_emb_feats[i].unsqueeze(0), rois)
+                        roi_feature = pooler(
+                            shallow_img_emb_feats[i].unsqueeze(0), rois
+                        )
                         roi_feature = roi_feature.squeeze(-1).squeeze(-1)
                         shallow_contrastive_proj_queries = (
                             self.shallow_contrastive_projection_image(roi_feature)
@@ -1173,9 +1263,13 @@ class ATSSLossComputation(torch.nn.Module):
                             negative_roi_feature = pooler(
                                 shallow_img_emb_feats[i].unsqueeze(0), negative_rois
                             )
-                            negative_roi_feature = negative_roi_feature.squeeze(-1).squeeze(-1)
+                            negative_roi_feature = negative_roi_feature.squeeze(
+                                -1
+                            ).squeeze(-1)
                             negative_shallow_contrastive_proj_queries = (
-                                self.shallow_contrastive_projection_image(negative_roi_feature)
+                                self.shallow_contrastive_projection_image(
+                                    negative_roi_feature
+                                )
                             )
                             negative_shallow_normalized_img_emb = F.normalize(
                                 negative_shallow_contrastive_proj_queries, p=2, dim=-1
@@ -1229,19 +1323,29 @@ class ATSSLossComputation(torch.nn.Module):
                                 )
                             )
 
-                shallow_normalized_img_embs = torch.stack(shallow_normalized_img_embs, dim=0)
+                shallow_normalized_img_embs = torch.stack(
+                    shallow_normalized_img_embs, dim=0
+                )
                 shallow_normalized_text_emb = shallow_proj_tokens
                 shallow_normalized_text_emb = pad_tensor_given_dim_length(
                     shallow_normalized_text_emb, dim=1, length=256, padding_value=0.0
                 )
 
-                gathered_shallow_normalized_img_emb = gather_tensors(shallow_normalized_img_embs)
-                gathered_shallow_normalized_text_emb = gather_tensors(shallow_normalized_text_emb)
-                gathered_shallow_normalized_img_emb = gathered_shallow_normalized_img_emb.view(
-                    -1, gathered_shallow_normalized_img_emb.size(-1)
+                gathered_shallow_normalized_img_emb = gather_tensors(
+                    shallow_normalized_img_embs
                 )
-                gathered_shallow_normalized_text_emb = gathered_shallow_normalized_text_emb.view(
-                    -1, gathered_shallow_normalized_text_emb.size(-1)
+                gathered_shallow_normalized_text_emb = gather_tensors(
+                    shallow_normalized_text_emb
+                )
+                gathered_shallow_normalized_img_emb = (
+                    gathered_shallow_normalized_img_emb.view(
+                        -1, gathered_shallow_normalized_img_emb.size(-1)
+                    )
+                )
+                gathered_shallow_normalized_text_emb = (
+                    gathered_shallow_normalized_text_emb.view(
+                        -1, gathered_shallow_normalized_text_emb.size(-1)
+                    )
                 )
                 shallow_contrastive_logits = (
                     torch.matmul(
@@ -1253,7 +1357,9 @@ class ATSSLossComputation(torch.nn.Module):
                 shallow_contrastive_logits = shallow_contrastive_logits.unsqueeze(0)
 
                 # apply text mask
-                text_attention_mask = text_attention_mask.view(-1).unsqueeze(0).unsqueeze(0)
+                text_attention_mask = (
+                    text_attention_mask.view(-1).unsqueeze(0).unsqueeze(0)
+                )
                 text_attention_mask = text_attention_mask.repeat(
                     1, shallow_contrastive_logits.size(1), 1
                 )  # copy along the image feature dimension
@@ -1263,7 +1369,9 @@ class ATSSLossComputation(torch.nn.Module):
 
                 # if PAD ZEROS, apply image mask
                 if image_masks is not None:
-                    image_attention_mask = image_attention_mask.view(-1).unsqueeze(0).unsqueeze(-1)
+                    image_attention_mask = (
+                        image_attention_mask.view(-1).unsqueeze(0).unsqueeze(-1)
+                    )
                     image_attention_mask = image_attention_mask.repeat(
                         1, 1, shallow_contrastive_logits.size(2)
                     )  # copy along the text feature dimension
@@ -1273,11 +1381,17 @@ class ATSSLossComputation(torch.nn.Module):
 
                 # Note: 7. calculate image and text logits and maps
                 shallow_image_logits = shallow_contrastive_logits[
-                    :, (rank * bs) * max_anchor_num : (rank * bs + bs) * max_anchor_num, :
+                    :,
+                    (rank * bs) * max_anchor_num : (rank * bs + bs) * max_anchor_num,
+                    :,
                 ]
                 shallow_image_positive_map = normalized_positive_map(
                     shallow_positive_map[
-                        :, (rank * bs) * max_anchor_num : (rank * bs + bs) * max_anchor_num, :
+                        :,
+                        (rank * bs)
+                        * max_anchor_num : (rank * bs + bs)
+                        * max_anchor_num,
+                        :,
                     ]
                 )
 
@@ -1296,7 +1410,10 @@ class ATSSLossComputation(torch.nn.Module):
         total_num_pos = reduce_sum(pos_inds.new_tensor([pos_inds.numel()])).item()
         num_pos_avg_per_gpu = max(total_num_pos / float(num_gpus), 1.0)
 
-        cls_loss = self.cls_loss_func(box_cls_flatten, labels_flatten.int()) / num_pos_avg_per_gpu
+        cls_loss = (
+            self.cls_loss_func(box_cls_flatten, labels_flatten.int())
+            / num_pos_avg_per_gpu
+        )
 
         token_logits_loss = None
         contrastive_align_loss = None
@@ -1316,7 +1433,9 @@ class ATSSLossComputation(torch.nn.Module):
 
         if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_CONTRASTIVE_ALIGN_LOSS:
             contrastive_align_loss = (
-                self.ContrastiveAlignLoss(contrastive_logits, positive_map_box_to_self_text)
+                self.ContrastiveAlignLoss(
+                    contrastive_logits, positive_map_box_to_self_text
+                )
                 / num_pos_avg_per_gpu
             )
 
@@ -1397,7 +1516,9 @@ def make_focal_loss_evaluator(cfg, box_coder):
         cfg.MODEL.FOCAL.BG_IOU_THRESHOLD,
         allow_low_quality_matches=True,
     )
-    sigmoid_focal_loss = SigmoidFocalLoss(cfg.MODEL.FOCAL.LOSS_GAMMA, cfg.MODEL.FOCAL.LOSS_ALPHA)
+    sigmoid_focal_loss = SigmoidFocalLoss(
+        cfg.MODEL.FOCAL.LOSS_GAMMA, cfg.MODEL.FOCAL.LOSS_ALPHA
+    )
 
     loss_evaluator = FocalLossComputation(
         matcher,

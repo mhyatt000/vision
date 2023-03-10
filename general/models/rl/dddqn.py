@@ -83,7 +83,7 @@ class DDDQN(nn.Module):
         self.load_state_dict(torch.load(self.ckpt_file))
 
 
-class Agent():
+class Agent:
     """agent ... contains dddqn
     gamma = discount factor
     eps = epsilon
@@ -123,14 +123,20 @@ class Agent():
 
         self.mem = ReplayBuffer(mem_size, idim)
 
-        self.online = DDDQN(self.lr, self.nactions, idim, "lunar_land_dddqn1", self.ckpt_dir)
-        self.target = DDDQN(self.lr, self.nactions, idim, "lunar_land_dddqn2", self.ckpt_dir)
+        self.online = DDDQN(
+            self.lr, self.nactions, idim, "lunar_land_dddqn1", self.ckpt_dir
+        )
+        self.target = DDDQN(
+            self.lr, self.nactions, idim, "lunar_land_dddqn2", self.ckpt_dir
+        )
 
     def choose_action(self, observation):
         """docstring"""
 
         if np.random.random() > self.eps:
-            state = torch.tensor(np.array([observation]), dtype=torch.float, device=self.online.device)
+            state = torch.tensor(
+                np.array([observation]), dtype=torch.float, device=self.online.device
+            )
             # print(state, state.view(-1).shape)
             _, advantage = self.online(state.view(-1))
             action = torch.argmax(advantage).item()
@@ -222,27 +228,29 @@ def main():
     if load_ckpt:
         agent.load()
 
-    fname = 'temp'
+    fname = "temp"
     scores, eps_hist = [], []
 
     for i in range(ngames):
-        done=False
+        done = False
         observation = env.reset()
         observation = observation[0] if type(observation) == tuple else observation
-        score=0
+        score = 0
 
         while not done:
-            action = agent.choose_action(observation) # call something better
+            action = agent.choose_action(observation)  # call something better
             observation_, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
-            score+= reward
+            score += reward
             agent.store(observation, action, reward, observation_, int(done))
             agent.learn()
             observation = observation_
 
         scores.append(score)
         avg = np.mean(scores[-10:])
-        print(f'episode: {i:3d} | score: {score:4.1f} | avg: {avg:4.1f} | eps: {agent.eps:.2f}')
+        print(
+            f"episode: {i:3d} | score: {score:4.1f} | avg: {avg:4.1f} | eps: {agent.eps:.2f}"
+        )
 
         if not i % 10:
             agent.save()
@@ -250,6 +258,7 @@ def main():
         eps_hist.append(agent.eps)
 
     plot_loss(list(range(ngames)), scores, eps_hist, fname)
+
 
 if __name__ == "__main__":
     main()

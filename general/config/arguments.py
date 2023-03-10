@@ -26,7 +26,7 @@ cfg.config_name = args.config_name
 # for k,v in args.__dict__.items():
 # setattr(cfg,k,v)
 
-cfg.config_name = (cfg.config_name or input("config file: ")) 
+cfg.config_name = cfg.config_name or input("config file: ")
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
 cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_name}.yaml")
 cfg.merge_from_file(cfg.config_file)
@@ -39,10 +39,10 @@ cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 
 # for mpirun
 # if True: # not cfg.world_size > 1:
-    # OMPI = "OMPI_COMM_WORLD_"
-    # cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
-    # cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
-    # cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
+# OMPI = "OMPI_COMM_WORLD_"
+# cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
+# cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
+# cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
 
 
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
@@ -51,12 +51,14 @@ if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
 
-print(f'Rank: {cfg.world_rank} online')
+print(f"Rank: {cfg.world_rank} online")
 time.sleep(2)
 dist_print = False
 if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
 
 # cfg.freeze() # some of the experiments need it to be mutable
-print(f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS'] if 'OMP_NUM_THREADS' in os.environ else -1}")
-print('CONFIG:', cfg.config_file, "\n")
+print(
+    f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS'] if 'OMP_NUM_THREADS' in os.environ else -1}"
+)
+print("CONFIG:", cfg.config_file, "\n")

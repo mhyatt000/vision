@@ -4,7 +4,7 @@ from general.config import cfg
 from torch.nn import functional as F
 
 from general.models.layers import smooth_l1_loss
-from general.models.sampler import  BalancedPositiveNegativeSampler
+from general.models.sampler import BalancedPositiveNegativeSampler
 from general.models.box_coder import BoxCoder
 from general.models.matcher import Matcher
 from general.models.utils import cat
@@ -42,11 +42,11 @@ class FastRCNNLossComputation(object):
         if len(target):
             matched_targets = target[matched_idxs.clamp(min=0)]
         else:
-            device = target.get_field('labels').device
-            dtype = target.get_field('labels').dtype
+            device = target.get_field("labels").device
+            dtype = target.get_field("labels").dtype
             labels = torch.zeros_like(matched_idxs, dtype=dtype, device=device)
             matched_targets = target
-            matched_targets.add_field('labels', labels)
+            matched_targets.add_field("labels", labels)
 
         matched_targets.add_field("matched_idxs", matched_idxs)
         return matched_targets
@@ -74,9 +74,13 @@ class FastRCNNLossComputation(object):
             # compute regression targets
             if not matched_targets.bbox.shape[0]:
                 zeros = torch.zeros_like(labels_per_image, dtype=torch.float32)
-                regression_targets_per_image = torch.stack((zeros, zeros, zeros, zeros), dim=1)
+                regression_targets_per_image = torch.stack(
+                    (zeros, zeros, zeros, zeros), dim=1
+                )
             else:
-                regression_targets_per_image = self.box_coder.encode(matched_targets.bbox, proposals_per_image.bbox)
+                regression_targets_per_image = self.box_coder.encode(
+                    matched_targets.bbox, proposals_per_image.bbox
+                )
 
             labels.append(labels_per_image)
             regression_targets.append(regression_targets_per_image)

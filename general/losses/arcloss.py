@@ -8,7 +8,7 @@ class CombinedMarginLoss(torch.nn.Module):
         super().__init__()
 
         self.s = cfg.LOSS.AAM.S
-        self.m1 , self.m2 , self.m3 = cfg.LOSS.AAM.M
+        self.m1, self.m2, self.m3 = cfg.LOSS.AAM.M
         self.interclass_filtering_threshold = cfg.LOSS.AAM.INTER_THRESH
 
         # For ArcFace
@@ -25,7 +25,9 @@ class CombinedMarginLoss(torch.nn.Module):
             with torch.no_grad():
                 dirty = logits > self.interclass_filtering_threshold
                 dirty = dirty.float()
-                mask = torch.ones([index_positive.size(0), logits.size(1)], device=logits.device)
+                mask = torch.ones(
+                    [index_positive.size(0), logits.size(1)], device=logits.device
+                )
                 mask.scatter_(1, labels[index_positive], 0)
                 dirty[index_positive] *= mask
                 tensor_mul = 1 - dirty
@@ -35,9 +37,13 @@ class CombinedMarginLoss(torch.nn.Module):
 
         if self.m1 == 1.0 and self.m3 == 0.0:
             sin_theta = torch.sqrt(1.0 - torch.pow(target_logit, 2))
-            cos_theta_m = target_logit * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
+            cos_theta_m = (
+                target_logit * self.cos_m - sin_theta * self.sin_m
+            )  # cos(target+margin)
             if self.easy_margin:
-                final_target_logit = torch.where(target_logit > 0, cos_theta_m, target_logit)
+                final_target_logit = torch.where(
+                    target_logit > 0, cos_theta_m, target_logit
+                )
             else:
                 final_target_logit = torch.where(
                     target_logit > self.theta, cos_theta_m, target_logit - self.sinmm
@@ -72,9 +78,13 @@ class ArcFace(torch.nn.Module):
         target_logit = logits[index, labels[index].view(-1)]
 
         sin_theta = torch.sqrt(1.0 - torch.pow(target_logit, 2))
-        cos_theta_m = target_logit * self.cos_m - sin_theta * self.sin_m  # cos(target+margin)
+        cos_theta_m = (
+            target_logit * self.cos_m - sin_theta * self.sin_m
+        )  # cos(target+margin)
         if self.easy_margin:
-            final_target_logit = torch.where(target_logit > 0, cos_theta_m, target_logit)
+            final_target_logit = torch.where(
+                target_logit > 0, cos_theta_m, target_logit
+            )
         else:
             final_target_logit = torch.where(
                 target_logit > self.theta, cos_theta_m, target_logit - self.sinmm

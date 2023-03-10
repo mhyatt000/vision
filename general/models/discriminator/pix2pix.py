@@ -7,7 +7,15 @@ from torch import nn
 
 
 class NLayerDiscriminator(nn.Module):
-    def __init__( self, inc, onc=64, nlayers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False, get_feat=False):
+    def __init__(
+        self,
+        inc,
+        onc=64,
+        nlayers=3,
+        norm_layer=nn.BatchNorm2d,
+        use_sigmoid=False,
+        get_feat=False,
+    ):
         super(NLayerDiscriminator, self).__init__()
 
         self.get_feat = get_feat

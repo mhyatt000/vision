@@ -88,7 +88,6 @@ def make_fc(dim_in, hidden_dim, use_gn=False):
 
 
 def conv_with_kaiming_uniform(use_gn=False, use_relu=False, use_dyrelu=False):
-
     def make_conv(in_channels, out_channels, kernel_size, stride=1, dilation=1):
 
         conv = Conv2d(

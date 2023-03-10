@@ -20,10 +20,11 @@ def gather(x):
     if not cfg.distributed:
         return x
 
-    _gather = [torch.zeros(x.shape, device=cfg.DEVICE) for _ in range(dist.get_world_size())]
+    _gather = [
+        torch.zeros(x.shape, device=cfg.DEVICE) for _ in range(dist.get_world_size())
+    ]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
-
 
 
 class Trainer:
@@ -46,7 +47,7 @@ class Trainer:
 
         self.loader = loader
 
-        self.clip = lambda : torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
+        self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
         """what is ema"""
 
@@ -80,7 +81,6 @@ class Trainer:
             plot.show_loss(self.losses)
             plot.show_accuracy(self.accs)
             self.ckp.save()
-
 
     def update_epoch(self):
         """update after the training loop like housekeeping"""
@@ -117,17 +117,18 @@ class Trainer:
                     milestone_target = i + 1
     """
 
-    def calc_accuracy(self,Yh,Y):
+    def calc_accuracy(self, Yh, Y):
 
         if cfg.LOSS.BODY != "CE":
             self.accs.append(-1)
-            return 
+            return
         with torch.no_grad():
-            acc = float((torch.argmax(Yh, dim=1)== torch.argmax(Y, dim=1)).sum()/Yh.shape[0])
+            acc = float(
+                (torch.argmax(Yh, dim=1) == torch.argmax(Y, dim=1)).sum() / Yh.shape[0]
+            )
             self.accs.append(acc)
 
-
-    def back_pass(self,loss):
+    def back_pass(self, loss):
         if cfg.AMP:
             self.scaler.scale(loss.to(cfg.DEVICE)).backward()
         else:
@@ -135,7 +136,7 @@ class Trainer:
 
     def backpropagation(self):
         if cfg.AMP:
-            self.scaler.unscale_(self.optimizer) # must unscale before clipping
+            self.scaler.unscale_(self.optimizer)  # must unscale before clipping
         self.clip()
         if cfg.AMP:
             self.scaler.step(self.optimizer)
@@ -145,12 +146,12 @@ class Trainer:
         self.optimizer.zero_grad()
         self.scheduler.step()
 
-    def step(self, X,Y):
+    def step(self, X, Y):
         """training step with adaptive gradient accumulation"""
 
         Yh = self.model(X)
-        loss = self.criterion(Yh, Y) 
-        self.calc_accuracy(Yh,Y)
+        loss = self.criterion(Yh, Y)
+        self.calc_accuracy(Yh, Y)
 
         self.loss = float(loss.detach())
         self.losses.append(self.loss)
@@ -161,7 +162,7 @@ class Trainer:
         # only update every k steps
         if self.nstep % cfg.SOLVER.GRAD_ACC_EVERY:
             return
-        else: 
+        else:
             self.backpropagation()
 
     def rebuild_loader(self):
@@ -173,9 +174,8 @@ class Trainer:
         # cfg.SOLVER.GRAD_ACC_EVERY *= 2
         # self.loader = build_loaders()['train']
 
-        # rebuild the same loader w sam hparam 
+        # rebuild the same loader w sam hparam
         # half the batch size
-    
 
     def run(self):
         """trains model"""
@@ -188,7 +188,7 @@ class Trainer:
         @tqdm.prog(steps_left)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f'loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.2f} | lr: {self.scheduler.get_last_lr()[0]:.2e} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}'
+            desc = f"loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.2f} | lr: {self.scheduler.get_last_lr()[0]:.2e} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}"
             return desc
 
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):
@@ -202,6 +202,6 @@ class Trainer:
             self.update_epoch()
 
         # except torch.cuda.OutOfMemoryError as ex:
-            # raise ex # TODO: shouldnt this work?
-            # self.rebuild_loader()
-            # self.run()
+        # raise ex # TODO: shouldnt this work?
+        # self.rebuild_loader()
+        # self.run()

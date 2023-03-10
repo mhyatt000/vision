@@ -61,7 +61,8 @@ class Matcher(object):
             else:
                 raise ValueError(
                     "No proposal boxes available for one of the images "
-                    "during training")
+                    "during training"
+                )
 
         # match_quality_matrix is M (gt) x N (predicted)
         # Max over gt elements (dim 0) to find best gt candidate for each prediction

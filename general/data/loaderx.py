@@ -37,7 +37,7 @@ def build_loaderx(num_workers=2):
     train_set = DATASETS[cfg.LOADER.DATASET](transform=transform)
 
     rank, world_size = get_dist_info()
-    sampler= DistributedSampler(
+    sampler = DistributedSampler(
         train_set, num_replicas=world_size, rank=rank, shuffle=True, seed=seed
     )
 

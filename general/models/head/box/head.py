@@ -53,12 +53,18 @@ class BoxHead(nn.Module):
         class_logits, box_regression = self.predictor(x)
 
         if self.onnx:
-            return x, (class_logits, box_regression, [box.bbox for box in proposals]), {}
+            return (
+                x,
+                (class_logits, box_regression, [box.bbox for box in proposals]),
+                {},
+            )
 
         if not self.training:
             result = self.post_processor((class_logits, box_regression), proposals)
             return x, result, {}
 
-        loss_classifier, loss_box_reg = self.loss_evaluator([class_logits], [box_regression])
+        loss_classifier, loss_box_reg = self.loss_evaluator(
+            [class_logits], [box_regression]
+        )
         loss_dict = dict(loss_classifier=loss_classifier, loss_box_reg=loss_box_reg)
         return (x, proposals, loss_dict)

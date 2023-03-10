@@ -1,13 +1,18 @@
-from torch.optim.lr_scheduler import MultiStepLR, ReduceLROnPlateau, StepLR, _LRScheduler
+from torch.optim.lr_scheduler import (
+    MultiStepLR,
+    ReduceLROnPlateau,
+    StepLR,
+    _LRScheduler,
+)
 from general.config import cfg
 
 
 class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
 
-        # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE 
+        # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
         self.max_steps = cfg.SOLVER.MAX_ITER
-        self.warmup_steps = 0 # nbatch * cfg.SCHEDULER.WARMUP
+        self.warmup_steps = 0  # nbatch * cfg.SCHEDULER.WARMUP
 
         self.base_lr = cfg.OPTIM.LR
         self.warmup_lr_init = 0.0001
@@ -35,6 +40,7 @@ class PolyScheduler(_LRScheduler):
                 self.power,
             )
             return [self.base_lr * alpha for _ in self.optimizer.param_groups]
+
 
 schedulers = {
     "STEP": lambda optim: StepLR(optim, step_size=1, gamma=cfg.SCHEDULER.GAMMA),

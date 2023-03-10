@@ -38,7 +38,9 @@ class LVIS:
             self.dataset = self._load_json(annotation_path)
             print("Done (t={:0.2f}s)".format(time.time() - tic))
 
-            assert type(self.dataset) == dict, "Annotation file format {} not supported.".format(type(self.dataset))
+            assert (
+                type(self.dataset) == dict
+            ), "Annotation file format {} not supported.".format(type(self.dataset))
             self._create_index()
 
     def _load_json(self, path):
@@ -102,7 +104,9 @@ class LVIS:
         ann_ids = [
             _ann["id"]
             for _ann in anns
-            if _ann["category_id"] in cat_ids and _ann["area"] > area_rng[0] and _ann["area"] < area_rng[1]
+            if _ann["category_id"] in cat_ids
+            and _ann["area"] > area_rng[0]
+            and _ann["area"] < area_rng[1]
         ]
         return ann_ids
 
@@ -210,8 +214,12 @@ class LVIS:
 
 
 class LvisDetectionBase(torchvision.datasets.VisionDataset):
-    def __init__(self, root, annFile, transform=None, target_transform=None, transforms=None):
-        super(LvisDetectionBase, self).__init__(root, transforms, transform, target_transform)
+    def __init__(
+        self, root, annFile, transform=None, target_transform=None, transforms=None
+    ):
+        super(LvisDetectionBase, self).__init__(
+            root, transforms, transform, target_transform
+        )
         self.lvis = LVIS(annFile)
         self.ids = list(sorted(self.lvis.imgs.keys()))
 
@@ -234,7 +242,6 @@ class LvisDetectionBase(torchvision.datasets.VisionDataset):
             img, target = self.transforms(img, target)
 
         return img, target
-    
 
     def __len__(self):
         return len(self.ids)
@@ -255,15 +262,15 @@ class LvisDetection(LvisDetectionBase):
         if self._transforms is not None:
             img = self._transforms(img)
         return img, target, idx
-    
+
     def get_raw_image(self, idx):
         img, target = super(LvisDetection, self).__getitem__(idx)
         return img
-    
+
     def categories(self):
         id2cat = {c["id"]: c for c in self.lvis.dataset["categories"]}
         all_cats = sorted(list(id2cat.keys()))
         categories = {}
         for l in list(all_cats):
-            categories[l] = id2cat[l]['name']
+            categories[l] = id2cat[l]["name"]
         return categories

@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import maskrcnn_benchmark.utils.mdetr_dist as dist
+
 #### The following loading utilities are imported from
 #### https://github.com/BryanPlummer/flickr30k_entities/blob/68b3d6f12d1d710f96233f6bd2b6de799d6f4e5b/flickr30k_entities_utils.py
 # Changelog:
 #    - Added typing information
 #    - Completed docstrings
+
 
 def get_sentence_data(filename) -> List[Dict[str, Any]]:
     """
@@ -76,9 +78,16 @@ def get_sentence_data(filename) -> List[Dict[str, Any]]:
                     words.append(token)
 
         sentence_data = {"sentence": " ".join(words), "phrases": []}
-        for index, phrase, p_id, p_type in zip(first_word, phrases, phrase_id, phrase_type):
+        for index, phrase, p_id, p_type in zip(
+            first_word, phrases, phrase_id, phrase_type
+        ):
             sentence_data["phrases"].append(
-                {"first_word_index": index, "phrase": phrase, "phrase_id": p_id, "phrase_type": p_type}
+                {
+                    "first_word_index": index,
+                    "phrase": phrase,
+                    "phrase_id": p_id,
+                    "phrase_type": p_type,
+                }
             )
 
         annotations.append(sentence_data)
@@ -86,7 +95,9 @@ def get_sentence_data(filename) -> List[Dict[str, Any]]:
     return annotations
 
 
-def get_annotations(filename) -> Dict[str, Union[int, List[str], Dict[str, List[List[int]]]]]:
+def get_annotations(
+    filename,
+) -> Dict[str, Union[int, List[str], Dict[str, List[List[int]]]]]:
     """
     Parses the xml files in the Flickr30K Entities dataset
 
@@ -204,6 +215,7 @@ def box_iou(boxes1: np.array, boxes2: np.array) -> np.array:
 
 #### End of import of box utilities
 
+
 def _merge_boxes(boxes: List[List[int]]) -> List[List[int]]:
     """
     Return the boxes corresponding to the smallest enclosing box containing all the provided boxes
@@ -214,11 +226,18 @@ def _merge_boxes(boxes: List[List[int]]) -> List[List[int]]:
 
     np_boxes = np.asarray(boxes)
 
-    return [[np_boxes[:, 0].min(), np_boxes[:, 1].min(), np_boxes[:, 2].max(), np_boxes[:, 3].max()]]
+    return [
+        [
+            np_boxes[:, 0].min(),
+            np_boxes[:, 1].min(),
+            np_boxes[:, 2].max(),
+            np_boxes[:, 3].max(),
+        ]
+    ]
 
 
 class RecallTracker:
-    """ Utility class to track recall@k for various k, split by categories"""
+    """Utility class to track recall@k for various k, split by categories"""
 
     def __init__(self, topk: Sequence[int]):
         """
@@ -226,8 +245,12 @@ class RecallTracker:
            - topk : tuple of ints corresponding to the recalls being tracked (eg, recall@1, recall@10, ...)
         """
 
-        self.total_byk_bycat: Dict[int, Dict[str, int]] = {k: defaultdict(int) for k in topk}
-        self.positives_byk_bycat: Dict[int, Dict[str, int]] = {k: defaultdict(int) for k in topk}
+        self.total_byk_bycat: Dict[int, Dict[str, int]] = {
+            k: defaultdict(int) for k in topk
+        }
+        self.positives_byk_bycat: Dict[int, Dict[str, int]] = {
+            k: defaultdict(int) for k in topk
+        }
 
     def add_positive(self, k: int, category: str):
         """Log a positive hit @k for given category"""
@@ -250,20 +273,21 @@ class RecallTracker:
         for k in self.total_byk_bycat:
             assert k in self.positives_byk_bycat
             report[k] = {
-                cat: self.positives_byk_bycat[k][cat] / self.total_byk_bycat[k][cat] for cat in self.total_byk_bycat[k]
+                cat: self.positives_byk_bycat[k][cat] / self.total_byk_bycat[k][cat]
+                for cat in self.total_byk_bycat[k]
             }
         return report
 
 
 class Flickr30kEntitiesRecallEvaluator:
     def __init__(
-            self,
-            flickr_path: str,
-            subset: str = "test",
-            topk: Sequence[int] = (1, 5, 10, -1),
-            iou_thresh: float = 0.5,
-            merge_boxes: bool = False,
-            verbose: bool = True,
+        self,
+        flickr_path: str,
+        subset: str = "test",
+        topk: Sequence[int] = (1, 5, 10, -1),
+        iou_thresh: float = 0.5,
+        merge_boxes: bool = False,
+        verbose: bool = True,
     ):
         assert subset in ["train", "test", "val"], f"Wrong flickr subset {subset}"
 
@@ -286,7 +310,9 @@ class Flickr30kEntitiesRecallEvaluator:
             print("Loading annotations...")
 
         for img_id in self.img_ids:
-            anno_info = get_annotations(flickr_path / "Annotations" / f"{img_id}.xml")["boxes"]
+            anno_info = get_annotations(flickr_path / "Annotations" / f"{img_id}.xml")[
+                "boxes"
+            ]
             if merge_boxes:
                 merged = {}
                 for phrase_id, boxes in anno_info.items():
@@ -303,22 +329,32 @@ class Flickr30kEntitiesRecallEvaluator:
         self.all_ids: List[str] = []
         tot_phrases = 0
         for img_id in self.img_ids:
-            sentence_info = get_sentence_data(flickr_path / "Sentences" / f"{img_id}.txt")
+            sentence_info = get_sentence_data(
+                flickr_path / "Sentences" / f"{img_id}.txt"
+            )
             self.imgid2sentences[img_id] = [None for _ in range(len(sentence_info))]
 
             # Some phrases don't have boxes, we filter them.
             for sent_id, sentence in enumerate(sentence_info):
-                phrases = [phrase for phrase in sentence["phrases"] if phrase["phrase_id"] in self.imgid2boxes[img_id]]
+                phrases = [
+                    phrase
+                    for phrase in sentence["phrases"]
+                    if phrase["phrase_id"] in self.imgid2boxes[img_id]
+                ]
                 if len(phrases) > 0:
                     self.imgid2sentences[img_id][sent_id] = phrases
                 tot_phrases += len(phrases)
 
             self.all_ids += [
-                f"{img_id}_{k}" for k in range(len(sentence_info)) if self.imgid2sentences[img_id][k] is not None
+                f"{img_id}_{k}"
+                for k in range(len(sentence_info))
+                if self.imgid2sentences[img_id][k] is not None
             ]
 
         if verbose:
-            print(f"There are {tot_phrases} phrases in {len(self.all_ids)} sentences to evaluate")
+            print(
+                f"There are {tot_phrases} phrases in {len(self.all_ids)} sentences to evaluate"
+            )
 
     def evaluate(self, predictions: List[Dict]):
         evaluated_ids = set()
@@ -348,11 +384,22 @@ class Flickr30kEntitiesRecallEvaluator:
             pred_boxes = pred["boxes"]
             if str(pred["image_id"]) not in self.imgid2sentences:
                 raise RuntimeError(f"Unknown image id {pred['image_id']}")
-            if not 0 <= int(pred["sentence_id"]) < len(self.imgid2sentences[str(pred["image_id"])]):
-                raise RuntimeError(f"Unknown sentence id {pred['sentence_id']}" f" in image {pred['image_id']}")
-            target_sentence = self.imgid2sentences[str(pred["image_id"])][int(pred["sentence_id"])]
+            if (
+                not 0
+                <= int(pred["sentence_id"])
+                < len(self.imgid2sentences[str(pred["image_id"])])
+            ):
+                raise RuntimeError(
+                    f"Unknown sentence id {pred['sentence_id']}"
+                    f" in image {pred['image_id']}"
+                )
+            target_sentence = self.imgid2sentences[str(pred["image_id"])][
+                int(pred["sentence_id"])
+            ]
 
-            phrases = self.imgid2sentences[str(pred["image_id"])][int(pred["sentence_id"])]
+            phrases = self.imgid2sentences[str(pred["image_id"])][
+                int(pred["sentence_id"])
+            ]
             if len(pred_boxes) != len(phrases):
                 raise RuntimeError(
                     f"Error, got {len(pred_boxes)} predictions, expected {len(phrases)} "
@@ -360,7 +407,9 @@ class Flickr30kEntitiesRecallEvaluator:
                 )
 
             for cur_boxes, phrase in zip(pred_boxes, phrases):
-                target_boxes = self.imgid2boxes[str(pred["image_id"])][phrase["phrase_id"]]
+                target_boxes = self.imgid2boxes[str(pred["image_id"])][
+                    phrase["phrase_id"]
+                ]
 
                 ious = box_iou(np.asarray(cur_boxes), np.asarray(target_boxes))
                 for k in self.topk:
@@ -380,7 +429,9 @@ class Flickr30kEntitiesRecallEvaluator:
                             recall_tracker.add_negative(k, phrase_type)
 
         if len(evaluated_ids) != len(self.all_ids):
-            print("ERROR, the number of evaluated sentence doesn't match. Missing predictions:")
+            print(
+                "ERROR, the number of evaluated sentence doesn't match. Missing predictions:"
+            )
             un_processed = set(self.all_ids) - evaluated_ids
             for missing in un_processed:
                 img_id, sent_id = missing.split("_")
@@ -392,17 +443,22 @@ class Flickr30kEntitiesRecallEvaluator:
 
 class FlickrEvaluator(object):
     def __init__(
-            self,
-            flickr_path,
-            subset,
-            top_k=(1, 5, 10, -1),
-            iou_thresh=0.5,
-            merge_boxes=False,
+        self,
+        flickr_path,
+        subset,
+        top_k=(1, 5, 10, -1),
+        iou_thresh=0.5,
+        merge_boxes=False,
     ):
         assert isinstance(top_k, (list, tuple))
 
         self.evaluator = Flickr30kEntitiesRecallEvaluator(
-            flickr_path, subset=subset, topk=top_k, iou_thresh=iou_thresh, merge_boxes=merge_boxes, verbose=False
+            flickr_path,
+            subset=subset,
+            topk=top_k,
+            iou_thresh=iou_thresh,
+            merge_boxes=merge_boxes,
+            verbose=False,
         )
         self.predictions = []
         self.results = None

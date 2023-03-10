@@ -2,7 +2,6 @@ from torch import nn
 from general.config import cfg
 
 
-
 class FastRCNNPredictor(nn.Module):
     def __init__(self, pretrained=None):
         super(FastRCNNPredictor, self).__init__()

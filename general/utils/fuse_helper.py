@@ -7,12 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.activations import ACT2FN
 
-from general.models.utils import (cat, concat_box_prediction_layers,
-                                  permute_and_flatten)
+from general.models.utils import cat, concat_box_prediction_layers, permute_and_flatten
 
 
 class BertPredictionHeadTransform(nn.Module):
-
     def __init__(self, config):
         super().__init__()
 
@@ -31,7 +29,6 @@ class BertPredictionHeadTransform(nn.Module):
 
 
 class BertLMPredictionHead(nn.Module):
-
     def __init__(self, config):
         super().__init__()
 
@@ -78,7 +75,9 @@ class FeatureResizer(nn.Module):
 def _make_conv(input_dim, output_dim, k, stride=1):
     pad = (k - 1) // 2
     return nn.Sequential(
-        nn.Conv2d(input_dim, output_dim, (k, k), padding=(pad, pad), stride=(stride, stride)),
+        nn.Conv2d(
+            input_dim, output_dim, (k, k), padding=(pad, pad), stride=(stride, stride)
+        ),
         nn.BatchNorm2d(output_dim),
         nn.ReLU(inplace=True),
     )
@@ -217,13 +216,21 @@ class BiMultiHeadAttention(nn.Module):
         self.out_l_proj = nn.Linear(self.embed_dim, self.l_dim)
 
         self.stable_softmax_2d = cfg.MODEL.DYHEAD.FUSE_CONFIG.STABLE_SOFTMAX_2D
-        self.clamp_min_for_underflow = cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_MIN_FOR_UNDERFLOW
-        self.clamp_max_for_overflow = cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_MAX_FOR_OVERFLOW
+        self.clamp_min_for_underflow = (
+            cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_MIN_FOR_UNDERFLOW
+        )
+        self.clamp_max_for_overflow = (
+            cfg.MODEL.DYHEAD.FUSE_CONFIG.CLAMP_MAX_FOR_OVERFLOW
+        )
 
         self._reset_parameters()
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
-        return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
+        return (
+            tensor.view(bsz, seq_len, self.num_heads, self.head_dim)
+            .transpose(1, 2)
+            .contiguous()
+        )
 
     def _reset_parameters(self):
         nn.init.xavier_uniform_(self.v_proj.weight)
@@ -276,7 +283,9 @@ class BiMultiHeadAttention(nn.Module):
             )  # Do not increase 50000, data type half has quite limited range
 
         attn_weights_T = attn_weights.transpose(1, 2)
-        attn_weights_l = attn_weights_T - torch.max(attn_weights_T, dim=-1, keepdim=True)[0]
+        attn_weights_l = (
+            attn_weights_T - torch.max(attn_weights_T, dim=-1, keepdim=True)[0]
+        )
         if self.clamp_min_for_underflow:
             attn_weights_l = torch.clamp(
                 attn_weights_l, min=-50000
@@ -295,8 +304,13 @@ class BiMultiHeadAttention(nn.Module):
             attention_mask = attention_mask.masked_fill(attention_mask == 0, -9e15)
 
             if attention_mask.size() != (bsz, 1, tgt_len, src_len):
-                raise ValueError(f"Attention mask should be of size {(bsz, 1, tgt_len, src_len)}")
-            attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len) + attention_mask
+                raise ValueError(
+                    f"Attention mask should be of size {(bsz, 1, tgt_len, src_len)}"
+                )
+            attn_weights = (
+                attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
+                + attention_mask
+            )
             attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
 
         attn_weights_v = nn.functional.softmax(attn_weights, dim=-1)
@@ -369,8 +383,12 @@ class BiAttentionBlock(nn.Module):
 
         # add layer scale for training stability
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        self.gamma_v = nn.Parameter(init_values * torch.ones((v_dim)), requires_grad=True)
-        self.gamma_l = nn.Parameter(init_values * torch.ones((l_dim)), requires_grad=True)
+        self.gamma_v = nn.Parameter(
+            init_values * torch.ones((v_dim)), requires_grad=True
+        )
+        self.gamma_l = nn.Parameter(
+            init_values * torch.ones((l_dim)), requires_grad=True
+        )
 
     def forward(self, v, l, attention_mask_l=None, dummy_tensor=None):
         v = self.layer_norm_v(v)
@@ -419,8 +437,12 @@ class BiAttentionBlockForCheckpoint(nn.Module):
 
         # add layer scale for training stability
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-        self.gamma_v = nn.Parameter(init_values * torch.ones((v_dim)), requires_grad=True)
-        self.gamma_l = nn.Parameter(init_values * torch.ones((l_dim)), requires_grad=True)
+        self.gamma_v = nn.Parameter(
+            init_values * torch.ones((v_dim)), requires_grad=True
+        )
+        self.gamma_l = nn.Parameter(
+            init_values * torch.ones((l_dim)), requires_grad=True
+        )
 
         self.cfg = cfg
         if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.SEPARATE_BIDIRECTIONAL:
@@ -436,7 +458,9 @@ class BiAttentionBlockForCheckpoint(nn.Module):
                 bs, _, h, w = feat.shape
                 q = feat.flatten(2).transpose(1, 2)
 
-                new_v, new_l = self.single_attention_call(q, l, attention_mask_l=attention_mask_l)
+                new_v, new_l = self.single_attention_call(
+                    q, l, attention_mask_l=attention_mask_l
+                )
                 new_v = new_v.transpose(1, 2).contiguous().view(bs, -1, h, w)
                 lang_feat.append(new_l)
                 visu_feat.append(new_v)
@@ -464,7 +488,9 @@ class BiAttentionBlockForCheckpoint(nn.Module):
 
             start = 0
             for (h, w) in size_per_level:
-                new_v_per_level = new_v[:, :, start : start + h * w].view(bs, -1, h, w).contiguous()
+                new_v_per_level = (
+                    new_v[:, :, start : start + h * w].view(bs, -1, h, w).contiguous()
+                )
                 visu_feat.append(new_v_per_level)
                 start += h * w
 
@@ -533,7 +559,11 @@ class MultiHeadAttention(nn.Module):
         self._reset_parameters()
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
-        return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
+        return (
+            tensor.view(bsz, seq_len, self.num_heads, self.head_dim)
+            .transpose(1, 2)
+            .contiguous()
+        )
 
     def _reset_parameters(self):
         nn.init.xavier_uniform_(self.q_proj.weight)
@@ -582,8 +612,13 @@ class MultiHeadAttention(nn.Module):
             attention_mask = attention_mask.masked_fill(attention_mask == 0, -9e15)
 
             if attention_mask.size() != (bsz, 1, tgt_len, src_len):
-                raise ValueError(f"Attention mask should be of size {(bsz, 1, tgt_len, src_len)}")
-            attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len) + attention_mask
+                raise ValueError(
+                    f"Attention mask should be of size {(bsz, 1, tgt_len, src_len)}"
+                )
+            attn_weights = (
+                attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
+                + attention_mask
+            )
             attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
 
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
@@ -593,8 +628,12 @@ class MultiHeadAttention(nn.Module):
             # make sure that attn_weights keeps its gradient.
             # In order to do so, attn_weights have to reshaped
             # twice and have to be reused in the following
-            attn_weights_reshaped = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
-            attn_weights = attn_weights_reshaped.view(bsz * self.num_heads, tgt_len, src_len)
+            attn_weights_reshaped = attn_weights.view(
+                bsz, self.num_heads, tgt_len, src_len
+            )
+            attn_weights = attn_weights_reshaped.view(
+                bsz * self.num_heads, tgt_len, src_len
+            )
         else:
             attn_weights_reshaped = None
 
@@ -617,7 +656,6 @@ class MultiHeadAttention(nn.Module):
 
 
 class AttentionMLP(nn.Module):
-
     def __init__(self, q_dim, hidden_dim, dropout=0.1):
         super(AttentionMLP, self).__init__()
 
@@ -677,7 +715,9 @@ class AttentionT2I(nn.Module):
         self.use_layer_scale = use_layer_scale
         if self.use_layer_scale:
             self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-            self.gamma = nn.Parameter(init_values * torch.ones((q_dim)), requires_grad=True)
+            self.gamma = nn.Parameter(
+                init_values * torch.ones((q_dim)), requires_grad=True
+            )
 
     def forward(self, q0, q1, q2, q3, q4, k, v, attention_mask, dummy_arg=None):
         qs = []

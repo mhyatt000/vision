@@ -1,5 +1,6 @@
 from .vldyhead import VLDyHeadModule
 from general.config import cfg
+
 # from .rpn import RPNModule
 # from .retina import RetinaNetModule
 # from .fcos import FCOSModule
@@ -7,11 +8,11 @@ from general.config import cfg
 # from .dyhead import DyHeadModule
 
 RPN_ARCH = {
-        # "RPN": RPNModule,
-        # "RETINA": RetinaNetModule,
-        # "FCOS": FCOSModule,
-        # "ATSS": ATSSModule,
-        # "DYHEAD": DyHeadModule,
+    # "RPN": RPNModule,
+    # "RETINA": RetinaNetModule,
+    # "FCOS": FCOSModule,
+    # "ATSS": ATSSModule,
+    # "DYHEAD": DyHeadModule,
     "VLDYHEAD": VLDyHeadModule,
 }
 

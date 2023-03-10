@@ -5,6 +5,7 @@ import torch.distributed as dist
 import general.utils.comm as comm
 from torch.autograd.function import Function
 
+
 class FrozenBatchNorm2d(nn.Module):
     """
     BatchNorm2d where the batch statistics and the affine parameters
@@ -27,7 +28,6 @@ class FrozenBatchNorm2d(nn.Module):
 
 
 class AllReduce(Function):
-
     @staticmethod
     def forward(ctx, input):
         input_list = [torch.zeros_like(input) for k in range(dist.get_world_size())]
@@ -85,7 +85,9 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
         meansqr = torch.mean(input * input, dim=[0, 2, 3])
 
         if self._stats_mode == "":
-            assert B > 0, 'SyncBatchNorm(stats_mode="") does not support zero batch size.'
+            assert (
+                B > 0
+            ), 'SyncBatchNorm(stats_mode="") does not support zero batch size.'
             vec = torch.cat([mean, meansqr], dim=0)
             vec = AllReduce.apply(vec) * (1.0 / dist.get_world_size())
             mean, meansqr = torch.split(vec, C)
@@ -96,13 +98,22 @@ class NaiveSyncBatchNorm2d(nn.BatchNorm2d):
                 vec = vec + input.sum()  # make sure there is gradient w.r.t input
             else:
                 vec = torch.cat(
-                    [mean, meansqr, torch.ones([1], device=mean.device, dtype=mean.dtype)], dim=0
+                    [
+                        mean,
+                        meansqr,
+                        torch.ones([1], device=mean.device, dtype=mean.dtype),
+                    ],
+                    dim=0,
                 )
             vec = AllReduce.apply(vec * B)
 
             total_batch = vec[-1].detach()
-            momentum = total_batch.clamp(max=1) * self.momentum  # no update if total_batch is 0
-            total_batch = torch.max(total_batch, torch.ones_like(total_batch))  # avoid div-by-zero
+            momentum = (
+                total_batch.clamp(max=1) * self.momentum
+            )  # no update if total_batch is 0
+            total_batch = torch.max(
+                total_batch, torch.ones_like(total_batch)
+            )  # avoid div-by-zero
             mean, meansqr, _ = torch.split(vec / total_batch, C)
 
         var = meansqr - mean * mean

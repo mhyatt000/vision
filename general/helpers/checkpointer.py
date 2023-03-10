@@ -27,7 +27,7 @@ class Checkpointer:
         self.criterion = self.trainer.criterion
 
         # paths
-        self.psnap = lambda : os.path.join(results.get_path(), "snapshot.pt")
+        self.psnap = lambda: os.path.join(results.get_path(), "snapshot.pt")
 
         # state
         self.remember = [
@@ -51,7 +51,9 @@ class Checkpointer:
             return
 
         snap = {a.upper(): getattr(self.trainer, a) for a in self.remember}
-        snap.update({a.upper(): getattr(self.trainer, a).state_dict() for a in self.states})
+        snap.update(
+            {a.upper(): getattr(self.trainer, a).state_dict() for a in self.states}
+        )
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         snap["MODEL"] = mod.state_dict()
         torch.save(snap, self.psnap())
@@ -70,12 +72,12 @@ class Checkpointer:
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         mod.load_state_dict(snap["MODEL"])
         for k, v in snap.items():
-            if k.lower() in self.remember+self.states:
-                if not type(v) in [list,int]: # try:
+            if k.lower() in self.remember + self.states:
+                if not type(v) in [list, int]:  # try:
                     temp = getattr(self.trainer, k.lower())
                     temp.load_state_dict(v)
-                    setattr(self.trainer,k.lower(),temp)
-                else: # except Exception as ex:
+                    setattr(self.trainer, k.lower(), temp)
+                else:  # except Exception as ex:
                     # raise ex
                     setattr(self.trainer, k.lower(), v)
         del snap

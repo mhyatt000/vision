@@ -4,13 +4,13 @@ import math
 import torch
 
 
-class BoxCoder():
+class BoxCoder:
     """
     This class encodes and decodes a set of bounding boxes into
     the representation used for training the regressors.
     """
 
-    def __init__(self, weights, bbox_xform_clip=math.log(1000. / 16)):
+    def __init__(self, weights, bbox_xform_clip=math.log(1000.0 / 16)):
         """
         Arguments:
             weights (4-element tuple)

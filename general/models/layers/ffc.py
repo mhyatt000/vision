@@ -13,10 +13,14 @@ class FFC_SE(nn.Module):
         self.conv1 = nn.Conv2d(channels, channels // r, kernel_size=1, bias=True)
         self.relu1 = nn.ReLU(inplace=True)
         self.conv_a2l = (
-            None if in_cl == 0 else nn.Conv2d(channels // r, in_cl, kernel_size=1, bias=True)
+            None
+            if in_cl == 0
+            else nn.Conv2d(channels // r, in_cl, kernel_size=1, bias=True)
         )
         self.conv_a2g = (
-            None if in_cg == 0 else nn.Conv2d(channels // r, in_cg, kernel_size=1, bias=True)
+            None
+            if in_cg == 0
+            else nn.Conv2d(channels // r, in_cg, kernel_size=1, bias=True)
         )
         self.sigmoid = nn.Sigmoid()
 
@@ -31,6 +35,7 @@ class FFC_SE(nn.Module):
         x_l = 0 if self.conv_a2l is None else id_l * self.sigmoid(self.conv_a2l(x))
         x_g = 0 if self.conv_a2g is None else id_g * self.sigmoid(self.conv_a2g(x))
         return x_l, x_g
+
 
 """
 class FourierUnit(nn.Module):
@@ -90,16 +95,32 @@ class FourierUnit(nn.Module):
 
 
 class FourierUnit(nn.Module):
-
-    def __init__(self, in_channels, out_channels, groups=1, spatial_scale_factor=None, spatial_scale_mode='bilinear',
-                 spectral_pos_encoding=False, use_se=False, se_kwargs=None, ffc3d=False, fft_norm='ortho'):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        groups=1,
+        spatial_scale_factor=None,
+        spatial_scale_mode="bilinear",
+        spectral_pos_encoding=False,
+        use_se=False,
+        se_kwargs=None,
+        ffc3d=False,
+        fft_norm="ortho",
+    ):
         # bn_layer not used
         super(FourierUnit, self).__init__()
         self.groups = groups
 
-        self.conv_layer = torch.nn.Conv2d(in_channels=in_channels * 2 + (2 if spectral_pos_encoding else 0),
-                                          out_channels=out_channels * 2,
-                                          kernel_size=1, stride=1, padding=0, groups=self.groups, bias=False)
+        self.conv_layer = torch.nn.Conv2d(
+            in_channels=in_channels * 2 + (2 if spectral_pos_encoding else 0),
+            out_channels=out_channels * 2,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            groups=self.groups,
+            bias=False,
+        )
         self.bn = torch.nn.BatchNorm2d(out_channels * 2)
         self.relu = torch.nn.ReLU(inplace=True)
 
@@ -121,7 +142,12 @@ class FourierUnit(nn.Module):
 
         if self.spatial_scale_factor is not None:
             orig_size = x.shape[-2:]
-            x = F.interpolate(x, scale_factor=self.spatial_scale_factor, mode=self.spatial_scale_mode, align_corners=False)
+            x = F.interpolate(
+                x,
+                scale_factor=self.spatial_scale_factor,
+                mode=self.spatial_scale_mode,
+                align_corners=False,
+            )
 
         r_size = x.size()
         # (batch, c, h, w/2+1, 2)
@@ -129,12 +155,26 @@ class FourierUnit(nn.Module):
         ffted = torch.fft.rfftn(x, dim=fft_dim, norm=self.fft_norm)
         ffted = torch.stack((ffted.real, ffted.imag), dim=-1)
         ffted = ffted.permute(0, 1, 4, 2, 3).contiguous()  # (batch, c, 2, h, w/2+1)
-        ffted = ffted.view((batch, -1,) + ffted.size()[3:])
+        ffted = ffted.view(
+            (
+                batch,
+                -1,
+            )
+            + ffted.size()[3:]
+        )
 
         if self.spectral_pos_encoding:
             height, width = ffted.shape[-2:]
-            coords_vert = torch.linspace(0, 1, height)[None, None, :, None].expand(batch, 1, height, width).to(ffted)
-            coords_hor = torch.linspace(0, 1, width)[None, None, None, :].expand(batch, 1, height, width).to(ffted)
+            coords_vert = (
+                torch.linspace(0, 1, height)[None, None, :, None]
+                .expand(batch, 1, height, width)
+                .to(ffted)
+            )
+            coords_hor = (
+                torch.linspace(0, 1, width)[None, None, None, :]
+                .expand(batch, 1, height, width)
+                .to(ffted)
+            )
             ffted = torch.cat((coords_vert, coords_hor, ffted), dim=1)
 
         if self.use_se:
@@ -143,15 +183,32 @@ class FourierUnit(nn.Module):
         ffted = self.conv_layer(ffted)  # (batch, c*2, h, w/2+1)
         ffted = self.relu(self.bn(ffted))
 
-        ffted = ffted.view((batch, -1, 2,) + ffted.size()[2:]).permute(
-            0, 1, 3, 4, 2).contiguous()  # (batch,c, t, h, w/2+1, 2)
+        ffted = (
+            ffted.view(
+                (
+                    batch,
+                    -1,
+                    2,
+                )
+                + ffted.size()[2:]
+            )
+            .permute(0, 1, 3, 4, 2)
+            .contiguous()
+        )  # (batch,c, t, h, w/2+1, 2)
         ffted = torch.complex(ffted[..., 0], ffted[..., 1])
 
         ifft_shape_slice = x.shape[-3:] if self.ffc3d else x.shape[-2:]
-        output = torch.fft.irfftn(ffted, s=ifft_shape_slice, dim=fft_dim, norm=self.fft_norm)
+        output = torch.fft.irfftn(
+            ffted, s=ifft_shape_slice, dim=fft_dim, norm=self.fft_norm
+        )
 
         if self.spatial_scale_factor is not None:
-            output = F.interpolate(output, size=orig_size, mode=self.spatial_scale_mode, align_corners=False)
+            output = F.interpolate(
+                output,
+                size=orig_size,
+                mode=self.spatial_scale_mode,
+                align_corners=False,
+            )
 
         return output
 
@@ -168,7 +225,9 @@ class SpectralTransform(nn.Module):
 
         self.stride = stride
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels // 2, kernel_size=1, groups=groups, bias=False),
+            nn.Conv2d(
+                in_channels, out_channels // 2, kernel_size=1, groups=groups, bias=False
+            ),
             nn.BatchNorm2d(out_channels // 2),
             nn.ReLU(inplace=True),
         )
@@ -190,7 +249,9 @@ class SpectralTransform(nn.Module):
             split_no = 2
             split_s_h = h // split_no
             split_s_w = w // split_no
-            xs = torch.cat(torch.split(x[:, : c // 4], split_s_h, dim=-2), dim=1).contiguous()
+            xs = torch.cat(
+                torch.split(x[:, : c // 4], split_s_h, dim=-2), dim=1
+            ).contiguous()
             xs = torch.cat(torch.split(xs, split_s_w, dim=-1), dim=1).contiguous()
             xs = self.lfu(xs)
             xs = xs.repeat(1, 1, split_no, split_no).contiguous()
@@ -233,13 +294,21 @@ class FFC(nn.Module):
         self.ratio_gout = ratio_gout
 
         module = nn.Identity if in_cl == 0 or out_cl == 0 else nn.Conv2d
-        self.convl2l = module(in_cl, out_cl, kernel_size, stride, padding, dilation, groups, bias)
+        self.convl2l = module(
+            in_cl, out_cl, kernel_size, stride, padding, dilation, groups, bias
+        )
         module = nn.Identity if in_cl == 0 or out_cg == 0 else nn.Conv2d
-        self.convl2g = module(in_cl, out_cg, kernel_size, stride, padding, dilation, groups, bias)
+        self.convl2g = module(
+            in_cl, out_cg, kernel_size, stride, padding, dilation, groups, bias
+        )
         module = nn.Identity if in_cg == 0 or out_cl == 0 else nn.Conv2d
-        self.convg2l = module(in_cg, out_cl, kernel_size, stride, padding, dilation, groups, bias)
+        self.convg2l = module(
+            in_cg, out_cl, kernel_size, stride, padding, dilation, groups, bias
+        )
         module = nn.Identity if in_cg == 0 or out_cg == 0 else SpectralTransform
-        self.convg2g = module(in_cg, out_cg, stride, 1 if groups == 1 else groups // 2, enable_lfu)
+        self.convg2g = module(
+            in_cg, out_cg, stride, 1 if groups == 1 else groups // 2, enable_lfu
+        )
 
     def forward(self, x):
         x_l, x_g = x if type(x) is tuple else (x, 0)

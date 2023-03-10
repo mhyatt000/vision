@@ -19,7 +19,12 @@ from .transforms import build_transforms
 
 
 def build_dataset(
-    dataset_list, transforms, dataset_catalog, is_train=True, class_concat=False, extra_args={}
+    dataset_list,
+    transforms,
+    dataset_catalog,
+    is_train=True,
+    class_concat=False,
+    extra_args={},
 ):
     """
     Arguments:
@@ -32,7 +37,9 @@ def build_dataset(
     """
 
     if not type(dataset_list) in [list, tuple]:
-        raise RuntimeError("dataset_list should be a list of strings, got {dataset_list}")
+        raise RuntimeError(
+            "dataset_list should be a list of strings, got {dataset_list}"
+        )
 
     datasets = []
     num_category = 1
@@ -119,11 +126,13 @@ def build_dataset(
             dataset.json_category_id_to_contiguous_id = {}
 
             for i, cat in enumerate(category, start=num_category):
-                dataset.json_category_id_to_contiguous_id[cat] =i
+                dataset.json_category_id_to_contiguous_id[cat] = i
                 dataset.contiguous_category_id_to_json_id[i] = cat
             num_category += len(category)
 
-            print(f"Found {num_category} #category after group {dataset_id}, concating ...")
+            print(
+                f"Found {num_category} #category after group {dataset_id}, concating ..."
+            )
         datasets.append(dataset)
 
     # for testing, return a list of datasets
@@ -158,7 +167,9 @@ def build_dataset_by_group(
     """
 
     if not isinstance(dataset_list, (list, tuple)):
-        raise RuntimeError("dataset_list should be a list of strings, got {}".format(dataset_list))
+        raise RuntimeError(
+            "dataset_list should be a list of strings, got {}".format(dataset_list)
+        )
 
     num_category = 1
     grouped_datasets = []
@@ -197,7 +208,11 @@ def build_dataset_by_group(
                     dataset.json_category_id_to_contiguous_id[cat] = id
                     dataset.contiguous_category_id_to_json_id[id] = cat
             num_category += len(category)
-            print("Found {} #category after group {}, concating ...".format(num_category, group_id))
+            print(
+                "Found {} #category after group {}, concating ...".format(
+                    num_category, group_id
+                )
+            )
 
         if is_train:
             datasets = D.ConcatDataset(datasets)
@@ -274,7 +289,9 @@ def make_batch_data_sampler(
             sampler, images_per_batch, drop_last=drop_last
         )
     if num_iters is not None:
-        batch_sampler = samplers.IterationBasedBatchSampler(batch_sampler, num_iters, start_iter)
+        batch_sampler = samplers.IterationBasedBatchSampler(
+            batch_sampler, num_iters, start_iter
+        )
     return batch_sampler
 
 
@@ -345,10 +362,15 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
         dataset_list = list(dataset_list)
         dataset_list.remove("bing_caption_train")
         for bing_index in cfg.DATASETS.BING_INDEX_LIST:
-            dataset_list.insert(len(dataset_list), "bing_caption_{}_train".format(bing_index))
+            dataset_list.insert(
+                len(dataset_list), "bing_caption_{}_train".format(bing_index)
+            )
         dataset_list = tuple(dataset_list)
 
-    if "bing_caption_train_no_coco" in dataset_list and len(cfg.DATASETS.BING_INDEX_LIST) > 0:
+    if (
+        "bing_caption_train_no_coco" in dataset_list
+        and len(cfg.DATASETS.BING_INDEX_LIST) > 0
+    ):
         dataset_list = list(dataset_list)
         dataset_list.remove("bing_caption_train_no_coco")
         for bing_index in cfg.DATASETS.BING_INDEX_LIST:
@@ -360,7 +382,9 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
     print("The combined datasets are: {dataset_list}.")
 
     transforms = (
-        None if not is_train and cfg.TEST.USE_MULTISCALE else build_transforms(cfg, is_train)
+        None
+        if not is_train and cfg.TEST.USE_MULTISCALE
+        else build_transforms(cfg, is_train)
     )
 
     extra_args = {}
@@ -406,7 +430,9 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
     if is_train:
         extra_args["caption_nms"] = cfg.DATASETS.CAPTION_NMS
     if is_train and cfg.DATASETS.PACK_RANDOM_CAPTION_NUMBER > 0:
-        extra_args["pack_random_caption_number"] = cfg.DATASETS.PACK_RANDOM_CAPTION_NUMBER
+        extra_args[
+            "pack_random_caption_number"
+        ] = cfg.DATASETS.PACK_RANDOM_CAPTION_NUMBER
     if is_train and cfg.DATASETS.INFERENCE_CAPTION:
         extra_args["inference_caption"] = True
     if is_train and cfg.DATASETS.SAMPLE_NEGATIVE_FOR_GROUNDING_DATA > 0:
@@ -416,9 +442,13 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
     if is_train and cfg.DATASETS.RANDOM_PACK_PROB > 0:
         extra_args["random_pack_prob"] = cfg.DATASETS.RANDOM_PACK_PROB
     if is_train and cfg.DATASETS.NO_RANDOM_PACK_PROBABILITY > 0:
-        extra_args["no_random_pack_probability"] = cfg.DATASETS.NO_RANDOM_PACK_PROBABILITY
+        extra_args[
+            "no_random_pack_probability"
+        ] = cfg.DATASETS.NO_RANDOM_PACK_PROBABILITY
     if is_train:
-        extra_args["safeguard_positive_caption"] = cfg.DATASETS.SAFEGUARD_POSITIVE_CAPTION
+        extra_args[
+            "safeguard_positive_caption"
+        ] = cfg.DATASETS.SAFEGUARD_POSITIVE_CAPTION
     if is_train:
         extra_args["local_debug"] = cfg.DATASETS.LOCAL_DEBUG
     if is_train:
@@ -494,12 +524,16 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
             num_iters = None
             cfg.defrost()
             cfg.SOLVER.MULTI_MAX_ITER += (
-                cfg.SOLVER.MULTI_MAX_EPOCH[di] * len(dataset) // cfg.SOLVER.IMS_PER_BATCH,
+                cfg.SOLVER.MULTI_MAX_EPOCH[di]
+                * len(dataset)
+                // cfg.SOLVER.IMS_PER_BATCH,
             )
             cfg.freeze()
 
         if is_train and cfg.DATALOADER.DISTRIBUTE_CHUNK_AMONG_NODE:
-            from .datasets.custom_distributed_sampler import DistributedSamplerChunkByNode
+            from .datasets.custom_distributed_sampler import (
+                DistributedSamplerChunkByNode,
+            )
 
             chunk_or_not = []
             for i in dataset_list:
@@ -511,9 +545,13 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
             """
             If we are training on 4 nodes, each with 8 GPUs
             """
-            num_nodes = int(os.getenv("NODE_COUNT", os.getenv("OMPI_COMM_WORLD_SIZE", 1)))
+            num_nodes = int(
+                os.getenv("NODE_COUNT", os.getenv("OMPI_COMM_WORLD_SIZE", 1))
+            )
             local_size = cfg.num_gpus // num_nodes
-            node_rank = int(os.getenv("NODE_RANK", os.getenv("OMPI_COMM_WORLD_RANK", 0)))
+            node_rank = int(
+                os.getenv("NODE_RANK", os.getenv("OMPI_COMM_WORLD_RANK", 0))
+            )
             local_rank = cfg.local_rank
             sampler = DistributedSamplerChunkByNode(
                 dataset=dataset,
@@ -566,7 +604,11 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
         )
         cfg.freeze()
 
-    if is_train and not cfg.DATASETS.ALTERNATIVE_TRAINING and not cfg.DATASETS.MULTISTAGE_TRAINING:
+    if (
+        is_train
+        and not cfg.DATASETS.ALTERNATIVE_TRAINING
+        and not cfg.DATASETS.MULTISTAGE_TRAINING
+    ):
         # during training, a single (possibly concatenated) data_loader is returned
         assert len(data_loaders) == 1
         return data_loaders[0]

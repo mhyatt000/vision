@@ -40,17 +40,29 @@ def load(url_or_file_name):
     return image
 
 
-def inference_default( model, data_loader, dataset_name, iou_types=("bbox",),
-    box_only=False, device="cuda", expected_results=(), expected_results_sigma_tol=4,
-    output_folder=None, cfg=None,
+def inference_default(
+    model,
+    data_loader,
+    dataset_name,
+    iou_types=("bbox",),
+    box_only=False,
+    device="cuda",
+    expected_results=(),
+    expected_results_sigma_tol=4,
+    output_folder=None,
+    cfg=None,
 ):
 
     # convert to a torch.device for efficiency
     device = torch.device(device)
-    num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
+    num_devices = (
+        torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
+    )
     logger = logging.getLogger("general.inference")
     dataset = data_loader.dataset
-    logger.info("Start evaluation on {} dataset({} images).".format(dataset_name, len(dataset)))
+    logger.info(
+        "Start evaluation on {} dataset({} images).".format(dataset_name, len(dataset))
+    )
     start_time = time.time()
 
     model.eval()
@@ -64,7 +76,9 @@ def inference_default( model, data_loader, dataset_name, iou_types=("bbox",),
             else:
                 output = model(images.to(device))
             output = [o.to(cpu_device) for o in output]
-        results_dict.update({img_id: result for img_id, result in zip(image_ids, output)})
+        results_dict.update(
+            {img_id: result for img_id, result in zip(image_ids, output)}
+        )
     predictions = results_dict
     # wait for all processes to complete before measuring the time
     synchronize()
@@ -90,7 +104,10 @@ def inference_default( model, data_loader, dataset_name, iou_types=("bbox",),
         expected_results_sigma_tol=expected_results_sigma_tol,
     )
     return evaluate(
-        dataset=dataset, predictions=predictions, output_folder=output_folder, **extra_args
+        dataset=dataset,
+        predictions=predictions,
+        output_folder=output_folder,
+        **extra_args
     )
 
 
@@ -156,7 +173,10 @@ def create_positive_dict(tokenized, tokens_positive, labels):
                 positive_map[i] = labels[j]  # because the labels starts from 1
                 positive_map_label_to_token[labels[j]].append(i)
             # positive_map[j, beg_pos : end_pos + 1].fill_(1)
-    return positive_map, positive_map_label_to_token  # / (positive_map.sum(-1)[:, None] + 1e-6)
+    return (
+        positive_map,
+        positive_map_label_to_token,
+    )  # / (positive_map.sum(-1)[:, None] + 1e-6)
 
 
 def chunks(lst, n):
@@ -300,9 +320,9 @@ def create_positive_map_label_to_token_from_positive_map(positive_map, plus=0):
 
     positive_map_label_to_token = {}
     for i in range(len(positive_map)):
-        positive_map_label_to_token[i + plus] = torch.nonzero(positive_map[i], as_tuple=True)[
-            0
-        ].tolist()
+        positive_map_label_to_token[i + plus] = torch.nonzero(
+            positive_map[i], as_tuple=True
+        )[0].tolist()
     return positive_map_label_to_token
 
 
@@ -422,9 +442,19 @@ def write_flickr_results(results, output_file_name):
     return
 
 
-def inference( model, data_loader, dataset_name, iou_types=("bbox",),
-    box_only=False, device="cuda", expected_results=(), expected_results_sigma_tol=4,
-    output_folder=None, cfg=None, verbose=True, visualizer=None,
+def inference(
+    model,
+    data_loader,
+    dataset_name,
+    iou_types=("bbox",),
+    box_only=False,
+    device="cuda",
+    expected_results=(),
+    expected_results_sigma_tol=4,
+    output_folder=None,
+    cfg=None,
+    verbose=True,
+    visualizer=None,
 ):
 
     # convert to a torch.device for efficiency
@@ -432,11 +462,17 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
         device = torch.device(device)
     except:
         device = device
-    num_devices = torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
+    num_devices = (
+        torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1
+    )
     logger = logging.getLogger("general.inference")
     dataset = data_loader.dataset
     if verbose:
-        logger.info("Start evaluation on {} dataset({} images).".format(dataset_name, len(dataset)))
+        logger.info(
+            "Start evaluation on {} dataset({} images).".format(
+                dataset_name, len(dataset)
+            )
+        )
     start_time = time.time()
 
     task = cfg.TEST.EVAL_TASK
@@ -464,9 +500,10 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
         all_queries = [[categories[k] for k in keys]]
         all_positive_map_label_to_token = [{k: [i] for i, k in enumerate(keys)}]
     elif task == "detection":
-        all_queries, all_positive_map_label_to_token = create_queries_and_maps_from_dataset(
-            dataset, cfg
-        )
+        (
+            all_queries,
+            all_positive_map_label_to_token,
+        ) = create_queries_and_maps_from_dataset(dataset, cfg)
     elif task == "grounding":
         all_queries = [None]
         all_positive_map_label_to_token = [None]
@@ -505,7 +542,9 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
                 for query_i in range(query_time):
                     if task == "detection":
                         captions = [all_queries[query_i] for ii in range(len(targets))]
-                        positive_map_label_to_token = all_positive_map_label_to_token[query_i]
+                        positive_map_label_to_token = all_positive_map_label_to_token[
+                            query_i
+                        ]
                     else:
                         captions = None
                         positive_map_label_to_token = None
@@ -530,15 +569,21 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
 
                     if task == "detection":
                         captions = [all_queries[query_i] for ii in range(len(targets))]
-                        positive_map_label_to_token = all_positive_map_label_to_token[query_i]
+                        positive_map_label_to_token = all_positive_map_label_to_token[
+                            query_i
+                        ]
                     elif task == "grounding":
                         captions = [t.get_field("caption") for t in targets]
-                        positive_map_eval = [t.get_field("positive_map_eval") for t in targets]
+                        positive_map_eval = [
+                            t.get_field("positive_map_eval") for t in targets
+                        ]
                         if cfg.MODEL.RPN_ARCHITECTURE == "VLDYHEAD":
                             plus = 1
                         else:
                             plus = 0
-                        assert len(positive_map_eval) == 1  # Let's just use one image per batch
+                        assert (
+                            len(positive_map_eval) == 1
+                        )  # Let's just use one image per batch
                         positive_map_eval = positive_map_eval[0]
                         positive_map_label_to_token = (
                             create_positive_map_label_to_token_from_positive_map(
@@ -546,7 +591,9 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
                             )
                         )
                     output = model(
-                        images, captions=captions, positive_map=positive_map_label_to_token
+                        images,
+                        captions=captions,
+                        positive_map=positive_map_label_to_token,
                     )
                     output = [o.to(cpu_device) for o in output]
 
@@ -610,7 +657,9 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
             no_background = True
             label_list = []
             for index, i in enumerate(categories):
-                if not no_background or (i["name"] != "__background__" and i["id"] != 0):
+                if not no_background or (
+                    i["name"] != "__background__" and i["id"] != 0
+                ):
                     label_list.append(i["name"])
             visualizer.entities = label_list
 
@@ -631,11 +680,15 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
         if evaluator is not None:
             evaluator.update(mdetr_style_output)
         else:
-            output = [[row[_i] for row in all_output] for _i in range(len(all_output[0]))]
+            output = [
+                [row[_i] for row in all_output] for _i in range(len(all_output[0]))
+            ]
             for index, i in enumerate(output):
                 output[index] = i[0].concate_box_list(i)
 
-            results_dict.update({img_id: result for img_id, result in zip(image_ids, output)})
+            results_dict.update(
+                {img_id: result for img_id, result in zip(image_ids, output)}
+            )
 
     if evaluator is not None:
         evaluator.synchronize_between_processes()
@@ -653,7 +706,9 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
                     score, output_file_name=os.path.join(output_folder, "bbox.csv")
                 )
             elif "lvis" in cfg.DATASETS.TEST[0]:
-                write_lvis_results(score, output_file_name=os.path.join(output_folder, "bbox.csv"))
+                write_lvis_results(
+                    score, output_file_name=os.path.join(output_folder, "bbox.csv")
+                )
         try:
             torch.distributed.barrier()
         except:
@@ -689,5 +744,8 @@ def inference( model, data_loader, dataset_name, iou_types=("bbox",),
         expected_results_sigma_tol=expected_results_sigma_tol,
     )
     return evaluate(
-        dataset=dataset, predictions=predictions, output_folder=output_folder, **extra_args
+        dataset=dataset,
+        predictions=predictions,
+        output_folder=output_folder,
+        **extra_args
     )

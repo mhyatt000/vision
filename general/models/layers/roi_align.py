@@ -7,6 +7,7 @@ from torch.nn.modules.utils import _pair
 
 from general.config import cfg
 
+
 class _ROIAlign(Function):
     @staticmethod
     def forward(ctx, input, roi, output_size, spatial_scale, sampling_ratio):
@@ -23,7 +24,7 @@ class _ROIAlign(Function):
     @staticmethod
     @once_differentiable
     def backward(ctx, grad_output):
-        rois, = ctx.saved_tensors
+        (rois,) = ctx.saved_tensors
         output_size = ctx.output_size
         spatial_scale = ctx.spatial_scale
         sampling_ratio = ctx.sampling_ratio
@@ -42,11 +43,13 @@ class _ROIAlign(Function):
         )
         return grad_input, None, None, None, None
 
+
 try:
     import torchvision
     from torchvision.ops import roi_align
 except:
     roi_align = _ROIAlign.apply
+
 
 class ROIAlign(nn.Module):
     def __init__(self, output_size, spatial_scale, sampling_ratio):
@@ -68,6 +71,7 @@ class ROIAlign(nn.Module):
         tmpstr += ")"
         return tmpstr
 
+
 class ROIAlignV2(nn.Module):
     def __init__(self, output_size, spatial_scale, sampling_ratio):
         super(ROIAlignV2, self).__init__()
@@ -77,7 +81,12 @@ class ROIAlignV2(nn.Module):
 
     def forward(self, input, rois):
         return torchvision.ops.roi_align(
-            input, rois, self.output_size, self.spatial_scale, self.sampling_ratio, aligned=True
+            input,
+            rois,
+            self.output_size,
+            self.spatial_scale,
+            self.sampling_ratio,
+            aligned=True,
         )
 
     def __repr__(self):

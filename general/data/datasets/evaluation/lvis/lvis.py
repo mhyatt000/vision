@@ -10,7 +10,6 @@ import torchvision
 from PIL import Image
 
 
-
 def _isArrayLike(obj):
     return hasattr(obj, "__iter__") and hasattr(obj, "__len__")
 
@@ -35,7 +34,9 @@ class LVIS:
             self.dataset = self._load_json(annotation_path)
             print("Done (t={:0.2f}s)".format(time.time() - tic))
 
-            assert type(self.dataset) == dict, "Annotation file format {} not supported.".format(type(self.dataset))
+            assert (
+                type(self.dataset) == dict
+            ), "Annotation file format {} not supported.".format(type(self.dataset))
             self._create_index()
 
     def _load_json(self, path):
@@ -99,7 +100,9 @@ class LVIS:
         ann_ids = [
             _ann["id"]
             for _ann in anns
-            if _ann["category_id"] in cat_ids and _ann["area"] > area_rng[0] and _ann["area"] < area_rng[1]
+            if _ann["category_id"] in cat_ids
+            and _ann["area"] > area_rng[0]
+            and _ann["area"] < area_rng[1]
         ]
         return ann_ids
 
@@ -204,4 +207,3 @@ class LVIS:
         """
         rle = self.ann_to_rle(ann)
         return mask_utils.decode(rle)
-

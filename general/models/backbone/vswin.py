@@ -5,6 +5,7 @@ from functools import lru_cache, reduce
 from operator import mul
 
 from einops import rearrange
+
 # from mmaction.utils import get_root_logger
 # from mmcv.runner import load_checkpoint
 import numpy as np
@@ -40,7 +41,9 @@ def window_partition(x, wsz):
 
     B, D, H, W, C = x.shape
     x = x.view(B, D // wsz[0], wsz[0], H // wsz[1], wsz[1], W // wsz[2], wsz[2], C)
-    windows = x.permute(0, 1, 3, 5, 2, 4, 6, 7).contiguous().view(-1, reduce(mul, wsz), C)
+    windows = (
+        x.permute(0, 1, 3, 5, 2, 4, 6, 7).contiguous().view(-1, reduce(mul, wsz), C)
+    )
     return windows
 
 
@@ -56,7 +59,9 @@ def window_reverse(windows, wsz, B, D, H, W):
         x: (B, D, H, W, C)
     """
 
-    x = windows.view(B, D // wsz[0], H // wsz[1], W // wsz[2], wsz[0], wsz[1], wsz[2], -1)
+    x = windows.view(
+        B, D // wsz[0], H // wsz[1], W // wsz[2], wsz[0], wsz[1], wsz[2], -1
+    )
     x = x.permute(0, 1, 4, 2, 5, 3, 6, 7).contiguous().view(B, D, H, W, -1)
     return x
 
@@ -114,7 +119,9 @@ class WindowAttention3D(nn.Module):
         # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
             torch.zeros(
-                (2 * window_size[0] - 1) * (2 * window_size[1] - 1) * (2 * window_size[2] - 1),
+                (2 * window_size[0] - 1)
+                * (2 * window_size[1] - 1)
+                * (2 * window_size[2] - 1),
                 num_heads,
             )
         )  # 2*Wd-1 * 2*Wh-1 * 2*Ww-1, nH
@@ -123,19 +130,25 @@ class WindowAttention3D(nn.Module):
         coords_d = torch.arange(self.window_size[0])
         coords_h = torch.arange(self.window_size[1])
         coords_w = torch.arange(self.window_size[2])
-        coords = torch.stack(torch.meshgrid(coords_d, coords_h, coords_w))  # 3, Wd, Wh, Ww
+        coords = torch.stack(
+            torch.meshgrid(coords_d, coords_h, coords_w)
+        )  # 3, Wd, Wh, Ww
 
         coords_flatten = torch.flatten(coords, 1)  # 3, Wd*Wh*Ww
         relative_coords = (
             coords_flatten[:, :, None] - coords_flatten[:, None, :]
         )  # 3, Wd*Wh*Ww, Wd*Wh*Ww
 
-        relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wd*Wh*Ww, Wd*Wh*Ww, 3
+        relative_coords = relative_coords.permute(
+            1, 2, 0
+        ).contiguous()  # Wd*Wh*Ww, Wd*Wh*Ww, 3
         relative_coords[:, :, 0] += self.window_size[0] - 1  # shift to start from 0
         relative_coords[:, :, 1] += self.window_size[1] - 1
         relative_coords[:, :, 2] += self.window_size[2] - 1
 
-        relative_coords[:, :, 0] *= (2 * self.window_size[1] - 1) * (2 * self.window_size[2] - 1)
+        relative_coords[:, :, 0] *= (2 * self.window_size[1] - 1) * (
+            2 * self.window_size[2] - 1
+        )
         relative_coords[:, :, 1] *= 2 * self.window_size[2] - 1
         relative_position_index = relative_coords.sum(-1)  # Wd*Wh*Ww, Wd*Wh*Ww
         self.register_buffer("relative_position_index", relative_position_index)
@@ -178,7 +191,9 @@ class WindowAttention3D(nn.Module):
 
         if mask is not None:
             nW = mask.shape[0]
-            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
+            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(
+                1
+            ).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
             attn = self.softmax(attn)
         else:
@@ -235,9 +250,15 @@ class SwinTransformerBlock3D(nn.Module):
         self.mlp_ratio = mlp_ratio
         self.use_checkpoint = use_checkpoint
 
-        assert 0 <= self.shift_size[0] < self.window_size[0], "shift_size must in 0-window_size"
-        assert 0 <= self.shift_size[1] < self.window_size[1], "shift_size must in 0-window_size"
-        assert 0 <= self.shift_size[2] < self.window_size[2], "shift_size must in 0-window_size"
+        assert (
+            0 <= self.shift_size[0] < self.window_size[0]
+        ), "shift_size must in 0-window_size"
+        assert (
+            0 <= self.shift_size[1] < self.window_size[1]
+        ), "shift_size must in 0-window_size"
+        assert (
+            0 <= self.shift_size[2] < self.window_size[2]
+        ), "shift_size must in 0-window_size"
 
         self.norm1 = norm_layer(dim)
         self.attn = WindowAttention3D(
@@ -253,12 +274,16 @@ class SwinTransformerBlock3D(nn.Module):
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = MLP(in_dim=dim, h_dim=mlp_hidden_dim, activation=act_layer, drop=drop)
+        self.mlp = MLP(
+            in_dim=dim, h_dim=mlp_hidden_dim, activation=act_layer, drop=drop
+        )
 
     def forward_part1(self, x, mask_matrix):
 
         B, D, H, W, C = x.shape
-        window_size, shift_size = get_window_size((D, H, W), self.window_size, self.shift_size)
+        window_size, shift_size = get_window_size(
+            (D, H, W), self.window_size, self.shift_size
+        )
 
         x = self.norm1(x)
 
@@ -274,7 +299,9 @@ class SwinTransformerBlock3D(nn.Module):
         # shifting the padded tensor is the same as shifting the windows
         if any(i > 0 for i in shift_size):
             shifted_x = torch.roll(
-                x, shifts=(-shift_size[0], -shift_size[1], -shift_size[2]), dims=(1, 2, 3)
+                x,
+                shifts=(-shift_size[0], -shift_size[1], -shift_size[2]),
+                dims=(1, 2, 3),
             )
             attn_mask = mask_matrix
         else:
@@ -287,12 +314,16 @@ class SwinTransformerBlock3D(nn.Module):
         attn_windows = self.attn(x_windows, mask=attn_mask)  # B*nW, Wd*Wh*Ww, C
         # merge windows
         attn_windows = attn_windows.view(-1, *(window_size + (C,)))
-        shifted_x = window_reverse(attn_windows, window_size, B, Dp, Hp, Wp)  # B D' H' W' C
+        shifted_x = window_reverse(
+            attn_windows, window_size, B, Dp, Hp, Wp
+        )  # B D' H' W' C
 
         # reverse cyclic shift
         if any(i > 0 for i in shift_size):
             x = torch.roll(
-                shifted_x, shifts=(shift_size[0], shift_size[1], shift_size[2]), dims=(1, 2, 3)
+                shifted_x,
+                shifts=(shift_size[0], shift_size[1], shift_size[2]),
+                dims=(1, 2, 3),
             )
         else:
             x = shifted_x
@@ -451,7 +482,9 @@ class BasicLayer(nn.Module):
                     qk_scale=qk_scale,
                     drop=drop,
                     attn_drop=attn_drop,
-                    drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
+                    drop_path=drop_path[i]
+                    if isinstance(drop_path, list)
+                    else drop_path,
                     norm_layer=norm_layer,
                     use_checkpoint=use_checkpoint,
                 )
@@ -471,7 +504,9 @@ class BasicLayer(nn.Module):
 
         # calculate attention mask for SW-MSA
         B, C, D, H, W = x.shape
-        window_size, shift_size = get_window_size((D, H, W), self.window_size, self.shift_size)
+        window_size, shift_size = get_window_size(
+            (D, H, W), self.window_size, self.shift_size
+        )
         x = rearrange(x, "b c d h w -> b d h w c")
         Dp = int(np.ceil(D / window_size[0])) * window_size[0]
         Hp = int(np.ceil(H / window_size[1])) * window_size[1]
@@ -503,7 +538,9 @@ class PatchEmbed3D(nn.Module):
         self.in_chans = in_chans
         self.embed_dim = embed_dim
 
-        self.proj = nn.Conv3d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv3d(
+            in_chans, embed_dim, kernel_size=patch_size, stride=patch_size
+        )
         if norm_layer is not None:
             self.norm = norm_layer(embed_dim)
         else:
@@ -704,15 +741,22 @@ class SwinTransformer3D(nn.Module):
                             relative_position_bias_table_pretrained.permute(1, 0).view(
                                 1, nH1, S1, S1
                             ),
-                            size=(2 * self.window_size[1] - 1, 2 * self.window_size[2] - 1),
+                            size=(
+                                2 * self.window_size[1] - 1,
+                                2 * self.window_size[2] - 1,
+                            ),
                             mode="bicubic",
                         )
                     )
                     relative_position_bias_table_pretrained = (
-                        relative_position_bias_table_pretrained_resized.view(nH2, L2).permute(1, 0)
+                        relative_position_bias_table_pretrained_resized.view(
+                            nH2, L2
+                        ).permute(1, 0)
                     )
 
-            state_dict[k] = relative_position_bias_table_pretrained.repeat(2 * wd - 1, 1)
+            state_dict[k] = relative_position_bias_table_pretrained.repeat(
+                2 * wd - 1, 1
+            )
 
         msg = self.load_state_dict(state_dict, strict=False)
         logger.info(msg)
@@ -750,7 +794,7 @@ class SwinTransformer3D(nn.Module):
             else:
                 # Directly load 3D model.
                 # load_checkpoint(self, self.pretrained, strict=False, logger=logger)
-                raise 'unimplemented'
+                raise "unimplemented"
         elif self.pretrained is None:
             self.apply(_init_weights)
         else:

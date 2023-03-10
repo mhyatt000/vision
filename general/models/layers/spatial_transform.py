@@ -19,7 +19,9 @@ class LearnableSpatialTransformWrapper(nn.Module):
         elif isinstance(x, tuple):
             x_trans = tuple(self.transform(elem) for elem in x)
             y_trans = self.impl(x_trans)
-            return tuple(self.inverse_transform(elem, orig_x) for elem, orig_x in zip(y_trans, x))
+            return tuple(
+                self.inverse_transform(elem, orig_x) for elem, orig_x in zip(y_trans, x)
+            )
         else:
             raise ValueError(f"Unexpected input type {type(x)}")
 
@@ -45,5 +47,7 @@ if __name__ == "__main__":
     x = torch.arange(2 * 3 * 15 * 15).view(2, 3, 15, 15).float()
     y = layer(x)
     assert x.shape == y.shape
-    assert torch.allclose(x[:, :, 1:, 1:][:, :, :-1, :-1], y[:, :, 1:, 1:][:, :, :-1, :-1])
+    assert torch.allclose(
+        x[:, :, 1:, 1:][:, :, :-1, :-1], y[:, :, 1:, 1:][:, :, :-1, :-1]
+    )
     print("all ok")

@@ -3,15 +3,17 @@ import torch
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from . import backbone, head, layers, rpn # lang
+from . import backbone, head, layers, rpn  # lang
 from .backbone import ffcresnet, iresnet, resnet, swint, vit, srnet, resnet_from_scratch
 from .vlrcnn import VLRCNN
 from .layers import basic
-from . import custom 
+from . import custom
+
 
 def sequence():
     """allows user to define a sequence of models"""
     return nn.Sequential(*[models[mod]() for mod in cfg.MODEL.SEQ.SEQUENCE])
+
 
 def CUSTOM():
     return custom.CUSTOM[cfg.MODEL.CUSTOM.KEY]()
@@ -20,15 +22,15 @@ def CUSTOM():
 models = {
     "VLRCNN": VLRCNN,
     "SWINT": swint.SwinTransformer,
-    "RESNET": resnet.ResNet, 
-    "RESNET_FROM_SCRATCH": resnet_from_scratch.ResNet, 
+    "RESNET": resnet.ResNet,
+    "RESNET_FROM_SCRATCH": resnet_from_scratch.ResNet,
     "VIT": vit.VIT,
     "FFCR": ffcresnet.FFCR,
     "IRESNET": iresnet.IResNet,
     "SEQUENTIAL": sequence,
-    "MLP" : basic._MLP,
-    "SELECT" : basic.Select,
-    "CONV" : basic.CONV2D,
+    "MLP": basic._MLP,
+    "SELECT": basic.Select,
+    "CONV": basic.CONV2D,
     "SRNET": srnet.SRNet,
     "CUSTOM": CUSTOM,
 }

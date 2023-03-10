@@ -14,13 +14,13 @@ from maskrcnn_benchmark.structures.boxlist_ops import boxlist_iou
 
 
 def do_coco_evaluation(
-        dataset,
-        predictions,
-        box_only,
-        output_folder,
-        iou_types,
-        expected_results,
-        expected_results_sigma_tol,
+    dataset,
+    predictions,
+    box_only,
+    output_folder,
+    iou_types,
+    expected_results,
+    expected_results_sigma_tol,
 ):
     logger = logging.getLogger("maskrcnn_benchmark.inference")
 
@@ -56,9 +56,9 @@ def do_coco_evaluation(
     if "segm" in iou_types:
         logger.info("Preparing segm results")
         coco_results["segm"] = prepare_for_coco_segmentation(predictions, dataset)
-    if 'keypoints' in iou_types:
-        logger.info('Preparing keypoints results')
-        coco_results['keypoints'] = prepare_for_coco_keypoint(predictions, dataset)
+    if "keypoints" in iou_types:
+        logger.info("Preparing keypoints results")
+        coco_results["keypoints"] = prepare_for_coco_keypoint(predictions, dataset)
 
     results = COCOResults(*iou_types)
     logger.info("Evaluating predictions")
@@ -149,10 +149,13 @@ def prepare_for_coco_detection(predictions, dataset):
                 coco_results.append(
                     {
                         "image_id": original_id,
-                        "category_id": dataset.contiguous_category_id_to_json_id[labels[k]],
+                        "category_id": dataset.contiguous_category_id_to_json_id[
+                            labels[k]
+                        ],
                         "bbox": box,
                         "score": scores[k],
-                    })
+                    }
+                )
 
     return coco_results
 
@@ -220,31 +223,37 @@ def prepare_for_coco_keypoint(predictions, dataset):
             continue
 
         # TODO replace with get_img_info?
-        image_width = dataset.coco.imgs[original_id]['width']
-        image_height = dataset.coco.imgs[original_id]['height']
+        image_width = dataset.coco.imgs[original_id]["width"]
+        image_height = dataset.coco.imgs[original_id]["height"]
         prediction = prediction.resize((image_width, image_height))
-        prediction = prediction.convert('xywh')
+        prediction = prediction.convert("xywh")
 
         boxes = prediction.bbox.tolist()
-        scores = prediction.get_field('scores').tolist()
-        labels = prediction.get_field('labels').tolist()
-        keypoints = prediction.get_field('keypoints')
+        scores = prediction.get_field("scores").tolist()
+        labels = prediction.get_field("labels").tolist()
+        keypoints = prediction.get_field("keypoints")
         keypoints = keypoints.resize((image_width, image_height))
         keypoints = keypoints.to_coco_format()
 
         mapped_labels = [dataset.contiguous_category_id_to_json_id[i] for i in labels]
 
-        coco_results.extend([{
-            'image_id': original_id,
-            'category_id': mapped_labels[k],
-            'keypoints': keypoint,
-            'score': scores[k]} for k, keypoint in enumerate(keypoints)])
+        coco_results.extend(
+            [
+                {
+                    "image_id": original_id,
+                    "category_id": mapped_labels[k],
+                    "keypoints": keypoint,
+                    "score": scores[k],
+                }
+                for k, keypoint in enumerate(keypoints)
+            ]
+        )
     return coco_results
 
 
 # inspired from Detectron
 def evaluate_box_proposals(
-        predictions, dataset, thresholds=None, area="all", limit=None
+    predictions, dataset, thresholds=None, area="all", limit=None
 ):
     """Evaluate detection proposal recall metrics. This function is a much
     faster alternative to the official COCO API recall evaluation code. However,
@@ -373,7 +382,7 @@ def evaluate_box_proposals(
 
 
 def evaluate_predictions_on_coco(
-        coco_gt, coco_results, json_result_file, iou_type="bbox"
+    coco_gt, coco_results, json_result_file, iou_type="bbox"
 ):
     import json
 
@@ -386,37 +395,43 @@ def evaluate_predictions_on_coco(
     coco_dt = coco_gt.loadRes(str(json_result_file)) if coco_results else COCO()
 
     # coco_dt = coco_gt.loadRes(coco_results)
-    if iou_type == 'keypoints':
+    if iou_type == "keypoints":
         coco_gt = filter_valid_keypoints(coco_gt, coco_dt)
     coco_eval = COCOeval(coco_gt, coco_dt, iou_type)
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
-    if iou_type == 'bbox':
-        summarize_per_category(coco_eval, json_result_file.replace('.json', '.csv'))
+    if iou_type == "bbox":
+        summarize_per_category(coco_eval, json_result_file.replace(".json", ".csv"))
     return coco_eval
 
 
 def summarize_per_category(coco_eval, csv_output=None):
-    '''
+    """
     Compute and display summary metrics for evaluation results.
     Note this functin can *only* be applied on the default parameter setting
-    '''
+    """
 
-    def _summarize(iouThr=None, areaRng='all', maxDets=100):
+    def _summarize(iouThr=None, areaRng="all", maxDets=100):
         p = coco_eval.params
-        titleStr = 'Average Precision'
-        typeStr = '(AP)'
-        iouStr = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
-            if iouThr is None else '{:0.2f}'.format(iouThr)
-        result_str = ' {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ], '. \
-            format(titleStr, typeStr, iouStr, areaRng, maxDets)
+        titleStr = "Average Precision"
+        typeStr = "(AP)"
+        iouStr = (
+            "{:0.2f}:{:0.2f}".format(p.iouThrs[0], p.iouThrs[-1])
+            if iouThr is None
+            else "{:0.2f}".format(iouThr)
+        )
+        result_str = (
+            " {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ], ".format(
+                titleStr, typeStr, iouStr, areaRng, maxDets
+            )
+        )
 
         aind = [i for i, aRng in enumerate(p.areaRngLbl) if aRng == areaRng]
         mind = [i for i, mDet in enumerate(p.maxDets) if mDet == maxDets]
 
         # dimension of precision: [TxRxKxAxM]
-        s = coco_eval.eval['precision']
+        s = coco_eval.eval["precision"]
         # IoU
         if iouThr is not None:
             t = np.where(iouThr == p.iouThrs)[0]
@@ -431,36 +446,38 @@ def summarize_per_category(coco_eval, csv_output=None):
             num_classes = len(p.catIds)
             avg_ap = 0.0
             for i in range(0, num_classes):
-                result_str += '{}, '.format(np.mean(s[:, :, i, :]))
+                result_str += "{}, ".format(np.mean(s[:, :, i, :]))
                 avg_ap += np.mean(s[:, :, i, :])
-            result_str += ('{} \n'.format(avg_ap / num_classes))
+            result_str += "{} \n".format(avg_ap / num_classes)
         return result_str
 
     id2name = {}
     for _, cat in coco_eval.cocoGt.cats.items():
-        id2name[cat['id']] = cat['name']
-    title_str = 'metric, '
+        id2name[cat["id"]] = cat["name"]
+    title_str = "metric, "
     for cid in coco_eval.params.catIds:
-        title_str += '{}, '.format(id2name[cid])
-    title_str += 'avg \n'
+        title_str += "{}, ".format(id2name[cid])
+    title_str += "avg \n"
 
     results = [title_str]
     results.append(_summarize())
-    results.append(_summarize(iouThr=.5, maxDets=coco_eval.params.maxDets[2]))
-    results.append(_summarize(areaRng='small', maxDets=coco_eval.params.maxDets[2]))
-    results.append(_summarize(areaRng='medium', maxDets=coco_eval.params.maxDets[2]))
-    results.append(_summarize(areaRng='large', maxDets=coco_eval.params.maxDets[2]))
+    results.append(_summarize(iouThr=0.5, maxDets=coco_eval.params.maxDets[2]))
+    results.append(_summarize(areaRng="small", maxDets=coco_eval.params.maxDets[2]))
+    results.append(_summarize(areaRng="medium", maxDets=coco_eval.params.maxDets[2]))
+    results.append(_summarize(areaRng="large", maxDets=coco_eval.params.maxDets[2]))
 
-    with open(csv_output, 'w') as f:
+    with open(csv_output, "w") as f:
         for result in results:
             f.writelines(result)
 
 
 def filter_valid_keypoints(coco_gt, coco_dt):
-    kps = coco_dt.anns[1]['keypoints']
+    kps = coco_dt.anns[1]["keypoints"]
     for id, ann in coco_gt.anns.items():
-        ann['keypoints'][2::3] = [a * b for a, b in zip(ann['keypoints'][2::3], kps[2::3])]
-        ann['num_keypoints'] = sum(ann['keypoints'][2::3])
+        ann["keypoints"][2::3] = [
+            a * b for a, b in zip(ann["keypoints"][2::3], kps[2::3])
+        ]
+        ann["num_keypoints"] = sum(ann["keypoints"][2::3])
     return coco_gt
 
 

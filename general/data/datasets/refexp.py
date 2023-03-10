@@ -56,10 +56,13 @@ class RefExpEvaluator(object):
                 prediction = self.predictions[image_id]
                 assert prediction is not None
                 sorted_scores_boxes = sorted(
-                    zip(prediction["scores"].tolist(), prediction["boxes"].tolist()), reverse=True
+                    zip(prediction["scores"].tolist(), prediction["boxes"].tolist()),
+                    reverse=True,
                 )
                 sorted_scores, sorted_boxes = zip(*sorted_scores_boxes)
-                sorted_boxes = torch.cat([torch.as_tensor(x).view(1, 4) for x in sorted_boxes])
+                sorted_boxes = torch.cat(
+                    [torch.as_tensor(x).view(1, 4) for x in sorted_boxes]
+                )
                 target_bbox = target[0]["bbox"]
                 converted_bbox = [
                     target_bbox[0],
@@ -67,7 +70,9 @@ class RefExpEvaluator(object):
                     target_bbox[2] + target_bbox[0],
                     target_bbox[3] + target_bbox[1],
                 ]
-                giou = generalized_box_iou(sorted_boxes, torch.as_tensor(converted_bbox).view(-1, 4))
+                giou = generalized_box_iou(
+                    sorted_boxes, torch.as_tensor(converted_bbox).view(-1, 4)
+                )
                 for k in self.k:
                     if max(giou[:k]) >= self.thresh_iou:
                         dataset2score[img_info["dataset_name"]][k] += 1.0

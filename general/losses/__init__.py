@@ -7,7 +7,7 @@ from .partial_fc_v2 import PartialFC_V2 as PFC2
 
 class PFC(PFC2):
     def __init__(self):
-        super(PFC,self).__init__(
+        super(PFC, self).__init__(
             margin_loss=CombinedMarginLoss(),
             embedding_size=cfg.LOSS.PFC.EMBED_DIM,
             num_classes=cfg.LOSS.PFC.NCLASSES,

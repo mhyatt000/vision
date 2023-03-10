@@ -109,7 +109,9 @@ class _IResNet(nn.Module):
 
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-05)
         self.prelu = nn.PReLU(self.inplanes)
 
@@ -213,4 +215,3 @@ def IResNet(**kwargs):
         "IR200": _IResNet(IBasicBlock, [6, 26, 60, 6], **kwargs),
     }
     return ARCH[cfg.MODEL.IRESNET.BODY]
-

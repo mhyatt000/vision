@@ -71,7 +71,7 @@ def calc_detection_voc_prec_rec(gt_boxlists, pred_boxlists, iou_thresh=0.5):
     predicted bounding boxes obtained from a dataset which has :math:`N`
     images.
     The code is based on the evaluation code used in PASCAL VOC Challenge.
-   """
+    """
     n_pos = defaultdict(int)
     score = defaultdict(list)
     match = defaultdict(list)

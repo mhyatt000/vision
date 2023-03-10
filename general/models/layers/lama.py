@@ -112,7 +112,9 @@ class MultidilatedConv(nn.Module):
             in_channels_permute = list(range(in_dim))
             random.shuffle(in_channels_permute)
             # save as buffer so it is saved and loaded with checkpoint
-            self.register_buffer("in_channels_permute", torch.tensor(in_channels_permute))
+            self.register_buffer(
+                "in_channels_permute", torch.tensor(in_channels_permute)
+            )
 
     def forward(self, x):
         if self.shuffle_in_channels:
@@ -143,7 +145,6 @@ class MultidilatedConv(nn.Module):
 
 
 class BaseDiscriminator(nn.Module):
-
     @abc.abstractmethod
     def forward(self, x):
         """

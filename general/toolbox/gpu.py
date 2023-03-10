@@ -1,11 +1,16 @@
 from pynvml import *
 
+
 def gpu_utilization():
     nvmlInit()
     handle = nvmlDeviceGetHandleByIndex(0)
     info = nvmlDeviceGetMemoryInfo(handle)
-    usegb = info.used//1042**3 > 1
-    return f"GPU used: {info.used//1024**3} GB" if usegb else f"GPU used: {info.used//1024**2} MB" 
+    usegb = info.used // 1042 ** 3 > 1
+    return (
+        f"GPU used: {info.used//1024**3} GB"
+        if usegb
+        else f"GPU used: {info.used//1024**2} MB"
+    )
 
 
 def summary(result):

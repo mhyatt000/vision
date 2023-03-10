@@ -21,7 +21,9 @@ def pad_tensor_given_dim_length(tensor, dim, length, padding_value=0, batch_firs
     return out_tensor
 
 
-def pad_random_negative_tensor_given_length(positive_tensor, negative_padding_tensor, length=None):
+def pad_random_negative_tensor_given_length(
+    positive_tensor, negative_padding_tensor, length=None
+):
     assert positive_tensor.shape[0] + negative_padding_tensor.shape[0] == length
     return torch.cat((positive_tensor, negative_padding_tensor), dim=0)
 

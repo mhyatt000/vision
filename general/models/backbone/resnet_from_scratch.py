@@ -12,7 +12,9 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
+            nn.Conv2d(
+                in_channels, out_channels, kernel_size=3, stride=stride, padding=1
+            ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
         )
@@ -37,7 +39,9 @@ class ResidualBlock(nn.Module):
 
 class ResNet(nn.Module):
     # 3,4,6,3 is r50
-    def __init__(self, block=ResidualBlock, layers=(3,4,6,3), num_classes=cfg.MODEL.ODIM):
+    def __init__(
+        self, block=ResidualBlock, layers=(3, 4, 6, 3), num_classes=cfg.MODEL.ODIM
+    ):
         super(ResNet, self).__init__()
 
         self.inplanes = 64
@@ -52,7 +56,7 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer2 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer3 = self._make_layer(block, 512, layers[3], stride=2)
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
 
     def _make_layer(self, block, planes, blocks, stride=1):
