@@ -50,6 +50,11 @@ cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
+if not cfg.world_rank:
+    print(
+        f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS'] if 'OMP_NUM_THREADS' in os.environ else -1}"
+    )
+    print("CONFIG:", cfg.config_file, "\n")
 
 time.sleep(cfg.world_rank/2)
 print(f"Rank: {cfg.world_rank} online")
@@ -58,7 +63,3 @@ if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
 
 # cfg.freeze() # some of the experiments need it to be mutable
-print(
-    f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS'] if 'OMP_NUM_THREADS' in os.environ else -1}"
-)
-print("CONFIG:", cfg.config_file, "\n")
