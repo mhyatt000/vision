@@ -13,6 +13,7 @@ from general.results import out
 
 warnings.filterwarnings("ignore")
 
+
 def mkfig(fname, legend=None):
 
     if legend:
@@ -20,10 +21,11 @@ def mkfig(fname, legend=None):
 
     plt.tight_layout()
     plt.savefig(os.path.join(out.get_path(), fname))
-    print(f'saved: {fname}')
+    print(f"saved: {fname}")
     plt.close("all")
 
-def show_loss(loss,  lr=None, *args, **kwargs):
+
+def show_loss(loss, lr=None, *args, **kwargs):
     """plots loss over time"""
 
     #   # len(loss) // cfg.SOLVER.MAX_EPOCH
@@ -36,6 +38,7 @@ def show_loss(loss,  lr=None, *args, **kwargs):
     # plt.xticks([i * epoch_size for i in epochs], epochs)
 
     mkfig("loss.png")
+
 
 def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
@@ -90,24 +93,28 @@ def arc_confusion(Y, Yh, centers):
     acc = confusion.diag().sum() / confusion.sum(1).sum()
     return confusion, acc
 
-def _RKNN(Y,Yh):
+
+def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
-    
-    print('rknn')
-    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=[cfg.LOADER.NCLASSES], algorithm='brute')
+
+    print("rknn")
+    rknn = RadiusNeighborsClassifier(
+        radius=0.2, outlier_label=[cfg.LOADER.NCLASSES], algorithm="brute"
+    )
     rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
     return rknn
 
-def show_RKNN_confusion(Y,Yh,rknn, **kwargs):
+
+def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
     """docstring"""
 
     Yh = torch.Tensor(rknn.predict(Yh))
-    ymax = int(Yh.max())+1
+    ymax = int(Yh.max()) + 1
 
     confusion = torch.zeros((ymax, ymax))
 
     for y, yh in zip(Y, Yh):
-        print((y),(yh))
+        print((y), (yh))
         confusion[int(y), int(yh)] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
@@ -124,6 +131,7 @@ def show_RKNN_confusion(Y,Yh,rknn, **kwargs):
     plt.ylabel("Ground Truth")
 
     mkfig("rknn.png")
+
 
 def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
@@ -205,7 +213,7 @@ def calc_dprime(Y, Yh):
         pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
         nall += [float(x) for x in nhist[c][:1000]]
 
-    dprime = (2 ** 0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
+    dprime = (2**0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
     return pall, nall, dprime
 
 
@@ -267,7 +275,8 @@ if __name__ == "__main__":
             [0, 0, 0, 0, 0, 1],
             [0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 1],
-        ]*4
+        ]
+        * 4
     )
 
     print(Y)
@@ -278,5 +287,3 @@ if __name__ == "__main__":
 
     print(acc)
     print(conf)
-
-    
