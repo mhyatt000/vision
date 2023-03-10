@@ -77,7 +77,6 @@ class Trainer:
         self.nstep += 1
 
         if self.nstep % cfg.SOLVER.CHECKPOINT_PERIOD == 0:
-            print(True)
             plot.show_loss(self.losses)
             plot.show_accuracy(self.accs)
             self.ckp.save()

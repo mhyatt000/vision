@@ -44,7 +44,8 @@ _C.LOADER = CN(
         LEAVE_OUT=None,
         SWAP=0,
         X=False,
-
+        BATCH_SIZE = None,
+        GPU_BATCH_SIZE = None,
         NUM_WORKERS=4, # Number of data loading threads
         # each collated batch_size % SIZE_DIVISIBILITY should == 0 
         SIZE_DIVISIBILITY=0,

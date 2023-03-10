@@ -1,4 +1,5 @@
 import argparse
+import time
 import os
 import sys
 
@@ -32,16 +33,32 @@ cfg.merge_from_file(cfg.config_file)
 
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
 
-
 cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-# used to be RANK but LOCAL_RANK is needed for multinode... hope it does not break
 cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
 cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
+
+# for mpirun
+if True: # not cfg.world_size > 1:
+    OMPI = "OMPI_COMM_WORLD_"
+    cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
+    cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
+    cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
+
+
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
-cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
+print(os.environ['OMPI_COMM_WORLD_SIZE'])
+print(cfg.rank)
+print(cfg.world_rank)
+
+quit()
+
+if cfg.LOADER.GPU_BATCH_SIZE is None:
+    cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
+
 
 print(f'Rank: {cfg.world_rank} online')
+time.sleep(2)
 dist_print = False
 if not dist_print:
     set_dist_print(cfg.world_rank <= 0)

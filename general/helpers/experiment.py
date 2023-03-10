@@ -9,8 +9,11 @@ class Experiment:
     """docstring"""
 
     def __init__(self):
+        print('init exp')
         model = build_model()
+        print('model is built')
         loaders = build_loaders()
+        print('loaders are built')
         self.trainer = Trainer(model, loaders["train"])
         self.tester = Tester(self.trainer.model, loaders["test"], trainloader=loaders['train'])
 

@@ -51,6 +51,7 @@ def build_loaders():
             shuffle=(sampler == None),
             drop_last=True,
             collate_fn=collate_fn if split == "train" else None,
+            num_workers=0,
         )
         loaders[split] = loader
 

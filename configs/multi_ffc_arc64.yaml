@@ -10,7 +10,8 @@ MODEL:
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE:  128 
+  GPU_BATCH_SIZE:  128 
+  # BATCH_SIZE:  null 
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
@@ -39,16 +40,17 @@ LOSS:
     SAMPLE_RATE:  1.0
 
 OPTIM: 
-  BODY: "SGD"
-  LR: 0.02 # suggested 0.02 for 1 gpu ... otherwise 0.1 for 64 gpus
+  BODY: "ADAM"
+  LR: 0.04 
   DECAY: 5e-4
   MOMENTUM: 0.9
-  # BETAS: [0.9, 0.99]
+  BETAS: [0.9, 0.99]
 
 EXP:
-  TRAIN: True
+  TRAIN: False # True
   TEST: True
   PLOTS:
   - "CONFUSION"
   - "TSNE"
+  - "PCA"
   - "DPRIME"

@@ -1,9 +1,11 @@
 import os
+from sklearn.neighbors import RadiusNeighborsClassifier
 from statistics import mean, variance
 import warnings
 
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 import torch
 
 from general.config import cfg
@@ -30,14 +32,19 @@ def mkfig(fname, legend=True):
 
     return decorator
 
+def _mkfig():
+
+    if legend:
+        plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(out.get_path(), fname))
+    plt.close("all")
 
 @mkfig("loss.png")
-def show_loss(loss, lr=None, *args, **kwargs):
+def show_loss(loss,  lr=None, *args, **kwargs):
     """plots loss over time"""
 
-    epoch_size = cfg.LOADER.SIZE // (
-        cfg.LOADER.BATCH_SIZE * cfg.world_size * cfg.SOLVER.GRAD_ACC_EVERY
-    )
     #   # len(loss) // cfg.SOLVER.MAX_EPOCH
     X = [i for i, _ in enumerate(loss)]
     plt.plot(X, loss, label="loss")
@@ -101,6 +108,31 @@ def arc_confusion(Y, Yh, centers):
     acc = confusion.diag().sum() / confusion.sum(1).sum()
     return confusion, acc
 
+def _RKNN(Y,Yh):
+    """return RKNN for confusion matrix"""
+    
+    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=['un'], algorithm='brute')
+    rknn.fit(Yh, Y)
+    return rknn
+
+@mkfig("rknn.png")
+def show_RKNN_confusion(Y,Yh,rknn):
+    """docstring"""
+
+    Yh = rknn.predict(Yh)
+    confusion, acc = calc_confusion(Y,Yh)
+        
+    # plt.rcParams.update({"font.size": 18}) # way too big...
+    plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
+
+    for i in range(confusion.shape[0]):
+        for j in range(confusion.shape[1]):
+            plt.text(x=j, y=i, s=int(confusion[i, j]), va="center", ha="center", size="xx-large")
+
+    # plt.title(f"Confusion Matrix")
+    plt.xlabel("Predictions")
+    plt.ylabel("Ground Truth")
+
 
 @mkfig("confusion.png", legend=False)
 def show_confusion(Y, Yh, centers=None, **kwargs):
@@ -122,13 +154,27 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
     plt.ylabel("Ground Truth")
 
 
-@mkfig("embed.png")
+@mkfig("tsne.png")
 def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
 
     tsne = TSNE(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
+
+    scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
+    # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
+    # ax.view_init(0, 180)
+    plt.legend(*scatter.legend_elements())
+
+
+@mkfig("pca.png")
+def show_pca(Y, Yh, *args, **kwargs):
+    """docstring"""
+    # ax = fig.add_subplot(projection="3d")
+
+    pca = PCA(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
+    Yh = pca.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
     scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
@@ -190,6 +236,7 @@ PLOTS = {
     "LOSS": show_loss,
     "CONFUSION": show_confusion,
     "TSNE": show_tsne,
+    "PCA": show_pca,
     "DPRIME": show_dprime,
 }
 

@@ -11,12 +11,22 @@ printf '%s\n' "${NODES[@]}"
 
 for i in "${IDXS[@]}"; do
   (ssh "${NODES[$i]}"  torchrun --nproc_per_node=4 --nnodes=2 --node_rank=$i \
-    --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=$RZV:29500 \
+     --master_addr=$RZV --master_port=29500 \
     ~/cs/vision/general/master.py --config-name $1 ) &
   done
 
 wait
 exit 0
 
-# git add -A ; git commit -m 'deploy' ; git push ;
+mpirun \
+--hostfile $PBS_NODEFILE \
+--ppn 4 \
+-x MASTER_ADDR= "$(hostname)" \
+-x MASTER_PORT= 29500 \
+-x $PATH \
+-bind-to none -map-by slot \
+-mca pml ob1 -mca btl ^openib \
+python3 ~/cs/vision/general/master.py --config-name $1
+
+exit 0
 
