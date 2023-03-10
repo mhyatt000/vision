@@ -32,11 +32,13 @@ class Split5x2Experiment(Experiment):
     def __init__(self):
         pass
 
+    # TODO: can you generalize for many iterations of any hparam? ie: LO
     def run():
-        for split in range(5):
+        for seed in range(5):
             for swap in [0, 1]:
-                set_seed(cfg.SEED + split)
+                cfg.SEED = seed
                 cfg.LOADER.SWAP = swap
+                setup_seed(cfg.SEED)
                 super().__init__()
                 super().run()
 
