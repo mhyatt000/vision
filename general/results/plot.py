@@ -15,6 +15,38 @@ from general.results import out
 warnings.filterwarnings("ignore")
 
 
+def convert_json(obj):
+    """Convert obj to a version which can be serialized with JSON."""
+
+    if is_json_serializable(obj):
+        return obj
+
+    if isinstance(obj, torch.Tensor) or isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, dict):
+        return {convert_json(k): convert_json(v) for k, v in obj.items()}
+    if isinstance(obj, tuple):
+        return (convert_json(x) for x in obj)
+    if isinstance(obj, list):
+        return [convert_json(x) for x in obj]
+
+    if hasattr(obj, "__name__") and not ("lambda" in obj.__name__):
+        return convert_json(obj.__name__)
+    if hasattr(obj, "__dict__") and obj.__dict__:
+        obj_dict = {convert_json(k): convert_json(v) for k, v in obj.__dict__.items()}
+        return {str(obj): obj_dict}
+
+    return str(obj)
+
+
+def is_json_serializable(v):
+    try:
+        json.dumps(v)
+        return True
+    except:
+        return False
+
+
 def mkfig(fname, legend=None):
 
     if legend:
@@ -28,7 +60,7 @@ def mkfig(fname, legend=None):
 
 def serialize(k, v, mode="w"):
     fname = os.path.join(out.get_path(), "results.json")
-    try: 
+    try:
         with open(fname, "r") as file:
             data = json.load(file)
     except:
@@ -122,7 +154,7 @@ def arc_confusion(Y, Yh, centers):
 def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
-    rknn = RadiusNeighborsClassifier( radius=0.2,  algorithm="brute")
+    rknn = RadiusNeighborsClassifier(radius=0.2, algorithm="brute")
     rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
     return rknn
 
@@ -131,7 +163,7 @@ def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
     """docstring"""
 
     Yh = torch.Tensor(rknn.predict(Yh))
-    confusion = torch.zeros((cfg.LOADER.NCLASSES)*2)
+    confusion = torch.zeros((cfg.LOADER.NCLASSES) * 2)
 
     for y, yh in zip(Y, Yh):
         print((y), (yh))
@@ -165,9 +197,7 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
 
     confusion, acc = (
-        calc_confusion(Y, Yh)
-        if cfg.LOSS.BODY == "CE"
-        else arc_confusion(Y, Yh, centers)
+        calc_confusion(Y, Yh) if cfg.LOSS.BODY == "CE" else arc_confusion(Y, Yh, centers)
     )
 
     # plt.rcParams.update({"font.size": 18}) # way too big...
@@ -214,9 +244,7 @@ def show_pca(Y, Yh, *args, **kwargs):
     pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = pca.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
-    scatter = plt.scatter(
-        *[Yh[:, i] for i in range(ncomponents)], c=Y.view(-1).tolist(), alpha=0.3
-    )
+    scatter = plt.scatter(*[Yh[:, i] for i in range(ncomponents)], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("pca.png")
@@ -237,9 +265,7 @@ def calc_dprime(Y, Yh):
 
         dist = lambda a, b: (a - b).pow(2).sum(-1).sqrt()
         angle = (
-            lambda a, b: torch.acos(
-                torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
-            )
+            lambda a, b: torch.acos(torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b)))
             * 180
             / 3.141592
         )
@@ -256,9 +282,7 @@ def calc_dprime(Y, Yh):
         pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
         nall += [float(x) for x in nhist[c][:1000]]
 
-    dprime = (2 ** 0.5 * abs(mean(pall) - mean(nall))) / (
-        (variance(pall) + variance(nall)) ** 0.2
-    )
+    dprime = (2 ** 0.5 * abs(mean(pall) - mean(nall))) / ((variance(pall) + variance(nall)) ** 0.2)
     serialize("dprime", dprime)
     return pall, nall, dprime
 
