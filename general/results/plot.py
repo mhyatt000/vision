@@ -47,14 +47,15 @@ def is_json_serializable(v):
         return False
 
 
-def mkfig(fname, legend=None):
+def mkfig(fname, legend=None, verbose=True):
 
     if legend:
         plt.legend()
 
     plt.tight_layout()
     plt.savefig(os.path.join(out.get_path(), fname))
-    print(f"saved: {fname}")
+    if verbose:
+        print(f"saved: {fname}")
     plt.close("all")
 
 
@@ -91,14 +92,14 @@ def show_loss(loss, lr=None, *args, **kwargs):
     epochs = list(range(cfg.SOLVER.MAX_EPOCH))
     # plt.xticks([i * epoch_size for i in epochs], epochs)
 
-    mkfig("loss.png")
+    mkfig("loss.png", verbose=False)
     serialize("losses", loss)
 
 
 def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
     plt.plot([i for i, _ in enumerate(acc)], acc, color="r", label="accuracy")
-    mkfig("accuracy.png")
+    mkfig("accuracy.png", verbose=False)
     serialize("accuracy", acc)
 
 
@@ -155,7 +156,7 @@ def arc_confusion(Y, Yh, centers):
 def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
-    rknn = RadiusNeighborsClassifier(radius=0.2, algorithm="brute")
+    rknn = RadiusNeighborsClassifier(radius=0.5, metric='cosine', algorithm="brute")
     rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
     return rknn
 
@@ -164,11 +165,10 @@ def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
     """docstring"""
 
     Yh = torch.Tensor(rknn.predict(Yh))
-    confusion = torch.zeros((cfg.LOADER.NCLASSES) * 2)
+    confusion = torch.zeros([cfg.LOADER.NCLASSES] * 2)
 
     for y, yh in zip(Y, Yh):
-        print((y), (yh))
-        confusion[int(y), int(yh)] += 1
+        confusion[int(y[0]), int(yh)] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
 
