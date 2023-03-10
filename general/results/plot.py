@@ -111,17 +111,25 @@ def arc_confusion(Y, Yh, centers):
 def _RKNN(Y,Yh):
     """return RKNN for confusion matrix"""
     
-    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=['un'], algorithm='brute')
+    print('rknn')
+    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=[cfg.LOADER.NCLASSES+1], algorithm='brute')
     rknn.fit(Yh, Y)
     return rknn
 
 @mkfig("rknn.png")
-def show_RKNN_confusion(Y,Yh,rknn):
+def show_RKNN_confusion(Y,Yh,rknn, **kwargs):
     """docstring"""
 
-    Yh = rknn.predict(Yh)
-    confusion, acc = calc_confusion(Y,Yh)
-        
+    Yh = torch.Tensor(rknn.predict(Yh))
+
+    confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
+
+    for y, yh in zip(Y, Yh):
+        print((y),(yh))
+        confusion[y, int(yh)] += 1
+
+    acc = confusion.diag().sum() / confusion.sum(1).sum()
+
     # plt.rcParams.update({"font.size": 18}) # way too big...
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
 
@@ -281,9 +289,8 @@ if __name__ == "__main__":
     print(Y)
     print(Yh)
 
-    centers = make_centers(Y, Yh)
-    acc, conf = arc_confusion(Y, Yh, centers)
-
+    rknn = _RKNN(Y, Yh)
+    acc, conf = show_RKNN_confusion(Y, Yh, rknn)
 
     print(acc)
     print(conf)

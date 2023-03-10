@@ -38,20 +38,14 @@ cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
 cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 
 # for mpirun
-if True: # not cfg.world_size > 1:
-    OMPI = "OMPI_COMM_WORLD_"
-    cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
-    cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
-    cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
+# if True: # not cfg.world_size > 1:
+    # OMPI = "OMPI_COMM_WORLD_"
+    # cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
+    # cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
+    # cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
 
 
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
-
-print(os.environ['OMPI_COMM_WORLD_SIZE'])
-print(cfg.rank)
-print(cfg.world_rank)
-
-quit()
 
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
