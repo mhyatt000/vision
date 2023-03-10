@@ -13,35 +13,16 @@ from general.results import out
 
 warnings.filterwarnings("ignore")
 
-
-def mkfig(fname, legend=True):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            fig, ax = plt.subplots()
-            result = func(*args, **kwargs, fig=fig, ax=ax)
-
-            if legend:
-                plt.legend()
-            plt.tight_layout()
-            plt.savefig(os.path.join(out.get_path(), fname))
-            plt.close("all")
-
-            return result
-
-        return wrapper
-
-    return decorator
-
-def _mkfig():
+def mkfig(fname, legend=None):
 
     if legend:
         plt.legend()
 
     plt.tight_layout()
     plt.savefig(os.path.join(out.get_path(), fname))
+    print(f'saved: {fname}')
     plt.close("all")
 
-@mkfig("loss.png")
 def show_loss(loss,  lr=None, *args, **kwargs):
     """plots loss over time"""
 
@@ -54,11 +35,12 @@ def show_loss(loss,  lr=None, *args, **kwargs):
     epochs = list(range(cfg.SOLVER.MAX_EPOCH))
     # plt.xticks([i * epoch_size for i in epochs], epochs)
 
+    mkfig("loss.png")
 
-@mkfig("accuracy.png")
 def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
     plt.plot([i for i, _ in enumerate(acc)], acc, color="r", label="accuracy")
+    mkfig("accuracy.png")
 
 
 def calc_confusion(Y, Yh):
@@ -112,21 +94,21 @@ def _RKNN(Y,Yh):
     """return RKNN for confusion matrix"""
     
     print('rknn')
-    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=[cfg.LOADER.NCLASSES+1], algorithm='brute')
-    rknn.fit(Yh, Y)
+    rknn = RadiusNeighborsClassifier(radius=0.2, outlier_label=[cfg.LOADER.NCLASSES], algorithm='brute')
+    rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
     return rknn
 
-@mkfig("rknn.png")
 def show_RKNN_confusion(Y,Yh,rknn, **kwargs):
     """docstring"""
 
     Yh = torch.Tensor(rknn.predict(Yh))
+    ymax = int(Yh.max())+1
 
-    confusion = torch.zeros((cfg.LOADER.NCLASSES, cfg.LOADER.NCLASSES))
+    confusion = torch.zeros((ymax, ymax))
 
     for y, yh in zip(Y, Yh):
         print((y),(yh))
-        confusion[y, int(yh)] += 1
+        confusion[int(y), int(yh)] += 1
 
     acc = confusion.diag().sum() / confusion.sum(1).sum()
 
@@ -141,8 +123,8 @@ def show_RKNN_confusion(Y,Yh,rknn, **kwargs):
     plt.xlabel("Predictions")
     plt.ylabel("Ground Truth")
 
+    mkfig("rknn.png")
 
-@mkfig("confusion.png", legend=False)
 def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
 
@@ -160,9 +142,9 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
     # plt.title(f"Confusion Matrix")
     plt.xlabel("Predictions")
     plt.ylabel("Ground Truth")
+    mkfig("confusion.png", legend=False)
 
 
-@mkfig("tsne.png")
 def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
@@ -174,9 +156,9 @@ def show_tsne(Y, Yh, *args, **kwargs):
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
+    mkfig("tsne.png")
 
 
-@mkfig("pca.png")
 def show_pca(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
@@ -188,6 +170,7 @@ def show_pca(Y, Yh, *args, **kwargs):
     # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
+    mkfig("pca.png")
 
 
 def calc_dprime(Y, Yh):
@@ -226,7 +209,6 @@ def calc_dprime(Y, Yh):
     return pall, nall, dprime
 
 
-@mkfig("dprime.png")
 def show_dprime(Y, Yh, *args, **kwargs):
     """docstring"""
 
@@ -238,11 +220,13 @@ def show_dprime(Y, Yh, *args, **kwargs):
     plt.title(f"Population Distance (d_prime={round(dprime,4)})")
     plt.xlabel("angle")
     plt.ylabel("frequency")
+    mkfig("dprime.png")
 
 
 PLOTS = {
     "LOSS": show_loss,
     "CONFUSION": show_confusion,
+    "RKNN": show_RKNN_confusion,
     "TSNE": show_tsne,
     "PCA": show_pca,
     "DPRIME": show_dprime,

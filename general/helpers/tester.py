@@ -59,8 +59,12 @@ class Tester:
         """docstring"""
 
         Y,Yh = self.embed(self.trainloader)
+        Y,Yh = Y.cpu(), Yh.cpu()
         centers = plot.make_centers(Y,Yh)
+        rknn = plot._RKNN(Y,Yh)
+        kwargs = {'centers':centers, 'rknn':rknn}
 
         Y,Yh = self.embed(self.loader)
+        Y,Yh = Y.cpu(), Yh.cpu()
         for p in cfg.EXP.PLOTS:
-            plot.PLOTS[p](Y,Yh, centers)
+            plot.PLOTS[p](Y,Yh, **kwargs)
