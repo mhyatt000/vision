@@ -51,8 +51,8 @@ if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
 
+time.sleep(cfg.world_rank/2)
 print(f"Rank: {cfg.world_rank} online")
-time.sleep(2)
 dist_print = False
 if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
