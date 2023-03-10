@@ -22,7 +22,7 @@ parser.add_argument(
 # parser.add_argument("--override_output_dir", default=None)
 
 args = parser.parse_args()
-cfg.config_name = args.config_name
+cfg.config_name = args.config_name.split('/')[-1].replace('.yaml','')
 # for k,v in args.__dict__.items():
 # setattr(cfg,k,v)
 
