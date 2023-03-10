@@ -27,8 +27,11 @@ def mkfig(fname, legend=None):
 
 def serialize(k, v, mode="w"):
     fname = os.path.join(out.get_path(), "results.json")
-    with open(fname, "r") as file:
-        data = json.load(file)
+    try: 
+        with open(fname, "r") as file:
+            data = json.load(file)
+    except:
+        data = {}
 
     if mode == "w":
         data[k] = v
