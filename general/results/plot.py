@@ -118,10 +118,7 @@ def arc_confusion(Y, Yh, centers):
 def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
-    print("rknn")
-    rknn = RadiusNeighborsClassifier(
-        radius=0.2, outlier_label=[cfg.LOADER.NCLASSES], algorithm="brute"
-    )
+    rknn = RadiusNeighborsClassifier( radius=0.2,  algorithm="brute")
     rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
     return rknn
 
@@ -130,9 +127,7 @@ def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
     """docstring"""
 
     Yh = torch.Tensor(rknn.predict(Yh))
-    ymax = int(Yh.max()) + 1
-
-    confusion = torch.zeros((ymax, ymax))
+    confusion = torch.zeros((cfg.LOADER.NCLASSES)*2)
 
     for y, yh in zip(Y, Yh):
         print((y), (yh))
