@@ -1,7 +1,7 @@
 from torch import optim
 from general.config import cfg
 
-OPTIM = {
+OPTIMIZERS = {
     "ADAM": optim.Adam,
     "SGD": optim.SGD,
 }
@@ -14,13 +14,13 @@ def make_optimizer(params):
 
     kwargs = dict(
         params=params,
-        lr=cfg.OPTIM.LR,
-        weight_decay=float(cfg.OPTIM.DECAY),
+        lr=cfg.SOLVER.OPTIM.LR,
+        weight_decay=float(cfg.SOLVER.OPTIM.DECAY),
     )
 
-    if cfg.OPTIM.BODY == "SGD":
-        kwargs["momentum"] = cfg.OPTIM.MOMENTUM
-    if cfg.OPTIM.BODY == "ADAM":
-        kwargs["betas"] = cfg.OPTIM.BETAS
+    if cfg.SOLVER.OPTIM.BODY == "SGD":
+        kwargs["momentum"] = cfg.SOLVER.OPTIM.MOMENTUM
+    if cfg.SOLVER.OPTIM.BODY == "ADAM":
+        kwargs["betas"] = cfg.SOLVER.OPTIM.BETAS
 
-    return OPTIM[cfg.OPTIM.BODY](**kwargs)
+    return OPTIMIZERS[cfg.SOLVER.OPTIM.BODY](**kwargs)

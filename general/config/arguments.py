@@ -6,11 +6,10 @@ import sys
 from general.utils.dist import set_dist_print
 from .defaults import _C as cfg
 
+
 parser = argparse.ArgumentParser(description="PyTorch Object Detection Training")
 
-parser.add_argument(
-    "--config-name", default="", metavar="FILE", help="path to config file", type=str
-)
+parser.add_argument( "--config-name", default="", metavar="FILE", help="path to config file", type=str)
 
 # parser.add_argument( "--config-file", default="", metavar="FILE", help="path to config file", type=str)
 # parser.add_argument("--local_rank", type=int, default=0)
@@ -37,13 +36,31 @@ cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ els
 cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
 cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
 
-# for mpirun
-# if True: # not cfg.world_size > 1:
-# OMPI = "OMPI_COMM_WORLD_"
-# cfg.world_size = int(os.environ[OMP+"SIZE"]) if OMPI+"SIZE" in os.environ else 1
-# cfg.rank = int(os.environ[OMPI+"LOCAL_RANK"]) if OMPI+"LOCAL_RANK" in os.environ else 0
-# cfg.world_rank = int(os.environ[OMPI+"RANK"]) if OMPI+"RANK" in os.environ else 0
+if False:
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
 
+    cfg.world_size = int(comm.Get_size())
+    cfg.world_rank = int(comm.Get_rank())
+
+    os.environ['RANK'] = str(cfg.world_rank)
+    os.environ['WORLD_SIZE'] = str(cfg.world_size)
+    # os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.rank)
+
+    with open(os.environ['PBS_NODEFILE'],'r') as file:
+        nodes = [n.strip('\n') for n in file.readlines()]
+
+    nodenames = {n.split('.')[0]:'NODE_'+str(i) for i,n in enumerate(nodes)}
+    ppn = cfg.world_size // len(nodes) # process per node
+
+    cfg.nodename = nodenames[MPI.Get_processor_name()]
+    cfg.local_rank = cfg.world_rank % ppn
+
+    os.environ['MASTER_ADDR'] = nodes[0]
+    os.environ['MASTER_PORT'] = str(2345)
+
+if True:
+    print('no OMPI')
 
 cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
@@ -57,9 +74,16 @@ if not cfg.world_rank:
     print("CONFIG:", cfg.config_file, "\n")
 
 time.sleep(cfg.world_rank/2)
-print(f"Rank: {cfg.world_rank} online")
+# print(f"Rank: {cfg.world_rank} online")
+try: 
+    print(f'Rank {cfg.world_rank} of {cfg.world_size} online | {cfg.local_rank} of {ppn} on {cfg.nodename}')
+except:
+    print(f'Rank {cfg.world_rank} of {cfg.world_size} online | {cfg.rank} of NODE_0 on localhost')
+
 dist_print = False
 if not dist_print:
     set_dist_print(cfg.world_rank <= 0)
+
+cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * cfg.world_size
 
 # cfg.freeze() # some of the experiments need it to be mutable

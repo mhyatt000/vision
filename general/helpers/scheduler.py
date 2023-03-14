@@ -14,7 +14,7 @@ class PolyScheduler(_LRScheduler):
         self.max_steps = cfg.SOLVER.MAX_ITER
         self.warmup_steps = 0  # nbatch * cfg.SCHEDULER.WARMUP
 
-        self.base_lr = cfg.OPTIM.LR
+        self.base_lr = cfg.SOLVER.OPTIM.LR
         self.warmup_lr_init = 0.0001
         self.power = 2
 

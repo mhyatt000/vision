@@ -9,6 +9,8 @@ from tqdm import tqdm
 from general.helpers.experiment import build_experiment
 from general.config import cfg
 
+# distributed.init_process_group() # mpi4py will handle processes
+# distributed.init_process_group(backend="nccl",init_method="env://") # mpi4py will handle processes
 distributed.init_process_group("nccl")  # , cfg.world_rank, cfg.world_size)
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 

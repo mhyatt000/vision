@@ -5,8 +5,8 @@ from general.results import plot
 import matplotlib.pyplot as plt
 
 from general.config import cfg
-from general.data import build_loaders, build_loaderx
-from general.helpers import Checkpointer, make_optimizer, make_scheduler
+from general.data import build_loaders 
+from general.helpers import Checkpointer, make_optimizer, make_scheduler, Stopper
 from general.losses import make_loss
 import torch
 from torch import distributed as dist
@@ -44,24 +44,12 @@ class Trainer:
         self.scheduler = make_scheduler(self.optimizer)
         self.scaler = GradScaler(growth_interval=100)  # default is 2k
         self.ckp = Checkpointer(self)
-
+        self.stopper = Stopper()
         self.loader = loader
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
         """what is ema"""
-
-        # TODO: you need to make this into an object to handle it all nicely
-        # early stopping
-
-        # self.use_patience = cfg.SOLVER.AUTO_TERMINATE_PATIENCE != -1
-        # self.patience = 0
-        # self.max_patience = cfg.SOLVER.AUTO_TERMINATE_PATIENCE
-        # self.best = 0.0
-        # self.best_epoch = 0
-
-        # self.use_decay = cfg.SOLVER.WEIGHT_DECAY_SCHEDULE
-        # self.milestone_tgt = 0
 
         # state
         self.epoch, self.nstep = 0, 0
@@ -85,37 +73,8 @@ class Trainer:
     def update_epoch(self):
         """update after the training loop like housekeeping"""
 
-        self.patient()
         self.epoch += 1
 
-    def patient(self):
-        """given the eval result should we terminate the loop"""
-
-        return
-
-        """
-        if self.accs[-1] < self.best:
-            self.patience += 1
-        else:
-            self.patience = 0
-            self.best = self.accs[-1]
-            self.best_epoch = self.epoch
-            self.ckp.save()
-        if self.use_patience and self.patience >= self.max_patience:
-            print()
-            print(f"Auto Termination at {self.epoch}, current best {self.best}")
-            quit()
-        """
-
-    """
-    def init_decay():
-        # Adapt the weight decay
-        if cfg.SOLVER.WEIGHT_DECAY_SCHEDULE and hasattr(scheduler, "milestones"):
-            milestone_target = 0
-            for i, milstone in enumerate(list(scheduler.milestones)):
-                if scheduler.last_epoch >= milstone * cfg.SOLVER.WEIGHT_DECAY_SCHEDULE_RATIO:
-                    milestone_target = i + 1
-    """
 
     def calc_accuracy(self, Yh, Y):
 
@@ -199,6 +158,8 @@ class Trainer:
             for X, Y in self.loader:
                 _step(X, Y)
                 self.update_step()
+                if self.stopper(self.losses[-1]):
+                    return
             self.update_epoch()
 
         # except torch.cuda.OutOfMemoryError as ex:

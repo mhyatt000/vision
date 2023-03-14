@@ -1,0 +1,24 @@
+Jobid: 10129680
+qsub -A EVITA -I -n 1 -q full-node -t 720
+Tue Mar 14 21:16:58 2023 +0000 (UTC) submitted with cwd set to: /lus/swift/home/mhyatt000/cs/vision
+jobid 10129680 submitted from terminal /dev/pts/133
+Tue Mar 14 21:20:05 2023 +0000 (UTC) 
+Tue Mar 14 21:20:05 2023 +0000 (UTC) Command: '/usr/bin/ssh' 'thetagpu21' '/usr/bin/cobalt-launcher.py' '--nf' '/var/tmp/cobalt.10129680' '--jobid' '10129680' '--cwd' '/lus/swift/home/mhyatt000/cs/vision' '--env' 'COBALT_JOBID=10129680' '/bin/sleep' '43200'
+Tue Mar 14 21:20:05 2023 +0000 (UTC) 
+Tue Mar 14 21:20:05 2023 +0000 (UTC) Environment:
+Tue Mar 14 21:20:05 2023 +0000 (UTC) SHELL=/bin/bash
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_NODEFILE=/tmp/tmpuu3y6N
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_PARTNAME=thetagpu21
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_JOBID=10129680
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_STARTTIME=1678828797
+Tue Mar 14 21:20:05 2023 +0000 (UTC) LOGNAME=mhyatt000
+Tue Mar 14 21:20:05 2023 +0000 (UTC) USER=mhyatt000
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_ENDTIME=1678871997
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_PARTSIZE=1
+Tue Mar 14 21:20:05 2023 +0000 (UTC) HOME=/home/mhyatt000
+Tue Mar 14 21:20:05 2023 +0000 (UTC) COBALT_JOBSIZE=1
+Tue Mar 14 21:20:05 2023 +0000 (UTC) 
+Tue Mar 14 21:20:05 2023 +0000 (UTC) Info: stdin received from /dev/null
+Tue Mar 14 21:20:05 2023 +0000 (UTC) Info: stdout sent to /lus/swift/home/mhyatt000/cs/vision/10129680.output
+Tue Mar 14 21:20:05 2023 +0000 (UTC) Info: stderr sent to /lus/swift/home/mhyatt000/cs/vision/10129680.error
+Tue Mar 14 21:20:05 2023 +0000 (UTC) 
