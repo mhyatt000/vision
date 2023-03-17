@@ -41,9 +41,7 @@ _C.MODEL = MODEL
 _C.LOADER = CN(
     new_allowed=True,
     init_dict=dict(
-        LEAVE_OUT=None,
-        SWAP=0,
-        X=False,
+        LEAVE_N_OUT=None,
         BATCH_SIZE=None,
         GPU_BATCH_SIZE=None,
         NUM_WORKERS=4,  # Number of data loading threads
@@ -775,6 +773,7 @@ _C.SOLVER = CN(
         CHECKPOINT_PER_EPOCH=-1.0,
         TEST_WITH_INFERENCE=False,
         AUTO_TERMINATE_PATIENCE=-1,
+        EARLY_STOPPING=-1, 
         # Number of images per batch
         # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
         # see 2 images per batch

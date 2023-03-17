@@ -28,6 +28,7 @@ cfg.config_name = args.config_name.split('/')[-1].replace('.yaml','')
 cfg.config_name = cfg.config_name or input("config file: ")
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
 cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_name}.yaml")
+cfg.OUT = os.path.join(*[cfg.ROOT,"experiments",f"{cfg.config_name}"])
 cfg.merge_from_file(cfg.config_file)
 
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
@@ -73,7 +74,7 @@ if not cfg.world_rank:
     )
     print("CONFIG:", cfg.config_file, "\n")
 
-time.sleep(cfg.world_rank/2)
+time.sleep(cfg.world_rank)
 # print(f"Rank: {cfg.world_rank} online")
 try: 
     print(f'Rank {cfg.world_rank} of {cfg.world_size} online | {cfg.local_rank} of {ppn} on {cfg.nodename}')

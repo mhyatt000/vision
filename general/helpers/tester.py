@@ -69,5 +69,6 @@ class Tester:
 
         Y, Yh = self.embed(self.loader)
         Y, Yh = Y.cpu(), Yh.cpu()
-        for p in cfg.EXP.PLOTS:
-            plot.PLOTS[p](Y, Yh, **kwargs)
+        if not cfg.rank:
+            for p in cfg.EXP.PLOTS:
+                plot.PLOTS[p](Y, Yh, **kwargs)

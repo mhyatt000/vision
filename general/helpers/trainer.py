@@ -147,7 +147,7 @@ class Trainer:
         @tqdm.prog(steps_left)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f"loss: {self.loss:.4f} | accuracy: {self.accs[-1]:.2f} | lr: {self.scheduler.get_last_lr()[0]:.2e} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}"
+            desc = f"loss: {self.loss:.4f} | best: {self.stopper.get_best():.4f} | accuracy: {self.accs[-1]:.2f} | patience: {self.stopper.get_patience()} | lr: {self.scheduler.get_last_lr()[0]:.2e} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}"
             return desc
 
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):

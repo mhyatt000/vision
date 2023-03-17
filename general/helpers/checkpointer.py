@@ -8,7 +8,7 @@ import torch
 def mkdir(path):
     if not os.path.exists(path):
         try:
-            os.system(f"mkdir {path}")
+            os.mkdir(path)
         except:
             return
 
@@ -27,7 +27,7 @@ class Checkpointer:
         self.criterion = self.trainer.criterion
 
         # paths
-        self.psnap = lambda: os.path.join(results.get_path(), "snapshot.pt")
+        self.psnap = os.path.join(results.get_path(), "snapshot.pt")
 
         # state
         self.remember = [
@@ -56,18 +56,18 @@ class Checkpointer:
         )
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         snap["MODEL"] = mod.state_dict()
-        torch.save(snap, self.psnap())
+        torch.save(snap, self.psnap)
 
     def load(self):
 
-        if not os.path.exists(self.psnap()):
-            print("No snapshot found")
+        if not os.path.exists(self.psnap):
+            print(f"No snapshot found for {self.psnap}")
             mkdir(results.get_path())
             return
 
         print("Loading Snapshot")
 
-        snap = torch.load(self.psnap())
+        snap = torch.load(self.psnap)
 
         mod = self.trainer.model.module if cfg.distributed else self.trainer.model
         mod.load_state_dict(snap["MODEL"])
@@ -83,4 +83,4 @@ class Checkpointer:
         del snap
 
         print(f"Resuming training from snapshot at step {self.trainer.nstep+1}")
-        print(self.psnap())
+        print(self.psnap)

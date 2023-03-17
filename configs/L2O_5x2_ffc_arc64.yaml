@@ -11,6 +11,7 @@ MODEL:
 LOADER: 
   DATASET: "WBLOT"
   GPU_BATCH_SIZE:  128 
+  LEAVE_N_OUT: 2
   # BATCH_SIZE:  null 
   SHUFFLE: True
   SPLIT: True

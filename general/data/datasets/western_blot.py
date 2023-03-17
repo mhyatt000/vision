@@ -50,6 +50,8 @@ class WBLOT(Dataset):
             self.stylegan2ada,
         ]
 
+        self.classes = [x.split('/')[-1] for x in self.datafolders]
+
         # init labels
         self.data = []
         for i, df in enumerate(self.datafolders):
@@ -64,8 +66,8 @@ class WBLOT(Dataset):
 
     def __getitem__(self, idx):
 
-        x, label = self.data[idx]
-        img_path = join(self.datafolders[label], x)
+        rel_path, label = self.data[idx]
+        img_path = join(self.datafolders[label], rel_path)
         image = read_image(img_path).float()
 
         if cfg.LOSS.BODY in ["PFC", "AAM"]:  # arcface loss

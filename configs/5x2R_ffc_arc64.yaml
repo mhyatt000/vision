@@ -49,7 +49,7 @@ LOSS:
 
 EXP:
   BODY: "5x2"
-  REVERSE: False
+  REVERSE: True
   TRAIN: True
   TEST: True
   PLOTS:

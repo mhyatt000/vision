@@ -1,4 +1,5 @@
 import os
+from general.data.datasets import WBLOT
 import json
 from sklearn.neighbors import RadiusNeighborsClassifier
 from statistics import mean, variance
@@ -14,6 +15,13 @@ from general.results import out
 
 warnings.filterwarnings("ignore")
 
+CLASSES = WBLOT().classes
+
+def label_matx():
+    """labels for plt matrix"""
+    pass
+    # plt.set_xticks([i for i in range(len(CLASSES))],CLASSES)
+    # plt.set_yticks([i for i in range(len(CLASSES))],CLASSES)
 
 def to_json(obj):
     """Convert obj to a version which can be serialized with JSON."""
@@ -83,14 +91,16 @@ def serialize(k, v, mode="w"):
 def show_loss(loss, lr=None, *args, **kwargs):
     """plots loss over time"""
 
-    #   # len(loss) // cfg.SOLVER.MAX_EPOCH
+    fig, axs = plt.subplots(2,1)
     X = [i for i, _ in enumerate(loss)]
-    plt.plot(X, loss, label="loss")
+    axs[0].plot(X, loss, label="loss")
+    axs[1].plot(X, loss, label="log loss")
     if lr:
-        plt.plot(X, lr, label="learning rate")
+        axs[1].plot(X, lr, label="learning rate")
 
-    epochs = list(range(cfg.SOLVER.MAX_EPOCH))
-    # plt.xticks([i * epoch_size for i in epochs], epochs)
+    axs[0].legend()
+    axs[1].legend()
+    axs[1].set_yscale('log')
 
     mkfig("loss.png", verbose=False)
     serialize("losses", loss)
@@ -174,6 +184,7 @@ def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
 
     # plt.rcParams.update({"font.size": 18}) # way too big...
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
+    label_matx()
 
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):
@@ -203,6 +214,7 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
 
     # plt.rcParams.update({"font.size": 18}) # way too big...
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
+    label_matx()
 
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):

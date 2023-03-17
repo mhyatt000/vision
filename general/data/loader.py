@@ -4,10 +4,28 @@ from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
 
 from .datasets import WBLOT
+from general.results.out import get_exp_version
 
 ds = {
     "WBLOT": WBLOT,
 }
+
+def to_swap():
+    version = get_exp_version()
+    return version['swap'] if version else False
+
+def leave_out()():
+    version = get_exp_version()
+    return version['LO'] if version else None
+
+def leave_out_collate(data):
+    X = [x for x, y in data if not y in leave_out()]
+    Y = [y for x, y in data if not y in leave_out()]
+    missing = cfg.LOADER.GPU_BATCH_SIZE - len(Y)
+    # copy randomly to fill the gaps ... it should be random cuz random sampler
+    if missing:
+        X, Y = X + X[:missing], Y + Y[:missing]
+    return torch.stack(X), torch.stack(Y)
 
 
 def build_loaders():
@@ -15,6 +33,7 @@ def build_loaders():
 
     print("building loader...\n")
     print(cfg.LOADER, "\n")
+    print(get_exp_version())
 
     dataset = ds[cfg.LOADER.DATASET]()
 
@@ -24,21 +43,12 @@ def build_loaders():
             dataset,
             split,
         )
-        if cfg.LOADER.SWAP:
+        if to_swap():
             datasets = datasets[::-1]
     else:
         datasets = [dataset, ds[cfg.LOADER.DATASET]()]
 
-    def leave_out_collate(data):
-        X = [x for x, y in data if y != cfg.LOADER.LEAVE_OUT]
-        Y = [y for x, y in data if y != cfg.LOADER.LEAVE_OUT]
-        missing = cfg.LOADER.GPU_BATCH_SIZE - len(Y)
-        # copy randomly to fill the gaps ... it should be random cuz random sampler
-        if missing:
-            X, Y = X + X[:missing], Y + Y[:missing]
-        return torch.stack(X), torch.stack(Y)
-
-    collate_fn = leave_out_collate if cfg.LOADER.LEAVE_OUT else None
+    collate_fn = leave_out_collate if not leave_out() is None else None
     loaders = {}
     splits = ["train", "test"]
 
