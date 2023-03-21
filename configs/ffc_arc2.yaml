@@ -5,7 +5,7 @@ MODEL:
   FFCR:
     BODY: '50'
     LAYERS: [3,4,6,3]
-    OUT_DIM: 2 # 5 classes but its  embed dim
+    OUT_DIM: 3 # 5 classes but its  embed dim
     USE_SE: False
 
 LOADER: 
@@ -34,7 +34,7 @@ LOSS:
     INTER_THRESH: 0
 
   PFC: 
-    EMBED_DIM: 2
+    EMBED_DIM: 3
     NC: 5
     NCLASSES: 5
     SAMPLE_RATE: 0.2
@@ -48,8 +48,10 @@ OPTIM:
   MOMENTUM: 0.9 
 
 EXP:
-  TRAIN: False # True
+  TRAIN: True
   TEST: True
   PLOTS:
   - "DPRIME"
   - "TSNE"
+  - "PCA"
+  - "CONFUSION"

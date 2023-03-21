@@ -67,7 +67,7 @@ def mkfig(fname, legend=None, verbose=True):
     plt.close("all")
 
 
-def serialize(k, v, mode="w"):
+def serialize(k, v):
     v = to_json(v)
     fname = os.path.join(out.get_path(), "results.json")
     try:
@@ -75,14 +75,6 @@ def serialize(k, v, mode="w"):
             data = json.load(file)
     except:
         data = {}
-
-    if mode == "w":
-        data[k] = v
-    if mode == "a":
-        try:
-            data[k].append(v)
-        except:
-            data[k] = [v]
 
     with open(fname, "w") as file:
         json.dump(data, file)
@@ -102,15 +94,15 @@ def show_loss(loss, lr=None, *args, **kwargs):
     axs[1].legend()
     axs[1].set_yscale('log')
 
-    mkfig("loss.png", verbose=False)
     serialize("losses", loss)
+    mkfig("loss.png", verbose=False)
 
 
 def show_accuracy(acc, *args, **kwargs):
     """plots accuracy over time"""
     plt.plot([i for i, _ in enumerate(acc)], acc, color="r", label="accuracy")
-    mkfig("accuracy.png", verbose=False)
     serialize("accuracy", acc)
+    mkfig("accuracy.png", verbose=False)
 
 
 def calc_confusion(Y, Yh):

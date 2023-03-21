@@ -82,15 +82,15 @@ class Split5x2Experiment(Experiment):
                 if len(LO) == cfg.LOADER.LEAVE_N_OUT and not LO in temp:
                     temp.append(LO)
             LO_combos = temp
-        
+
         for LO in LO_combos:
-            for seed,swap in itertools.product(ordered([4,3,2,1,0]), ordered([True,False])):
+            for seed,swap in itertools.product(ordered([0,1,2,3,4]), ordered([False,True])):
                 e = {'LO':LO, 'seed':seed, 'swap':swap}
                 exp.append(e)
                 mkdir(os.path.join(cfg.OUT,out.d2s(e)))
 
         with open(self.versions,'w') as file:
-            json.dump(file,data)
+            json.dump(exp,file)
 
     def pop_versions(self):
         """pop the first experiment version off the file"""
@@ -98,7 +98,7 @@ class Split5x2Experiment(Experiment):
             with open(self.versions,'r') as file:
                 exp = json.load(file)[1:]
             with open(self.versions,'w') as file:
-                json.dump(file,exp)
+                json.dump(exp,file)
          
 
     # TODO: can you generalize for many iterations of any hparam? ie: LO
