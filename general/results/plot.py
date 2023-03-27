@@ -239,6 +239,18 @@ def show_tsne(Y, Yh, *args, **kwargs):
     mkfig("tsne.png")
 
 
+def show_embed(Y, Yh, *args, **kwargs):
+    """docstring"""
+
+    fig, ax = plt.subplots()
+    ax = fig.add_subplot(projection="3d")
+
+    ncomponents = 3  # 2
+    scatter = plt.scatter(*[Yh[:, i] for i in range(ncomponents)], c=Y.view(-1).tolist(), alpha=0.3)
+    # ax.view_init(0, 180)
+    plt.legend(*scatter.legend_elements())
+    mkfig("embed.png")
+
 def show_pca(Y, Yh, *args, **kwargs):
     """docstring"""
 
@@ -312,6 +324,7 @@ PLOTS = {
     "RKNN": show_RKNN_confusion,
     "TSNE": show_tsne,
     "PCA": show_pca,
+    "EMBED": show_embed,
     "DPRIME": show_dprime,
 }
 

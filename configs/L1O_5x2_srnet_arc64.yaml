@@ -1,7 +1,8 @@
 DEVICE: 'cuda' # TODO add implicit GPU detection
 
 MODEL:
-  BODY: "FFCR"
+  BODY: "SRNET"
+  ODIM: 64
 
   FFCR:
     BODY: 50

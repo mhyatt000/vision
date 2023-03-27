@@ -21,5 +21,5 @@ def get_exp_version():
 def get_path():
     """dynamically generate output folder"""
 
-    version = d2s(get_exp_version())
-    return join(cfg.OUT,version) if version else cfg.OUT
+    version = get_exp_version()
+    return join(cfg.OUT,d2s(version)) if version else cfg.OUT

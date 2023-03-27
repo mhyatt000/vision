@@ -3,17 +3,16 @@ MODEL:
   BODY: "FFCR"
 
   FFCR:
-    BODY: '50'
-    LAYERS: [3,4,6,3]
-    OUT_DIM: 3 # 5 classes but its  embed dim
+    BODY: 50
+    OUT_DIM: 3 
     USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  BATCH_SIZE: 128
+  GPU_BATCH_SIZE: 128
+  # BATCH_SIZE:  null
   SHUFFLE: True
-  USE_SPLIT: True
-  SPLIT: [0,1]
+  SPLIT: True
   NCLASSES: 5
   SIZE: 38200
 
@@ -23,7 +22,14 @@ SOLVER:
   MAX_EPOCH: 20
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
-  SEED: 0 # default ... why in solver
+  CHECKPOINT_PERIOD: 100
+
+  OPTIM: 
+    BODY: "ADAM"
+    BASE_LR: 0.02
+    DECAY: 0.0005
+    MOMENTUM: 0.9 
+    BETAS: [0.9, 0.99]
 
 LOSS: 
   BODY: "AAM" # aam uses pfc sampler
@@ -37,15 +43,7 @@ LOSS:
     EMBED_DIM: 3
     NC: 5
     NCLASSES: 5
-    SAMPLE_RATE: 0.2
-      # FP16: False
-
-OPTIM: 
-  BODY: "SGD"
-  LR: 0.01
-    # BETAS: [0.5, 0.999]
-  DECAY: 5e-4
-  MOMENTUM: 0.9 
+    SAMPLE_RATE: 1.0
 
 EXP:
   TRAIN: True
@@ -55,3 +53,4 @@ EXP:
   - "TSNE"
   - "PCA"
   - "CONFUSION"
+  - "EMBED"
