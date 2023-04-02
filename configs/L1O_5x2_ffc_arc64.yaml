@@ -55,6 +55,7 @@ EXP:
   TEST: True
   PLOTS:
   - "CONFUSION"
+  - "RKNN"
   - "TSNE"
   - "PCA"
   - "DPRIME"

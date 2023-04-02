@@ -121,9 +121,8 @@ def calc_confusion(Y, Yh):
 def make_centers(Y, Yh):
     """makes cls centers from training set"""
 
-    to_rad = lambda a, b: torch.acos(
-        torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
-    )
+    norm = torch.linalg.norm
+    to_rad = lambda a, b: torch.acos( torch.dot(a, b) / (norm(a) * norm(b)))
     angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
 
     C = set(range(cfg.LOADER.NCLASSES))
@@ -136,9 +135,8 @@ def make_centers(Y, Yh):
 def arc_confusion(Y, Yh, centers):
     """confusion matrix with arc embeddings"""
 
-    to_rad = lambda a, b: torch.acos(
-        torch.dot(a, b) / (torch.linalg.norm(a) * torch.linalg.norm(b))
-    )
+    norm = torch.linalg.norm
+    to_rad = lambda a, b: torch.acos( torch.dot(a, b) / (norm(a) * norm(b)))
     angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
 
     Yh = torch.Tensor([[angle(yh, c) for c in centers] for yh in Yh])
@@ -155,59 +153,105 @@ def arc_confusion(Y, Yh, centers):
     return confusion, acc
 
 
+def arc_confusion_openset(Y, Yh, centers, thresh):
+    """confusion matrix with arc embeddings"""
+
+    norm = torch.linalg.norm
+    to_rad = lambda a, b: torch.acos( torch.dot(a, b) / (norm(a) * norm(b)))
+    angle = lambda a, b: (to_rad(a, b) * 180 / 3.141592)
+
+    classes = [[] for i in range(len(centers))]
+    embeds = [[] for i in range(len(centers))]
+    nknown = cfg.LOADER.NCLASSES
+
+    Y = Y.cpu().view(-1).tolist()
+    Yh = Yh.cpu().tolist()
+
+    while Y:
+        y, yh, = Y.pop(), torch.Tensor(Yh.pop()), 
+        a = torch.Tensor([angle(yh,c) if c.sum() else 360 for c in centers]) # dont want 0 centers with no values
+        i = torch.argmin(a)
+
+        # give priority to known classes
+        if any([x<thresh for x in a[:nknown]]):
+            classes[i].append(y)
+            embeds[i].append(yh)
+
+        # then to unknown classes
+        elif any([x<thresh for x in a]):
+            classes[i].append(y)
+            embeds[i].append(yh)
+            # recompute center for that class
+            centers[i] = make_centers(torch.Tensor([0 for _ in embeds[i]]),torch.stack(embeds[i]))[0] # reuse old code
+
+        # lastly to potential new classes
+        else:
+            classes.append([y])
+            embeds.append([yh])
+            centers.append(yh)
+
+    confusion = torch.zeros((len(classes),len(classes) ))
+    for yh, Y in enumerate(classes):
+        for y in Y:
+            confusion[int(y), int(yh)] += 1
+
+    acc = confusion.diag().sum() / confusion.sum(1).sum()
+    serialize("confusion_from_centers", confusion)
+    return confusion, acc
+
+
 def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
-    rknn = RadiusNeighborsClassifier(radius=0.5, metric='cosine', algorithm="brute")
-    rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
-    return rknn
+    rknns = dict()
+    for r in [1e-5,  5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]:
+        try:
+            rknn = RadiusNeighborsClassifier(radius=r, metric='cosine', algorithm="brute", outlier_label=5)
+            rknn.fit(Yh.cpu(), [int(x) for x in Y.cpu()])
+            rknns[r] = rknn
+        except:
+            pass
+    return rknns
 
 
-def show_RKNN_confusion(Y, Yh, rknn, **kwargs):
+def show_RKNN_confusion(Y, Yh, rknns, **kwargs):
     """docstring"""
 
-    Yh = torch.Tensor(rknn.predict(Yh))
-    confusion = torch.zeros([cfg.LOADER.NCLASSES] * 2)
+    for r,rknn in rknns.items():
 
-    for y, yh in zip(Y, Yh):
-        confusion[int(y[0]), int(yh)] += 1
+        pred = torch.Tensor(rknn.predict(Yh))
+        ncol = max([int(x) for x in pred]+[int(x) for x in Y])+1
+        confusion = torch.zeros((ncol,ncol))
 
-    acc = confusion.diag().sum() / confusion.sum(1).sum()
+        for y, yh in zip(Y, pred):
+            confusion[int(y[0]), int(yh)] += 1
 
-    # plt.rcParams.update({"font.size": 18}) # way too big...
-    plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
-    label_matx()
+        acc = confusion.diag().sum() / confusion.sum(1).sum()
 
-    for i in range(confusion.shape[0]):
-        for j in range(confusion.shape[1]):
-            plt.text(
-                x=j,
-                y=i,
-                s=int(confusion[i, j]),
-                va="center",
-                ha="center",
-                size="xx-large",
-            )
-
-    # plt.title(f"Confusion Matrix")
-    plt.xlabel("Predictions")
-    plt.ylabel("Ground Truth")
-
-    mkfig("rknn.png")
-    serialize("confusion_from_rknn", confusion)
+        _plot_confusion(confusion,acc,f'rknn_openset{r}.png')
 
 
 def show_confusion(Y, Yh, centers=None, **kwargs):
     """builds confusion matrix"""
 
-    confusion, acc = (
-        calc_confusion(Y, Yh) if cfg.LOSS.BODY == "CE" else arc_confusion(Y, Yh, centers)
-    )
+    if cfg.LOSS.BODY == "CE" :
+        confusion, acc =  calc_confusion(Y, Yh) 
+        _plot_confusion(confusion,acc,'confusion.png')
+    else:
+        confusion, acc =  arc_confusion(Y, Yh, centers)
+        _plot_confusion(confusion,acc,'confusion.png')
 
-    # plt.rcParams.update({"font.size": 18}) # way too big...
+        # for thresh in [55,60,65,70,75]:
+            # confusion, acc =  arc_confusion_openset(Y, Yh, centers,thresh)
+            # _plot_confusion(confusion,acc,f'confusion_openset{thresh}.png')
+
+
+def _plot_confusion(confusion,acc, fname):
+
     plt.matshow(confusion, cmap=plt.cm.Blues, alpha=0.3)
     label_matx()
 
+    getname = lambda x: CLASSES[x] if x < len(CLASSES) else f'unknown{x-len(CLASSES)}'
     for i in range(confusion.shape[0]):
         for j in range(confusion.shape[1]):
             plt.text(
@@ -222,18 +266,26 @@ def show_confusion(Y, Yh, centers=None, **kwargs):
     # plt.title(f"Confusion Matrix")
     plt.xlabel("Predictions")
     plt.ylabel("Ground Truth")
-    mkfig("confusion.png", legend=False)
+    plt.xticks([i for i in range(len(confusion))], [getname(i) for i in range(len(confusion))])
+    plt.yticks([i for i in range(len(confusion))],[getname(i) for i in range(len(confusion))])
+    plt.setp(plt.xticks()[1], rotation=30) 
+    plt.setp(plt.yticks()[1], rotation=30) 
+    plt.tight_layout()
+    mkfig(fname, legend=False)
 
 
 def show_tsne(Y, Yh, *args, **kwargs):
     """docstring"""
     # ax = fig.add_subplot(projection="3d")
 
-    tsne = TSNE(n_components=2, random_state=cfg.SOLVER.SEED)  # could do 3 dim
+    fig, ax = plt.subplots()
+    n_components = 2
+    if n_components == 3:
+        ax = fig.add_subplot(projection="3d")
+    tsne = TSNE(n_components=n_components, random_state=cfg.SOLVER.SEED)  
     Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
 
-    scatter = plt.scatter(Yh[:, 0], Yh[:, 1], c=Y.view(-1).tolist(), alpha=0.3)
-    # ax.scatter(Yh[:,0], Yh[:,1],Yh[:,2], c=Y.view(-1).tolist())
+    scatter = plt.scatter(*[Yh[:, i] for i in range(n_components)], c=Y.view(-1).tolist(), alpha=0.3)
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("tsne.png")
@@ -315,6 +367,7 @@ def show_dprime(Y, Yh, *args, **kwargs):
     plt.title(f"Population Distance (d_prime={round(dprime,4)})")
     plt.xlabel("angle")
     plt.ylabel("frequency")
+    plt.legend()
     mkfig("dprime.png")
 
 
@@ -332,8 +385,6 @@ if __name__ == "__main__":
 
     Y = torch.rand((20, 5))
     Y = torch.argmax(Y, dim=-1)
-
-    
 
     Yh = torch.rand((20, 64))
 

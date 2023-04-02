@@ -64,8 +64,8 @@ class Tester:
         Y, Yh = self.embed(self.trainloader)
         Y, Yh = Y.cpu(), Yh.cpu()
         centers = plot.make_centers(Y, Yh)
-        rknn = plot._RKNN(Y, Yh)
-        kwargs = {"centers": centers, "rknn": rknn}
+        rknns = plot._RKNN(Y, Yh)
+        kwargs = {"centers": centers, "rknns": rknns}
 
         Y, Yh = self.embed(self.loader)
         Y, Yh = Y.cpu(), Yh.cpu()

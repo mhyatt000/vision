@@ -25,6 +25,14 @@ SOLVER:
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
 
+  OPTIM: 
+    BODY: "ADAM"
+    BASE_LR: 0.04 
+    DECAY: 5e-4
+    MOMENTUM: 0.9
+    BETAS: [0.9, 0.99]
+
+
 LOSS: 
   BODY: "AAM" # aam uses pfc sampler
 
@@ -39,15 +47,8 @@ LOSS:
     NCLASSES: 5
     SAMPLE_RATE:  1.0
 
-OPTIM: 
-  BODY: "ADAM"
-  LR: 0.04 
-  DECAY: 5e-4
-  MOMENTUM: 0.9
-  BETAS: [0.9, 0.99]
-
 EXP:
-  TRAIN: False # True
+  TRAIN: True
   TEST: True
   PLOTS:
   - "CONFUSION"

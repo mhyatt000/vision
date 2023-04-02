@@ -1,4 +1,5 @@
 import math
+import time
 from typing import Callable
 
 import torch
@@ -60,12 +61,11 @@ class PartialFC_V2(torch.nn.Module):
         self.embedding_size = embedding_size
         self.sample_rate: float = sample_rate
         self.fp16 = fp16
-        self.num_local: int = num_classes // self.world_size + int(
-            self.rank < num_classes % self.world_size
-        )
-        self.class_start: int = num_classes // self.world_size * self.rank + min(
-            self.rank, num_classes % self.world_size
-        )
+        # case 1 ... more classes than gpus#
+        # self.class_start 
+
+        self.num_local: int = num_classes // self.world_size + int( self.rank < num_classes % self.world_size)
+        self.class_start: int = num_classes // self.world_size * self.rank + min( self.rank, num_classes % self.world_size)
         self.num_sample: int = int(self.sample_rate * self.num_local)
         self.last_batch_size: int = 0
 
@@ -151,11 +151,13 @@ class PartialFC_V2(torch.nn.Module):
         labels = torch.cat(_gather_labels)
 
         labels = labels.view(-1, 1)
-        index_positive = (self.class_start <= labels) & (
-            labels < self.class_start + self.num_local
-        )
+        index_positive = (self.class_start <= labels) & ( labels < self.class_start + self.num_local)
         labels[~index_positive] = -1
         labels[index_positive] -= self.class_start
+
+        time.sleep(self.rank)
+        print(self.class_start, self.num_local)
+        print(self.class_start, '->', self.class_start+self.num_local)
 
         if self.sample_rate < 1:
             weight = self.sample(labels, index_positive)

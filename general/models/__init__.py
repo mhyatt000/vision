@@ -37,15 +37,19 @@ models = {
 
 
 def build_model():
+    print(cfg.MODEL.BODY)
+    print('building model...')
+
     model = models[cfg.MODEL.BODY]().to(cfg.rank)
+    print('building ddp...')
 
     if cfg.distributed:
         model = DDP(
             model,
             device_ids=[cfg.rank],
-            output_device=cfg.rank,
+            # output_device=cfg.rank,
             # broadcast_buffers=False,
-            # find_unused_parameters=True,
+            # find_unused_parameters=True, ... this could prob be turned on
         )
 
     if cfg.EXP.TRAIN:

@@ -49,7 +49,9 @@ class Trainer:
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
-        """what is ema"""
+        """
+        what is ema -> exponential moving average
+        """
 
         # state
         self.epoch, self.nstep = 0, 0
