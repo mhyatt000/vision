@@ -73,7 +73,7 @@ class ArcFace(torch.nn.Module):
         self.sinmm = math.sin(math.pi - margin) * margin
         self.easy_margin = False
 
-    def forward(self, logits: torch.Tensor, labels: torch.Tensor):
+    def forward(self, logits, labels):
         index = torch.where(labels != -1)[0]
         target_logit = logits[index, labels[index].view(-1)]
 

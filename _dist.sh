@@ -1,17 +1,12 @@
-# source ~/.bashrc
-# echo $1 $2 $3 $4
-# exit 0
-
-# which torchrun
-# conda env list
-# python --version
-# CUDA_VISIBLE_DEVICES=0,1,2,3
 MASTER_ADDR=$4
 MASTER_PORT=29400
 NCCL_DEBUG=INFO
 NCCL_NET_GDR_LEVEL=PHB
 NCCL_COLLNET_ENABLE=1
 NCCL_SOCKET_IFNAME=eno1
+export PBS_NODEFILE=$5
+GLOO_SOCKET_IFNAME=ens15f0,ens15f1,ens15f2,ens15f3
+NCCL_SOCKET_IFNAME=ens15f0,ens15f1,ens15f2,ens15f3
 
 torchrun \
 --nproc_per_node=4 \

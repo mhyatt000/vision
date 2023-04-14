@@ -32,7 +32,6 @@ def mkdir(path):
             return
 
 
-
 class Experiment:
     """docstring"""
 
@@ -45,7 +44,10 @@ class Experiment:
         print("model is built")
         self.trainer = Trainer(model, loaders["train"])
         self.tester = Tester(
-            self.trainer.model, loaders["test"], trainloader=loaders["train"]
+            self.trainer.model,
+            loaders["test"],
+            trainloader=loaders["train"],
+            criterion=self.trainer.criterion,
         )
 
     def run(self):
@@ -59,22 +61,24 @@ class Split5x2Experiment(Experiment):
     """5 Seeds of 2-fold cross validation"""
 
     def __init__(self):
-        self.versions = os.path.join(cfg.OUT,'versions.json')
+        self.versions = os.path.join(cfg.OUT, "versions.json")
         pass
 
     def mk_versions(self):
         "allows different versions of the experiment to be saved to different folders"
 
         mkdir(cfg.OUT)
-        if os.path.exists(self.versions): # dont remake if you can start in the middle
+        if os.path.exists(self.versions):  # dont remake if you can start in the middle
             return
 
         exp = []
         ordered = lambda x: x.reverse() if cfg.EXP.REVERSE else x
-        
+
         LO_combos = [None]
         if cfg.LOADER.LEAVE_N_OUT:
-            classes =[ [i for i in range(cfg.LOADER.NCLASSES)] for _ in range(cfg.LOADER.LEAVE_N_OUT)]
+            classes = [
+                [i for i in range(cfg.LOADER.NCLASSES)] for _ in range(cfg.LOADER.LEAVE_N_OUT)
+            ]
             LO_combos = list(itertools.product(*classes))
             LO_combos = [sorted(set(x)) for x in LO_combos]
             temp = []
@@ -84,22 +88,21 @@ class Split5x2Experiment(Experiment):
             LO_combos = temp
 
         for LO in LO_combos:
-            for seed,swap in itertools.product(ordered([0,1,2,3,4]), ordered([False,True])):
-                e = {'LO':LO, 'seed':seed, 'swap':swap}
+            for seed, swap in itertools.product(ordered([0, 1, 2, 3, 4]), ordered([False, True])):
+                e = {"LO": LO, "seed": seed, "swap": swap}
                 exp.append(e)
-                mkdir(os.path.join(cfg.OUT,out.d2s(e)))
+                mkdir(os.path.join(cfg.OUT, out.d2s(e)))
 
-        with open(self.versions,'w') as file:
-            json.dump(exp,file)
+        with open(self.versions, "w") as file:
+            json.dump(exp, file)
 
     def pop_versions(self):
         """pop the first experiment version off the file"""
-        if not cfg.world_rank: # only rank 0 pops
-            with open(self.versions,'r') as file:
+        if not cfg.world_rank:  # only rank 0 pops
+            with open(self.versions, "r") as file:
                 exp = json.load(file)[1:]
-            with open(self.versions,'w') as file:
-                json.dump(exp,file)
-         
+            with open(self.versions, "w") as file:
+                json.dump(exp, file)
 
     # TODO: can you generalize for many iterations of any hparam? ie: LO
     def run(self):
@@ -109,12 +112,13 @@ class Split5x2Experiment(Experiment):
             version = out.get_exp_version()
             if not version:
                 break
-            cfg.SEED = version['seed']
+            cfg.SEED = version["seed"]
             setup_seed(cfg.SEED)
 
             super().__init__()
             super().run()
             self.pop_versions()
+
 
 EXPERIMENTS = {
     "DEFAULT": Experiment,

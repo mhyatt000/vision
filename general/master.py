@@ -16,20 +16,20 @@ from general.config import cfg
 # dist.init_process_group(backend="nccl",init_method="env://") # mpi4py will handle processes
 
 def main():
-    print("running master")
 
     # hvd.init()
     # torch.cuda.set_device(hvd.local__rank())
 
-    os.environ['MASTER_PORT'] = str(12355)
+    # os.environ['MASTER_PORT'] = str(12355)
     # print(os.environ['MASTER_ADDR'], os.environ['MASTER_PORT'])
 
-    if cfg.deepspeed:
-        deepspeed.init_distributed()
-    else:
-        dist.init_process_group(backend="nccl", rank=cfg.world_rank, world_size=cfg.world_size, timeout=timedelta(seconds=30))
+    # dist.init_process_group(backend="nccl", rank=cfg.world_rank, world_size=cfg.world_size, timeout=timedelta(seconds=30))
 
-    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+    dist.init_process_group(backend="gloo", rank=cfg.world_rank, world_size=cfg.world_size, timeout=timedelta(seconds=30))
+    # dist.init_process_group(backend="mpi", rank=cfg.world_rank, world_size=cfg.world_size, timeout=timedelta(seconds=30))
+    # dist.init_process_group(backend="nccl", rank=cfg.world_rank, world_size=cfg.world_size, timeout=timedelta(seconds=30))
+
+    dist.barrier()
 
     setup_seed(seed=cfg.SEED, deterministic=False)
     torch.cuda.device(cfg.rank)

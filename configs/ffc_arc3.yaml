@@ -1,4 +1,4 @@
-DEVICE: 'cuda' # TODO add implicit GPU detection
+DEVICE: 'cuda' 
 MODEL:
   BODY: "FFCR"
 
@@ -19,38 +19,38 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_EPOCH: 20
+  MAX_ITER: 3000
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
 
   OPTIM: 
-    BODY: "ADAM"
-    BASE_LR: 0.02
+    BODY: "LAMB"
+    BASE_LR: 0.04
     DECAY: 0.0005
     MOMENTUM: 0.9 
     BETAS: [0.9, 0.99]
 
 LOSS: 
-  BODY: "AAM" # aam uses pfc sampler
+  BODY: "ARC" 
 
   AAM:
     S: 64.0
-    M: [1.0, 0.0, 0.4]
+    M: [1.0, 0.5, 0.0]
     INTER_THRESH: 0
 
   PFC: 
     EMBED_DIM: 3
-    NC: 5
     NCLASSES: 5
     SAMPLE_RATE: 1.0
 
 EXP:
-  TRAIN: True
+  TRAIN: False
   TEST: True
   PLOTS:
+  - "EMBED"
+  - "CENTER"
   - "DPRIME"
   - "TSNE"
   - "PCA"
   - "CONFUSION"
-  - "EMBED"

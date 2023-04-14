@@ -40,6 +40,7 @@ cfg.merge_from_file(cfg.config_file)
 cfg.world_size = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 cfg.rank = int(os.environ["LOCAL_RANK"]) if "LOCAL_RANK" in os.environ else 0
 cfg.world_rank = int(os.environ["RANK"]) if "RANK" in os.environ else 0
+cfg.master = cfg.world_rank == 0
 
 """
 if False:
@@ -49,10 +50,6 @@ if False:
     cfg.world_size = int(comm.Get_size())
     cfg.world_rank = int(comm.Get_rank())
 
-with open(os.environ['PBS_NODEFILE'],'r') as file:
-    nodes = [n.strip('\n') for n in file.readlines()]
-
-nodenames = {n.split('.')[0]:'NODE_'+str(i) for i,n in enumerate(nodes)}
 ppn = cfg.world_size // len(nodes) # process per node
 cfg.nodename = nodenames[MPI.Get_processor_name()]
 cfg.local_rank = cfg.world_rank % ppn
@@ -63,24 +60,32 @@ if True and not cfg.rank:
     print('no OMPI')
 """
 
-cfg.nodename = socket.gethostname()
-cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
+cfg.distributed = True
+# cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
+
+with open(os.environ['PBS_NODEFILE'],'r') as file:
+    nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
+cfg.nodename = 'NODE_' + str(nodes.index(socket.gethostname()))
 
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
-if not cfg.world_rank:
+if cfg.master:
     print( f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS']}")
     print("CONFIG:", cfg.config_file, "\n")
 
-time.sleep(cfg.world_rank)
-print(f'Rank {cfg.world_rank} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename}')
+time.sleep(cfg.world_rank/4)
+print(f'Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename}')
 
-dist_print = True
-if not dist_print:
+all_print = False # all nodes print?
+if not all_print:
     set_dist_print(cfg.world_rank <= 0)
 
-cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * cfg.world_size
+# TODO: fix cast 1e-3 str to float
+cfg.SOLVER.OPTIM.BASE_LR = float(cfg.SOLVER.OPTIM.BASE_LR)
+cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.5) 
+cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.2) 
+# cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR 
 
 # cfg.freeze() # some of the experiments need it to be mutable
 

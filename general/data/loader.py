@@ -42,6 +42,7 @@ def build_loaders():
 
     if cfg.LOADER.SPLIT:
         split = [0.7, 0.3] if cfg.EXP.BODY != "5x2" else [0.5, 0.5]
+        split = [int(x*len(dataset)) for x in split]
         datasets = random_split(
             dataset,
             split,

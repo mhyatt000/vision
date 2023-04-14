@@ -5,7 +5,7 @@ from torch.optim.lr_scheduler import (
     _LRScheduler,
 )
 from general.config import cfg
-
+import torch
 
 class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
@@ -51,3 +51,16 @@ schedulers = {
 def make_scheduler(optimizer):
     print(cfg.SCHEDULER)
     return schedulers[cfg.SCHEDULER.BODY](optimizer)
+
+def test_scheduler():
+    """docstring"""
+
+    net = torch.nn.Linear(1,1)
+    scheduler = make_scheduler(torch.optim.Adam(net.parameters()))
+    for _ in range(cfg.SOLVER.MAX_ITER):
+        lr = scheduler.get_lr()
+        scheduler.step()
+        print(lr)
+
+if __name__ == '__main__': 
+    test_scheduler()

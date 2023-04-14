@@ -40,7 +40,7 @@ class Checkpointer:
         ]
 
         self.states = [
-            # "criterion",
+            "criterion",
             # "optimizer",
             "scaler",
             "scheduler",

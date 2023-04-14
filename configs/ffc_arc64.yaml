@@ -15,24 +15,24 @@ LOADER:
   SPLIT: True
   NCLASSES: 5
   SIZE: 38200
-  
+
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_EPOCH: 20 # you said 200 but 20 is on arcface
+  MAX_ITER: 5000 # you said 200 but 20 is on arcface
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
 
   OPTIM: 
-    BODY: "SGD"
-    BASE_LR: 0.02 # suggested 0.02 for 1 gpu ... otherwise 0.1 for 64 gpus
+    BODY: "LAMB"
+    BASE_LR: 0.04 # suggested 0.02 for 1 gpu ... otherwise 0.1 for 64 gpus
     DECAY: 5e-4
     MOMENTUM: 0.9
-    # BETAS: [0.9, 0.99]
+    BETAS: [0.9, 0.99]
 
 LOSS: 
-  BODY: "AAM" # aam uses pfc sampler
+  BODY: "ARC" 
 
   AAM:
     S: 64.0
@@ -41,7 +41,6 @@ LOSS:
 
   PFC: 
     EMBED_DIM: 64
-    NC: 5
     NCLASSES: 5
     SAMPLE_RATE:  1.0
 
@@ -49,6 +48,9 @@ EXP:
   TRAIN: True
   TEST: True
   PLOTS:
-  - "CONFUSION"
+  - "EMBED"
   - "TSNE"
+  - "PCA"
   - "DPRIME"
+  - "CONFUSION"
+  - "RKNN"

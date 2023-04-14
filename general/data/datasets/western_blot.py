@@ -11,15 +11,78 @@ from torchvision import transforms
 from torchvision.io import read_image
 import torchvision.transforms.functional as F
 
+"""
+1 an upscaling post-processing, in which the images are
+enlarged by factors 1.25 and 1.5, and then randomly
+cropped to fit the 256 × 256 pixel resolution;
+
+2 a down-upscaling post-processing, in which images are
+downscaled by factors 0.5, 0.75 and 0.9, and then upscaled back to 
+fit their original resolution of 256 × 256 pixels;
+
+3 a JPEG compression with different quality factors (i.e., 80, 90 and 100) 
+corresponding to increasing image visual
+quality.
+"""
+
+import albumentations as A
+
+upscale = A.Compose([
+    A.OneOf([
+        A.Affine(scale=1.25,p=1.0),
+        A.Affine(scale=1.5,p=1.0),
+    ],p=1),
+    A.RandomCrop(256,256,p=1.0),
+])
+
+downupscale = A.Compose([
+    A.OneOf([
+        A.Sequential([
+            A.Affine(scale=0.5,p=1.0),
+            A.Affine(scale=2,p=1.0),
+        ]),
+        A.Sequential([
+            A.Affine(scale=0.75,p=1.0),
+            A.Affine(scale=1.333,p=1.0),
+        ]),
+        A.Sequential([
+            A.Affine(scale=0.9,p=1.0),
+            A.Affine(scale=1.111,p=1.0),
+        ]),
+    ],p=1),
+])
+
+jpeg = A.Compose([
+    A.OneOf([
+        A.ImageCompression(80,80,p=1.0),
+        A.ImageCompression(90,90,p=1.0),
+        A.ImageCompression(100,100,p=1.0),
+    ],p=1),
+])
+
+"""
+preprocess = {
+    'upscale':upscale,
+    'downupscale': downupscale,
+    'jpeg': jpeg,
+}
+preprocess = A.Compose([ 
+    preprocess[cfg.LOADER.PREPROCESS],
+    lambda x: x['image'],
+])
+"""
+
 transform = transforms.Compose(
     [
         transforms.ToPILImage(),
+        # lambda x: preprocess(x) if cfg.LOADER.PREPROCESS else x,
         transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomRotation(degrees=(-90,90)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ]
 )
-
 
 class WBLOT(Dataset):
     """synthetic western blots dataset"""
@@ -70,7 +133,7 @@ class WBLOT(Dataset):
         img_path = join(self.datafolders[label], rel_path)
         image = read_image(img_path).float()
 
-        if cfg.LOSS.BODY in ["PFC", "AAM"]:  # arcface loss
+        if cfg.LOSS.BODY in ["ARC", "ANGULAR_SM"]:  
             label = torch.Tensor([label])
         else:
             nclasses = len(self.datafolders)
@@ -81,4 +144,4 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        return image.to("cuda"), label.to("cuda")
+        return image.to(cfg.rank), label.to(cfg.rank)

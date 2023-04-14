@@ -10,7 +10,6 @@ def prog(length, desc=None):
     only if this is a node that can print to stdout
     iterates the bar on each call ... nice for loops
     """
-    printnode = not (cfg.world_rank and cfg.distributed)
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -23,6 +22,6 @@ def prog(length, desc=None):
 
             return result
 
-        return wrapper if printnode else func  # no tqdm if not printnode
+        return wrapper if cfg.master else func  # no tqdm if not master
 
     return decorator

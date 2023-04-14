@@ -1,4 +1,5 @@
 import os
+import time
 from general.toolbox import gpu, tqdm
 from general.results import plot
 
@@ -6,7 +7,8 @@ import matplotlib.pyplot as plt
 
 from general.config import cfg
 from general.data import build_loaders 
-from general.helpers import Checkpointer, make_optimizer, make_scheduler, Stopper
+from general.helpers import Checkpointer, make_scheduler, Stopper
+from general.optim import make_optimizer
 from general.losses import make_loss
 import torch
 from torch import distributed as dist
@@ -21,7 +23,7 @@ def gather(x):
         return x
 
     _gather = [
-        torch.zeros(x.shape, device=cfg.DEVICE) for _ in range(dist.get_world_size())
+        torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())
     ]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
@@ -37,7 +39,7 @@ class Trainer:
         self.criterion = make_loss()
 
         params = [{"params": model.parameters()}]
-        if cfg.LOSS.BODY == "AAM":
+        if cfg.LOSS.BODY in ["PFC", "ANGULAR_SM"]:
             params.append({"params": self.criterion.parameters()})
 
         self.optimizer = make_optimizer(params)
@@ -91,9 +93,10 @@ class Trainer:
 
     def back_pass(self, loss):
         if cfg.AMP:
-            self.scaler.scale(loss.to(cfg.DEVICE)).backward()
+            self.scaler.scale(loss).backward()
+            # self.scaler.scale(loss.to(cfg.rank)).backward()
         else:
-            loss.backward()
+            loss.to(cfg.rank).backward()
 
     def backpropagation(self):
         if cfg.AMP:
@@ -111,14 +114,19 @@ class Trainer:
         """training step with adaptive gradient accumulation"""
 
         Yh = self.model(X)
+
+        # print(f'model device: {self.model.device}')
+        # print(f'Y device: {Y.device} | shape: {Y.shape}')
+        # print(f'Yh device: {Yh.device} | shape: {Yh.shape}')
+
         loss = self.criterion(Yh, Y)
         self.calc_accuracy(Yh, Y)
+
+        self.back_pass(loss)
 
         self.loss = float(loss.detach())
         self.losses.append(self.loss)
         loss /= cfg.SOLVER.GRAD_ACC_EVERY
-
-        self.back_pass(loss)
 
         # only update every k steps
         if self.nstep % cfg.SOLVER.GRAD_ACC_EVERY:

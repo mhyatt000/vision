@@ -10,7 +10,7 @@ arguments for train/test will be post-fixed by a _TRAIN or _TEST
 _C = CN(
     new_allowed=True,
     init_dict=dict(
-        DEVICE="cuda",
+        # DEVICE="cuda",
         AMP=True,
         SEED=0,
     ),
@@ -740,8 +740,8 @@ _C.SOLVER = CN(
         MAX_EPOCH=0,  # any epoch number>0 will overwrite max_iter
         MULTI_MAX_EPOCH=(),  # set different max epoch for different stage
         OPTIMIZER="SGD",  # "ADAMW"
-        BASE_LR=0.001,
-        LANG_LR=0.00001,
+        BASE_LR=1e-3,
+        LANG_LR=1e-5,
         BACKBONE_BODY_LR_FACTOR=1.0,
         BIAS_LR_FACTOR=2,
         GRAD_CLIP=0.0,
