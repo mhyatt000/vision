@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 import os
 from general.data.datasets import WBLOT
 import json
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import torch
+import torch.nn.functional as F
 
 from general.config import cfg
 from general.results import out
@@ -82,19 +83,22 @@ def serialize(k, v):
         json.dump(data, file)
 
 
-def show_loss(loss, lr=None, *args, **kwargs):
+def show_loss(loss, *args, lr=None, **kwargs):
     """plots loss over time"""
 
-    fig, axs = plt.subplots(2, 1)
+    nplots = 2 + (1 if lr else 0)
+    fig, axs = plt.subplots(nplots , 1, figsize=(5*nplots,10))
+
     X = [i for i, _ in enumerate(loss)]
     axs[0].plot(X, loss, label="loss")
     axs[1].plot(X, loss, label="log loss")
-    if lr:
-        axs[1].plot(X, lr, label="learning rate")
-
-    axs[0].legend()
-    axs[1].legend()
     axs[1].set_yscale("log")
+    if lr:
+        axs[2].plot(X, [0 for x in X[:-len(lr)]] + lr, label="learning rate") # mixed length :( can remove later
+        axs[2].set_yscale("log")
+
+    for ax in axs:
+        ax.legend()
 
     serialize("losses", loss)
     mkfig("loss.png", verbose=False)
@@ -296,14 +300,14 @@ def show_tsne(Y, Yh, *args, **kwargs):
         ax = fig.add_subplot(projection="3d")
     tsne = TSNE(n_components=n_components, random_state=cfg.SOLVER.SEED)
     Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
+    Y = Y.view(-1).tolist()
 
     scatter = plt.scatter(
-        *[Yh[:, i] for i in range(n_components)], c=Y.view(-1).tolist(), alpha=0.3
+        *[Yh[:, i] for i in range(n_components)], c=Y, alpha=0.3, label=[CLASSES[int(y)] for y in Y]
     )
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("tsne.png")
-
 
 
 def make_sphere(ax):
@@ -325,7 +329,8 @@ def show_embed(Y, Yh, *args, **kwargs):
     ax = fig.add_subplot(projection="3d")
 
     make_sphere(ax)
-    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y.view(-1).tolist(), s=20)  # alpha=0.3
+    Y = Y.view(-1).tolist()
+    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20)  # alpha=0.3
     # ax.view_init(0, 180)
 
     plt.legend(*scatter.legend_elements())
@@ -335,14 +340,17 @@ def show_embed(Y, Yh, *args, **kwargs):
 def show_pca(Y, Yh, *args, **kwargs):
     """docstring"""
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
 
     ncomponents = 3  # 2
     pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)  # could do 3 dim
     Yh = pca.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
+    Yh = F.normalize(torch.Tensor(Yh)).numpy()
+    Y = Y.view(-1).tolist()
 
-    scatter = plt.scatter(*[Yh[:, i] for i in range(ncomponents)], c=Y.view(-1).tolist(), alpha=0.3)
+    make_sphere(ax)
+    scatter = plt.scatter(*[Yh[:, i] for i in range(ncomponents)], c=Y, alpha=0.3,s=2, label=[CLASSES[int(y)] for y in Y])
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("pca.png")
@@ -399,16 +407,20 @@ def show_dprime(Y, Yh, *args, **kwargs):
     plt.legend()
     mkfig("dprime.png")
 
-def show_centers(Y,Yh,*args, **kwargs):
+
+def show_centers(Y, Yh, *args, centers, **kwargs):
     """plot cls centers"""
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
 
+    colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
+
     make_sphere(ax)
-    for i, C in enumerate(centers):
-        plt.plot(*C, label=i)
-    
+    for i, C in enumerate(centers.tolist()):
+        C = [(0, c) for c in C]
+        plt.plot(*C, c=colors[i], label=CLASSES[i])
+
     plt.legend()
     mkfig("center.png")
 

@@ -21,7 +21,7 @@ def gather(x):
     if not cfg.distributed:
         return x
 
-    _gather = [torch.zeros(x.shape, device=cfg.DEVICE) for _ in range(dist.get_world_size())]
+    _gather = [torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
 
@@ -45,7 +45,7 @@ class Tester:
         # decorator was to fix printnode problem but its clunky
         @tqdm.prog(len(loader), desc="Embed")
         def _embed(X, Y):
-            X, Y = X.to(cfg.DEVICE), Y.to(cfg.DEVICE)
+            X, Y = X.to(cfg.rank), Y.to(cfg.rank)
             Yh = self.model(X).view((Y.shape[0], -1))
             Y, Yh = gather(Y), gather(Yh)
             Yh = F.normalize(Yh)
@@ -60,23 +60,24 @@ class Tester:
 
     def get_centers(self):
         """get learned cls centers"""
-        return self.criterion.weight.tolist()
+        return F.normalize(self.criterion.weight).cpu()
 
     def run(self):
         """docstring"""
 
         Y, Yh = self.embed(self.trainloader)
         Y, Yh = Y.cpu(), Yh.cpu()
-        centers = plot.make_centers(Y, Yh)
+        # centers = plot.make_centers(Y, Yh)
         rknns = plot._RKNN(Y, Yh)
         kwargs = {
-            "centers": centers,
             "rknns": rknns,
             "centers": self.get_centers()
         }
 
         Y, Yh = self.embed(self.loader)
         Y, Yh = Y.cpu(), Yh.cpu()
-        if not cfg.rank:
+        if  cfg.master:
             for p in cfg.EXP.PLOTS:
                 plot.PLOTS[p](Y, Yh, **kwargs)
+
+        dist.barrier()

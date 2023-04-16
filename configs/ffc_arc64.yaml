@@ -19,7 +19,7 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_ITER: 5000 # you said 200 but 20 is on arcface
+  MAX_ITER: 1000 # you said 200 but 20 is on arcface
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
@@ -36,7 +36,7 @@ LOSS:
 
   AAM:
     S: 64.0
-    M: [1.0, 0.0, 0.4]
+    M: [1.0, 0.5, 0.0]
     INTER_THRESH: 0
 
   PFC: 
@@ -49,6 +49,7 @@ EXP:
   TEST: True
   PLOTS:
   - "EMBED"
+  - "CENTER"
   - "TSNE"
   - "PCA"
   - "DPRIME"

@@ -19,7 +19,7 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_ITER: 3000
+  MAX_ITER: 1000
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
@@ -45,7 +45,7 @@ LOSS:
     SAMPLE_RATE: 1.0
 
 EXP:
-  TRAIN: False
+  TRAIN: True
   TEST: True
   PLOTS:
   - "EMBED"

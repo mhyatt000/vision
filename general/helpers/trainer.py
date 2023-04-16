@@ -39,7 +39,7 @@ class Trainer:
         self.criterion = make_loss()
 
         params = [{"params": model.parameters()}]
-        if cfg.LOSS.BODY in ["PFC", "ANGULAR_SM"]:
+        if cfg.LOSS.BODY in ["ARC", "ANGULAR_SM"]:
             params.append({"params": self.criterion.parameters()})
 
         self.optimizer = make_optimizer(params)
@@ -51,13 +51,11 @@ class Trainer:
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
-        """
-        what is ema -> exponential moving average
-        """
+        """ what is ema -> exponential moving average """
 
         # state
         self.epoch, self.nstep = 0, 0
-        self.losses, self.accs = [], []
+        self.losses, self.accs, self.lrs = [], [], []
         self.best_epoch = 0
 
         print(gpu.gpu_utilization())
@@ -70,7 +68,7 @@ class Trainer:
         self.nstep += 1
 
         if self.nstep % cfg.SOLVER.CHECKPOINT_PERIOD == 0:
-            plot.show_loss(self.losses)
+            plot.show_loss(self.losses, lr=self.lrs)
             plot.show_accuracy(self.accs)
             self.ckp.save()
 
@@ -114,11 +112,6 @@ class Trainer:
         """training step with adaptive gradient accumulation"""
 
         Yh = self.model(X)
-
-        # print(f'model device: {self.model.device}')
-        # print(f'Y device: {Y.device} | shape: {Y.shape}')
-        # print(f'Yh device: {Yh.device} | shape: {Yh.shape}')
-
         loss = self.criterion(Yh, Y)
         self.calc_accuracy(Yh, Y)
 
@@ -126,6 +119,7 @@ class Trainer:
 
         self.loss = float(loss.detach())
         self.losses.append(self.loss)
+        self.lrs.append(self.scheduler.get_last_lr()[0])
         loss /= cfg.SOLVER.GRAD_ACC_EVERY
 
         # only update every k steps

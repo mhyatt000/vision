@@ -7,9 +7,9 @@ from torch.optim.lr_scheduler import (
 from general.config import cfg
 import torch
 
+
 class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
-
         # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
         self.max_steps = cfg.SOLVER.MAX_ITER
         self.warmup_steps = 0  # nbatch * cfg.SCHEDULER.WARMUP
@@ -26,7 +26,6 @@ class PolyScheduler(_LRScheduler):
         return [self.base_lr * alpha for _ in self.optimizer.param_groups]
 
     def get_lr(self):
-
         if self.last_epoch == -1:
             return [self.warmup_lr_init for _ in self.optimizer.param_groups]
         if self.last_epoch < self.warmup_steps:
@@ -52,15 +51,17 @@ def make_scheduler(optimizer):
     print(cfg.SCHEDULER)
     return schedulers[cfg.SCHEDULER.BODY](optimizer)
 
+
 def test_scheduler():
     """docstring"""
 
-    net = torch.nn.Linear(1,1)
+    net = torch.nn.Linear(1, 1)
     scheduler = make_scheduler(torch.optim.Adam(net.parameters()))
     for _ in range(cfg.SOLVER.MAX_ITER):
         lr = scheduler.get_lr()
         scheduler.step()
         print(lr)
 
-if __name__ == '__main__': 
+
+if __name__ == "__main__":
     test_scheduler()

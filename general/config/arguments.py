@@ -74,7 +74,7 @@ if cfg.master:
     print( f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS']}")
     print("CONFIG:", cfg.config_file, "\n")
 
-time.sleep(cfg.world_rank/4)
+time.sleep(cfg.world_rank/32)
 print(f'Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename}')
 
 all_print = False # all nodes print?
@@ -84,7 +84,7 @@ if not all_print:
 # TODO: fix cast 1e-3 str to float
 cfg.SOLVER.OPTIM.BASE_LR = float(cfg.SOLVER.OPTIM.BASE_LR)
 cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.5) 
-cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.2) 
+# cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.2) 
 # cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR 
 
 # cfg.freeze() # some of the experiments need it to be mutable
