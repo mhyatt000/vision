@@ -87,15 +87,17 @@ def show_loss(loss, *args, lr=None, **kwargs):
     """plots loss over time"""
 
     nplots = 2 + (1 if lr else 0)
-    fig, axs = plt.subplots(nplots , 1, figsize=(5*nplots,10))
+    fig, axs = plt.subplots(nplots, 1, figsize=(5 * nplots, 10))
 
     X = [i for i, _ in enumerate(loss)]
     axs[0].plot(X, loss, label="loss")
     axs[1].plot(X, loss, label="log loss")
     axs[1].set_yscale("log")
     if lr:
-        axs[2].plot(X, [0 for x in X[:-len(lr)]] + lr, label="learning rate") # mixed length :( can remove later
-        axs[2].set_yscale("log")
+        axs[2].plot(
+            X, [0 for x in X[: -len(lr)]] + lr, c='r', lw=3, label="learning rate"
+        )  # mixed length :( can remove later
+        # axs[2].set_yscale("log")
 
     for ax in axs:
         ax.legend()
@@ -330,7 +332,11 @@ def show_embed(Y, Yh, *args, **kwargs):
 
     make_sphere(ax)
     Y = Y.view(-1).tolist()
-    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20)  # alpha=0.3
+    if Yh.shape[-1] > 3:
+        Yh = F.normalize(Yh[:,:3])
+    scatter = ax.scatter(
+        Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20, 
+    )  # alpha=0.3
     # ax.view_init(0, 180)
 
     plt.legend(*scatter.legend_elements())
@@ -350,7 +356,10 @@ def show_pca(Y, Yh, *args, **kwargs):
     Y = Y.view(-1).tolist()
 
     make_sphere(ax)
-    scatter = plt.scatter(*[Yh[:, i] for i in range(ncomponents)], c=Y, alpha=0.3,s=2, label=[CLASSES[int(y)] for y in Y])
+    # scatter = plt.scatter( *[Yh[:, i] for i in range(ncomponents)], c=Y,  alpha=0.3, label=[CLASSES[int(y)] for y in Y]) # s=20
+    scatter = ax.scatter(
+        Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20, alpha=0.3,
+    )  # alpha=0.3
     # ax.view_init(0, 180)
     plt.legend(*scatter.legend_elements())
     mkfig("pca.png")
@@ -417,9 +426,19 @@ def show_centers(Y, Yh, *args, centers, **kwargs):
     colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
 
     make_sphere(ax)
+
+    # compress
+    if len(centers[0]) > 3:
+        centers = F.normalize(centers[:,:3])
+        # ncomponents = 3
+        # pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)
+        # centers = pca.fit_transform(np.array(centers), np.array([i for i in range(cfg.LOADER.NCLASSES)]))
+        # Yh = F.normalize(torch.Tensor(Yh)).numpy()
+
+
     for i, C in enumerate(centers.tolist()):
         C = [(0, c) for c in C]
-        plt.plot(*C, c=colors[i], label=CLASSES[i])
+        plt.plot(*C, c=colors[i], label=CLASSES[i], lw=3)
 
     plt.legend()
     mkfig("center.png")

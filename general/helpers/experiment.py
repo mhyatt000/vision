@@ -1,4 +1,6 @@
 from general.config import cfg
+import torch
+from torch import distributed as dist
 import itertools
 import json
 import numpy as np
@@ -98,7 +100,7 @@ class Split5x2Experiment(Experiment):
 
     def pop_versions(self):
         """pop the first experiment version off the file"""
-        if not cfg.world_rank:  # only rank 0 pops
+        if cfg.master:  # only rank 0 pops
             with open(self.versions, "r") as file:
                 exp = json.load(file)[1:]
             with open(self.versions, "w") as file:
@@ -118,7 +120,7 @@ class Split5x2Experiment(Experiment):
             super().__init__()
             super().run()
             self.pop_versions()
-
+            dist.barrier()
 
 EXPERIMENTS = {
     "DEFAULT": Experiment,

@@ -36,6 +36,32 @@ _C.SCHEDULER = CN(
     ),
 )
 
+_C.LOSS= CN(
+    new_allowed=True,
+    init_dict=dict(
+    ),
+)
+
+
+_C.LOSS.PFC = CN(
+    new_allowed=True,
+    init_dict=dict(
+        EMBED_DIM=64,
+        NCLASSES=5,
+        SAMPLE_RATE=1.0,
+    ),
+)
+
+
+_C.LOSS.ARC = CN(
+    new_allowed=True,
+    init_dict=dict(
+        L6_SCALE=1.0,
+    ),
+)
+
+
+
 _C.MODEL = MODEL
 
 _C.LOADER = CN(
@@ -773,7 +799,7 @@ _C.SOLVER = CN(
         CHECKPOINT_PER_EPOCH=-1.0,
         TEST_WITH_INFERENCE=False,
         AUTO_TERMINATE_PATIENCE=-1,
-        EARLY_STOPPING=-1, 
+        EARLY_STOPPING=-1,
         # Number of images per batch
         # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
         # see 2 images per batch

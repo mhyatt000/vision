@@ -144,4 +144,4 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        return image.to(cfg.rank), label.to(cfg.rank)
+        return image.pin_memory(), label.pin_memory()

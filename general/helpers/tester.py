@@ -45,12 +45,15 @@ class Tester:
         # decorator was to fix printnode problem but its clunky
         @tqdm.prog(len(loader), desc="Embed")
         def _embed(X, Y):
-            X, Y = X.to(cfg.rank), Y.to(cfg.rank)
+
+            X = X.to(cfg.rank, non_blocking=True)
+            Y = Y.to(cfg.rank, non_blocking=True)
+
             Yh = self.model(X).view((Y.shape[0], -1))
             Y, Yh = gather(Y), gather(Yh)
             Yh = F.normalize(Yh)
-            allY.append(Y)
-            allYh.append(Yh)
+            allY.append(Y.cpu())
+            allYh.append(Yh.cpu())
 
         with torch.no_grad():
             for X, Y in loader:
@@ -60,11 +63,12 @@ class Tester:
 
     def get_centers(self):
         """get learned cls centers"""
-        return F.normalize(self.criterion.weight).cpu()
+        return F.normalize(self.criterion.weight).detach().cpu()
 
     def run(self):
         """docstring"""
 
+        self.model.eval()
         Y, Yh = self.embed(self.trainloader)
         Y, Yh = Y.cpu(), Yh.cpu()
         # centers = plot.make_centers(Y, Yh)
@@ -80,4 +84,3 @@ class Tester:
             for p in cfg.EXP.PLOTS:
                 plot.PLOTS[p](Y, Yh, **kwargs)
 
-        dist.barrier()

@@ -70,13 +70,6 @@ cfg.nodename = 'NODE_' + str(nodes.index(socket.gethostname()))
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
 
-if cfg.master:
-    print( f"OMP_NUM_THREADS: {os.environ['OMP_NUM_THREADS']}")
-    print("CONFIG:", cfg.config_file, "\n")
-
-time.sleep(cfg.world_rank/32)
-print(f'Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename}')
-
 all_print = False # all nodes print?
 if not all_print:
     set_dist_print(cfg.world_rank <= 0)

@@ -6,7 +6,7 @@ from general.results import plot
 import matplotlib.pyplot as plt
 
 from general.config import cfg
-from general.data import build_loaders 
+from general.data import build_loaders
 from general.helpers import Checkpointer, make_scheduler, Stopper
 from general.optim import make_optimizer
 from general.losses import make_loss
@@ -22,9 +22,7 @@ def gather(x):
     if not cfg.distributed:
         return x
 
-    _gather = [
-        torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())
-    ]
+    _gather = [torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
 
@@ -33,7 +31,6 @@ class Trainer:
     """manages and abstracts options from the training loop"""
 
     def __init__(self, model, loader):
-
         # essentials
         self.model = model
         self.criterion = make_loss()
@@ -77,16 +74,12 @@ class Trainer:
 
         self.epoch += 1
 
-
     def calc_accuracy(self, Yh, Y):
-
         if cfg.LOSS.BODY != "CE":
             self.accs.append(-1)
             return
         with torch.no_grad():
-            acc = float(
-                (torch.argmax(Yh, dim=1) == torch.argmax(Y, dim=1)).sum() / Yh.shape[0]
-            )
+            acc = float((torch.argmax(Yh, dim=1) == torch.argmax(Y, dim=1)).sum() / Yh.shape[0])
             self.accs.append(acc)
 
     def back_pass(self, loss):
@@ -111,10 +104,13 @@ class Trainer:
     def step(self, X, Y):
         """training step with adaptive gradient accumulation"""
 
+        # with torch.autograd.detect_anomaly(check_nan=True):
+        X = X.to(cfg.rank, non_blocking=True)
+        Y = Y.to(cfg.rank, non_blocking=True)
+
         Yh = self.model(X)
         loss = self.criterion(Yh, Y)
         self.calc_accuracy(Yh, Y)
-
         self.back_pass(loss)
 
         self.loss = float(loss.detach())
@@ -156,7 +152,6 @@ class Trainer:
 
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):
         while self.nstep < cfg.SOLVER.MAX_ITER:
-
             if cfg.distributed:
                 self.loader.sampler.set_epoch(self.epoch)
             for X, Y in self.loader:

@@ -23,12 +23,11 @@ class ArcFace(torch.nn.Module):
             torch.normal(0, 0.01, (cfg.LOSS.PFC.NCLASSES, cfg.LOSS.PFC.EMBED_DIM))
         )
 
-
         eps = 1e-4
-        self.clamp = lambda x: torch.clamp(x,-1+eps, 1-eps)
+        self.clamp = lambda x: torch.clamp(x, -1 + eps, 1 - eps)
 
-        self.torad = lambda x: x * (3.14/180)
-        self.todeg = lambda x: x * (180/3.14) 
+        self.torad = lambda x: x * (3.14 / 180)
+        self.todeg = lambda x: x * (180 / 3.14)
 
     def get_l5(self, embeddings, labels):
         """
@@ -38,7 +37,9 @@ class ArcFace(torch.nn.Module):
 
         norm = F.normalize
         logits = F.linear(norm(embeddings), norm(self.weight))
-        theta = torch.acos(logits[labels.view(-1).long()]) # get radians distance from x,w ... minimize
+        theta = torch.acos(
+            logits[labels.view(-1).long()]
+        )  # get radians distance from x,w ... minimize
 
         loss = theta.mean() / 3.14
         return loss
@@ -60,10 +61,9 @@ class ArcFace(torch.nn.Module):
             # degs.append(self.todeg(similarity.detach().tolist()))
         # print(f'avg deg: {sum(degs)/len(degs):.2f} | std: {stats.stdev(degs)}')
         loss /= -3.14 * (cfg.LOSS.PFC.NCLASSES - 1)
-        return F.sigmoid(loss)
+        return loss * cfg.LOSS.ARC.L6_SCALE 
 
     def apply_margin(self, embeddings, labels):
-
         norm = F.normalize
         logits = F.linear(norm(embeddings), norm(self.weight))
         logits = self.clamp(logits)
@@ -99,7 +99,6 @@ class ArcFace(torch.nn.Module):
         return logits
 
     def forward(self, logits, labels):
-
         margin_logits = self.apply_margin(logits, labels)
         loss = F.cross_entropy(margin_logits, labels.view(-1).long())
-        return loss + self.get_l5(logits,labels) + self.get_l6() 
+        return loss # +  self.get_l6() + self.get_l5(logits, labels)

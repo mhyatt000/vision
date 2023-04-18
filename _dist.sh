@@ -17,6 +17,8 @@ torchrun \
 --rdzv_endpoint=$4:29400 \
 ~/cs/vision/general/master.py --config-name $1 
 
+# --max-restarts=3 \
+
 # --master_addr=$4 \
 # --master_port=2345 \ 
 

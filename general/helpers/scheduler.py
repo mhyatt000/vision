@@ -12,10 +12,10 @@ class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
         # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
         self.max_steps = cfg.SOLVER.MAX_ITER
-        self.warmup_steps = 0  # nbatch * cfg.SCHEDULER.WARMUP
+        self.warmup_steps = 20 # self.max_steps // 10 # cfg.SCHEDULER.WARMUP_ITER
 
         self.base_lr = cfg.SOLVER.OPTIM.LR
-        self.warmup_lr_init = 0.0001
+        self.warmup_lr_init = 1e-4
         self.power = 2
 
         super(PolyScheduler, self).__init__(optimizer, -1, False)

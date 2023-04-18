@@ -1,4 +1,6 @@
 from torch import optim
+from torch.distributed.optim import ZeroRedundancyOptimizer as ZeRO
+
 from general.config import cfg
 
 import torch
@@ -9,6 +11,7 @@ OPTIMIZERS = {
     "ADAM": optim.Adam,
     "SGD": optim.SGD,
     "LAMB": LAMB,
+    "ZERO": ZeRO,
 }
 
 
@@ -29,6 +32,8 @@ def make_optimizer(params):
         kwargs["momentum"] = cfg.SOLVER.OPTIM.MOMENTUM
     if cfg.SOLVER.OPTIM.BODY == "ADAM":
         kwargs["betas"] = cfg.SOLVER.OPTIM.BETAS
+    if cfg.SOLVER.OPTIM.BODY == "ZERO":
+        kwargs["optimizer_class"] = optim.Adam
 
-    optim =  OPTIMIZERS[cfg.SOLVER.OPTIM.BODY](**kwargs)
-    return optim
+    optimizer =  OPTIMIZERS[cfg.SOLVER.OPTIM.BODY](**kwargs)
+    return optimizer

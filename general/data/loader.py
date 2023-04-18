@@ -10,13 +10,16 @@ ds = {
     "WBLOT": WBLOT,
 }
 
+
 def to_swap():
     version = get_exp_version()
-    return version['swap'] if version else False
+    return version["swap"] if version else False
+
 
 def leave_out():
     version = get_exp_version()
-    return version['LO'] if version else None
+    return version["LO"] if version else None
+
 
 def leave_out_collate(data):
     X = [x for x, y in data if not y in leave_out()]
@@ -27,7 +30,9 @@ def leave_out_collate(data):
         X = X + X[:missing]
         Y = Y + Y[:missing]
         missing = cfg.LOADER.GPU_BATCH_SIZE - len(Y)
-    assert len(X) == cfg.LOADER.GPU_BATCH_SIZE, f"samples are missing... have {len(Y)}, need {missing} for total of {cfg.LOADER.GPU_BATCH_SIZE}"
+    assert (
+        len(X) == cfg.LOADER.GPU_BATCH_SIZE
+    ), f"samples are missing... have {len(Y)}, need {missing} for total of {cfg.LOADER.GPU_BATCH_SIZE}"
     return torch.stack(X), torch.stack(Y)
 
 
@@ -42,7 +47,7 @@ def build_loaders():
 
     if cfg.LOADER.SPLIT:
         split = [0.7, 0.3] if cfg.EXP.BODY != "5x2" else [0.5, 0.5]
-        split = [int(x*len(dataset)) for x in split]
+        split = [int(x * len(dataset)) for x in split]
         datasets = random_split(
             dataset,
             split,
@@ -63,9 +68,14 @@ def build_loaders():
             batch_size=cfg.LOADER.GPU_BATCH_SIZE,
             sampler=sampler,
             shuffle=(sampler == None),
-            drop_last=True if split=='train' else False,
+            drop_last=True if split == "train" else False,
             collate_fn=collate_fn if split == "train" else None,
-            num_workers=0,
+            # for going fast...
+            num_workers=2,
+            pin_memory=True, 
+            prefetch_factor=2,
+            persistent_workers=True,
+            multiprocessing_context='forkserver', # spawn' is too slow ... uses lots mem
         )
         loaders[split] = loader
 
