@@ -3,6 +3,7 @@ import os
 from general.data.datasets import WBLOT
 import json
 from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.metrics import RocCurveDisplay, roc_auc_score
 from statistics import mean, variance
 import warnings
 
@@ -79,6 +80,7 @@ def serialize(k, v):
     except:
         data = {}
 
+    data[k] = v
     with open(fname, "w") as file:
         json.dump(data, file)
 
@@ -95,11 +97,12 @@ def show_loss(loss, *args, lr=None, **kwargs):
     axs[1].set_yscale("log")
     if lr:
         axs[2].plot(
-            X, [0 for x in X[: -len(lr)]] + lr, c='r', lw=3, label="learning rate"
+            X, [0 for x in X[: -len(lr)]] + lr, c="r", lw=3, label="learning rate"
         )  # mixed length :( can remove later
         # axs[2].set_yscale("log")
 
     for ax in axs:
+        ax.grid()
         ax.legend()
 
     serialize("losses", loss)
@@ -126,7 +129,7 @@ def calc_confusion(Y, Yh):
     return confusion, acc
 
 
-def make_centers(Y, Yh):
+def calc_centers(Y, Yh):
     """makes cls centers from training set"""
 
     norm = torch.linalg.norm
@@ -198,7 +201,7 @@ def arc_confusion_openset(Y, Yh, centers, thresh):
             classes[i].append(y)
             embeds[i].append(yh)
             # recompute center for that class
-            centers[i] = make_centers(torch.Tensor([0 for _ in embeds[i]]), torch.stack(embeds[i]))[
+            centers[i] = calc_centers(torch.Tensor([0 for _ in embeds[i]]), torch.stack(embeds[i]))[
                 0
             ]  # reuse old code
 
@@ -222,7 +225,9 @@ def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
     rknns = dict()
-    for r in [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]:
+    radii = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
+    radii += [0.1, 0.2, 0.3, 0.4, 0.5]
+    for r in radii:
         try:
             rknn = RadiusNeighborsClassifier(
                 radius=r, metric="cosine", algorithm="brute", outlier_label=5
@@ -234,9 +239,72 @@ def _RKNN(Y, Yh):
     return rknns
 
 
-def show_RKNN_confusion(Y, Yh, rknns, **kwargs):
+def trapezoid_score(x1, y1, x2, y2):
+    width = abs(x2 - x1)
+    height = (y1 + y2) / 2
+    return width * height
+
+def calculate_auc(points):
+    points = sorted(points, key=lambda p: p[0]) # sort points by x value
+    x1, y1 = points[0]
+    auc = 0.0
+
+    for x2, y2 in points[1:]:
+        score = trapezoid_score(x1, y1, x2, y2)
+        auc += score
+        x1, y1 = x2, y2
+
+    return auc
+
+
+def show_auc(Y, Yh, *args, logits, **kwargs):
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    logits = F.softmax(logits, dim=-1)
+    Y = F.one_hot(Y.view(-1).long())
+
+    for i in range(1,cfg.LOADER.NCLASSES):
+
+        # binary classification AUC
+        # select only the rows where Y is 1 in column 0 or i
+        rows = (Y[:, 0] == 1) | (Y[:, i] == 1)
+        probs = logits[rows, 0].view(-1).numpy()
+        ova = Y[rows, 0].view(-1).numpy()  # one-vs-all membership
+
+        probs = logits[:, 0].view(-1).numpy()
+        ova = Y[:,0].view(-1).numpy() # one vs all membership
+
+        tprs, fprs = [], []
+        threshs = [0.05 * x for x in list(range(20))]
+        # threshs = list(range(-180,180,10))
+        for thresh in threshs:
+            npand , npnot = np.logical_and, np.logical_not
+
+            tp = npand(probs >= thresh, ova).sum()
+            fp = npand(probs >= thresh, npnot(ova)).sum()
+
+            tn = npand(probs < thresh, npnot(ova)).sum()
+            fn = npand(probs < thresh, ova).sum()
+
+            tprs.append((tp/(tp+fn)))
+            fprs.append((fp/(fp+tn)))
+
+        points = [(x1,y1) for x1,y1 in zip(fprs,tprs)]
+        auc = calculate_auc(points)
+        ax.plot(fprs, tprs, label=f"{CLASSES[i]:15s} AUC:{auc:.4f}")
+
+    ax.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    ax.legend()
+    mkfig("auc.png")
+
+
+def show_RKNN_confusion(Y, Yh, rknns, logits, **kwargs):
     """docstring"""
 
+    accs = []
+    fprs = []  # false pos rate
     for r, rknn in rknns.items():
         pred = torch.Tensor(rknn.predict(Yh))
         ncol = max([int(x) for x in pred] + [int(x) for x in Y]) + 1
@@ -245,9 +313,16 @@ def show_RKNN_confusion(Y, Yh, rknns, **kwargs):
         for y, yh in zip(Y, pred):
             confusion[int(y[0]), int(yh)] += 1
 
-        acc = confusion.diag().sum() / confusion.sum(1).sum()
+        total = confusion.sum(1).sum()
+        tp = confusion.diag().sum()
+        acc = tp / total
+        accs.append(acc)
+        fpr = (total - tp) / total
+        fprs.append(fpr)
 
         _plot_confusion(confusion, acc, f"rknn_openset{r}.png")
+
+    # plot_auc(fprs, accs)
 
 
 def show_confusion(Y, Yh, centers=None, **kwargs):
@@ -292,24 +367,19 @@ def _plot_confusion(confusion, acc, fname):
     mkfig(fname, legend=False)
 
 
-def show_tsne(Y, Yh, *args, **kwargs):
-    """docstring"""
-    # ax = fig.add_subplot(projection="3d")
+def make_centers(ax, centers):
+    """plot cls centers"""
 
-    fig, ax = plt.subplots()
-    n_components = 2
-    if n_components == 3:
-        ax = fig.add_subplot(projection="3d")
-    tsne = TSNE(n_components=n_components, random_state=cfg.SOLVER.SEED)
-    Yh = tsne.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
-    Y = Y.view(-1).tolist()
+    colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
 
-    scatter = plt.scatter(
-        *[Yh[:, i] for i in range(n_components)], c=Y, alpha=0.3, label=[CLASSES[int(y)] for y in Y]
-    )
-    # ax.view_init(0, 180)
-    plt.legend(*scatter.legend_elements())
-    mkfig("tsne.png")
+    # compress
+    if len(centers[0]) > 3:
+        centers = F.normalize(centers[:, :3])
+
+    for i, C in enumerate(centers.tolist()):
+        C = [(0, c) for c in C]
+        ax.plot(*C, c=colors[i], label=CLASSES[i], lw=3)
+    ax.legend()
 
 
 def make_sphere(ax):
@@ -324,26 +394,59 @@ def make_sphere(ax):
     ax.plot_surface(x, y, z, rstride=1, cstride=1, color="w", alpha=0.3, linewidth=0)
 
 
-def show_embed(Y, Yh, *args, **kwargs):
+def show_tsne(Y, Yh, *args, **kwargs):
+    """docstring"""
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    n_components = 3
+    if n_components == 3:
+        ax = fig.add_subplot(projection="3d")
+        make_sphere(ax)
+    tsne = TSNE(
+        n_components=n_components,
+        random_state=cfg.SOLVER.SEED,
+        metric="cosine",
+        n_iter=5000,
+        perplexity=100,
+        verbose=1,
+        n_jobs=16,
+    )
+    Yh = tsne.fit_transform(Yh.numpy(), Y.numpy())
+    if n_components == 3:
+        Yh = F.normalize(torch.Tensor(Yh)).numpy()
+
+    Y = Y.view(-1).tolist()
+    labels = [CLASSES[int(y)] for y in Y]
+
+    scatter = ax.scatter(
+        *[Yh[:, i] for i in range(n_components)], c=Y, alpha=0.3, s=20, label=labels
+    )
+    # ax.view_init(0, 180)
+    plt.legend(*scatter.legend_elements())
+    mkfig("tsne.png")
+
+
+def show_embed(Y, Yh, *args, centers, **kwargs):
     """plots image embeddings"""
 
     fig, ax = plt.subplots(figsize=(10, 10))
     ax = fig.add_subplot(projection="3d")
 
     make_sphere(ax)
+    make_centers(ax, centers)
+
     Y = Y.view(-1).tolist()
+    labels = [CLASSES[int(y)] for y in Y]
     if Yh.shape[-1] > 3:
-        Yh = F.normalize(Yh[:,:3])
-    scatter = ax.scatter(
-        Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20, 
-    )  # alpha=0.3
+        Yh = F.normalize(Yh[:, :3])
+    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=labels, s=20)  # alpha=0.3
     # ax.view_init(0, 180)
 
-    plt.legend(*scatter.legend_elements())
+    # plt.legend(*scatter.legend_elements())
     mkfig("embed.png")
 
 
-def show_pca(Y, Yh, *args, **kwargs):
+def show_pca(Y, Yh, *args, centers, **kwargs):
     """docstring"""
 
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -351,17 +454,19 @@ def show_pca(Y, Yh, *args, **kwargs):
 
     ncomponents = 3  # 2
     pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)  # could do 3 dim
-    Yh = pca.fit_transform(Yh.cpu().numpy(), Y.cpu().numpy())
-    Yh = F.normalize(torch.Tensor(Yh)).numpy()
-    Y = Y.view(-1).tolist()
+    Yh = pca.fit_transform(Yh.numpy(), Y.numpy())
+    centers = pca.transform(centers)
 
+    norm = lambda x: F.normalize(torch.from_numpy(x)).numpy()
+    Yh, centers = norm(Yh), norm(centers)
+
+    Y = Y.view(-1).tolist()
+    labels = [CLASSES[int(y)] for y in Y]
     make_sphere(ax)
-    # scatter = plt.scatter( *[Yh[:, i] for i in range(ncomponents)], c=Y,  alpha=0.3, label=[CLASSES[int(y)] for y in Y]) # s=20
-    scatter = ax.scatter(
-        Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=[CLASSES[int(y)] for y in Y], s=20, alpha=0.3,
-    )  # alpha=0.3
+    make_centers(ax, centers)
+    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=labels, s=20, alpha=0.3)
     # ax.view_init(0, 180)
-    plt.legend(*scatter.legend_elements())
+    # plt.legend(*scatter.legend_elements())
     mkfig("pca.png")
 
 
@@ -417,33 +522,6 @@ def show_dprime(Y, Yh, *args, **kwargs):
     mkfig("dprime.png")
 
 
-def show_centers(Y, Yh, *args, centers, **kwargs):
-    """plot cls centers"""
-
-    fig, ax = plt.subplots(figsize=(10, 10))
-    ax = fig.add_subplot(projection="3d")
-
-    colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
-
-    make_sphere(ax)
-
-    # compress
-    if len(centers[0]) > 3:
-        centers = F.normalize(centers[:,:3])
-        # ncomponents = 3
-        # pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)
-        # centers = pca.fit_transform(np.array(centers), np.array([i for i in range(cfg.LOADER.NCLASSES)]))
-        # Yh = F.normalize(torch.Tensor(Yh)).numpy()
-
-
-    for i, C in enumerate(centers.tolist()):
-        C = [(0, c) for c in C]
-        plt.plot(*C, c=colors[i], label=CLASSES[i], lw=3)
-
-    plt.legend()
-    mkfig("center.png")
-
-
 PLOTS = {
     "LOSS": show_loss,
     "CONFUSION": show_confusion,
@@ -452,5 +530,5 @@ PLOTS = {
     "PCA": show_pca,
     "EMBED": show_embed,
     "DPRIME": show_dprime,
-    "CENTER": show_centers,
+    "AUC": show_auc
 }

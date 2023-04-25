@@ -20,7 +20,7 @@ class ArcFace(torch.nn.Module):
         self.easy_margin = False
 
         self.weight = torch.nn.Parameter(
-            torch.normal(0, 0.01, (cfg.LOSS.PFC.NCLASSES, cfg.LOSS.PFC.EMBED_DIM))
+            torch.normal(0, 0.01, (cfg.LOSS.ARC.NCLASSES, cfg.LOSS.ARC.EMBED_DIM))
         )
 
         eps = 1e-4
@@ -34,6 +34,9 @@ class ArcFace(torch.nn.Module):
         get L5 term from arcface paper
         intra cluster compactness
         """
+
+        if not cfg.LOSS.ARC.L5_SCALE:
+            return 0
 
         norm = F.normalize
         logits = F.linear(norm(embeddings), norm(self.weight))
@@ -51,8 +54,11 @@ class ArcFace(torch.nn.Module):
         modified with sigmoid to avoid divergence...
         """
 
+        if not cfg.LOSS.ARC.L6_SCALE:
+            return 0
+
         loss = 0
-        pairs = itertools.combinations(list(range(cfg.LOSS.PFC.NCLASSES)), 2)
+        pairs = itertools.combinations(list(range(cfg.LOSS.ARC.NCLASSES)), 2)
         norm = lambda x: F.normalize(self.weight[x], dim=0)
         # degs = []
         for a, b in pairs:
@@ -60,17 +66,13 @@ class ArcFace(torch.nn.Module):
             loss += similarity
             # degs.append(self.todeg(similarity.detach().tolist()))
         # print(f'avg deg: {sum(degs)/len(degs):.2f} | std: {stats.stdev(degs)}')
-        loss /= -3.14 * (cfg.LOSS.PFC.NCLASSES - 1)
-        return loss * cfg.LOSS.ARC.L6_SCALE 
+        loss /= -3.14 * (cfg.LOSS.ARC.NCLASSES - 1)
+        return loss * cfg.LOSS.ARC.L6_SCALE
 
     def apply_margin(self, embeddings, labels):
         norm = F.normalize
         logits = F.linear(norm(embeddings), norm(self.weight))
         logits = self.clamp(logits)
-
-        # print(embeddings)
-        # print(self.weight)
-        # quit()
 
         # these logits are X•W ... X•W = cos(theta)
         # X•W is dimension R(batch*nclasses) cos(theta) for each class?
@@ -101,4 +103,4 @@ class ArcFace(torch.nn.Module):
     def forward(self, logits, labels):
         margin_logits = self.apply_margin(logits, labels)
         loss = F.cross_entropy(margin_logits, labels.view(-1).long())
-        return loss # +  self.get_l6() + self.get_l5(logits, labels)
+        return loss + self.get_l6() + self.get_l5(logits, labels)

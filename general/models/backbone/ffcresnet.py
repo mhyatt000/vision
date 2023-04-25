@@ -177,7 +177,7 @@ class FFCResNet(nn.Module):
         groups=1,
         width_per_group=64,
         norm_layer=None,
-        ratio=0.5,
+        ratio=cfg.MODEL.FFCR.RATIO,
         lfu=True,
         use_se=cfg.MODEL.FFCR.USE_SE or False,
     ):

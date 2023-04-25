@@ -1,16 +1,35 @@
 from pynvml import *
 
+import time
+from functools import wraps
 
-def gpu_utilization():
-    nvmlInit()
+nvmlInit()
+
+def timer():
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            elapsed = end - start
+            print(f"{func.__name__:20s}: Execution time: {elapsed:.2f} seconds | {gpu_utilization()} | {gpu_free()}")
+            return result
+        return wrapper
+    return decorator
+
+
+def gpu_free():
     handle = nvmlDeviceGetHandleByIndex(0)
     info = nvmlDeviceGetMemoryInfo(handle)
-    usegb = info.used // 1042 ** 3 > 1
-    return (
-        f"GPU used: {info.used//1024**3} GB"
-        if usegb
-        else f"GPU used: {info.used//1024**2} MB"
-    )
+    gb = info.free // 1042**3
+    return f"GPU free: {gb} GB" if gb > 1 else f"GPU free: {gb*1024} MB"
+
+
+def gpu_utilization():
+    handle = nvmlDeviceGetHandleByIndex(0)
+    info = nvmlDeviceGetMemoryInfo(handle)
+    gb = info.used // 1042**3
+    return f"GPU used: {gb} GB" if gb > 1 else f"GPU used: {gb*1024} MB"
 
 
 def summary(result):

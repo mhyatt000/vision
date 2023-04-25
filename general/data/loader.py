@@ -1,8 +1,9 @@
 from general.config import cfg
+from general.toolbox import gpu
 import torch
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
-
+import sklearn
 from .datasets import WBLOT
 from general.results.out import get_exp_version
 
@@ -46,16 +47,25 @@ def build_loaders():
     dataset = ds[cfg.LOADER.DATASET]()
 
     if cfg.LOADER.SPLIT:
-        split = [0.7, 0.3] if cfg.EXP.BODY != "5x2" else [0.5, 0.5]
-        split = [int(x * len(dataset)) for x in split]
-        datasets = random_split(
-            dataset,
-            split,
-        )
+
+        idxs = list(range(len(dataset)))
+        test_size = 0.3 if cfg.EXP.BODY != "5x2" else 0.5
+        idxa, idxb = sklearn.model_selection.train_test_split(
+            idxs, test_size=test_size, random_state=cfg.SEED)
+
+        dataseta = torch.utils.data.Subset(dataset, idxa)
+        datasetb = torch.utils.data.Subset(dataset, idxb)
+        datasets = [dataseta, datasetb]
+
         if to_swap():
             datasets = datasets[::-1]
     else:
-        datasets = [dataset, ds[cfg.LOADER.DATASET]()]
+        raise
+        # datasets = [dataset, ds[cfg.LOADER.DATASET]()]
+
+    if cfg.LOADER.AUGMENT:
+        datasets[0].dataset.set_augment(cfg.LOADER.TRAIN_AUGMENT)
+        datasets[1].dataset.set_augment(cfg.LOADER.TEST_AUGMENT)
 
     collate_fn = leave_out_collate if not leave_out() is None else None
     loaders = {}
@@ -72,10 +82,10 @@ def build_loaders():
             collate_fn=collate_fn if split == "train" else None,
             # for going fast...
             num_workers=2,
-            pin_memory=True, 
-            prefetch_factor=2,
+            pin_memory=True,
+            prefetch_factor=4,
             persistent_workers=True,
-            multiprocessing_context='forkserver', # spawn' is too slow ... uses lots mem
+            multiprocessing_context="spawn",
         )
         loaders[split] = loader
 

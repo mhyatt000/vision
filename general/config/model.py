@@ -58,6 +58,7 @@ MODEL.FFCR = CN(
         BODY=50,
         LAYERS=[3, 4, 6, 3],
         OUT_DIM=64,
+        RATIO=0.5, # how much ffc to use
         USE_SE=False,
     ),
 )

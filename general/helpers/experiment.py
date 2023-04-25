@@ -66,11 +66,15 @@ class Split5x2Experiment(Experiment):
         self.versions = os.path.join(cfg.OUT, "versions.json")
         pass
 
-    def mk_versions(self):
+    def mk_versions(self, force=False):
         "allows different versions of the experiment to be saved to different folders"
 
+        if not cfg.master:
+            return
         mkdir(cfg.OUT)
-        if os.path.exists(self.versions):  # dont remake if you can start in the middle
+        if os.path.exists(self.versions) and not force:  
+            # dont remake if you can start in the middle
+            # unless you are forced to by partition
             return
 
         exp = []
@@ -95,6 +99,11 @@ class Split5x2Experiment(Experiment):
                 exp.append(e)
                 mkdir(os.path.join(cfg.OUT, out.d2s(e)))
 
+        # TODO: partition experiments on the nodes
+        if cfg.EXP.PARTITION:
+            assert len(cfg.nodes) == len(exp), f'{len(cfg.nodes)} != {len(exp)} ... you cannot partition here'
+            exp = {k:v for k,v in zip(cfg.nodes,exp)}
+
         with open(self.versions, "w") as file:
             json.dump(exp, file)
 
@@ -102,19 +111,22 @@ class Split5x2Experiment(Experiment):
         """pop the first experiment version off the file"""
         if cfg.master:  # only rank 0 pops
             with open(self.versions, "r") as file:
-                exp = json.load(file)[1:]
+                exp = json.load(file)
+
+            if cfg.EXP.PARTITION:
+                exp = {k:v for k,v in exp.items() if k != cfg.nodename}
             with open(self.versions, "w") as file:
                 json.dump(exp, file)
 
     # TODO: can you generalize for many iterations of any hparam? ie: LO
     def run(self):
-        self.mk_versions()
+        self.mk_versions(force=cfg.EXP.PARTITION)
 
         while True:
             version = out.get_exp_version()
             if not version:
                 break
-            cfg.SEED = version["seed"]
+            cfg.SEED = int(version["seed"])
             setup_seed(cfg.SEED)
 
             super().__init__()

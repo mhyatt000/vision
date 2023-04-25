@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# A="$NODE0"
-# B=$(hostname)
-# if [ "$A" == "$B" ]; then
-    # GPUS=2
-# else
-    # GPUS=5
-# fi
+if [ $# -gt 0 ]; then
+  arg1="$1"
+else
+  arg1="--config-name"
+fi
 
-clear;
+
 export OMP_NUM_THREADS=62;
 torchrun --standalone --nproc_per_node gpu ~/cs/vision/general/master.py --config-name $1
 

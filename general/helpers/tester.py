@@ -49,37 +49,39 @@ class Tester:
             X = X.to(cfg.rank, non_blocking=True)
             Y = Y.to(cfg.rank, non_blocking=True)
 
-            Yh = self.model(X).view((Y.shape[0], -1))
-            Y, Yh = gather(Y), gather(Yh)
-            Yh = F.normalize(Yh)
-            allY.append(Y.cpu())
-            allYh.append(Yh.cpu())
+            with torch.no_grad():
+                Yh = self.model(X).view((Y.shape[0], -1))
+                Yh = F.normalize(Yh)
+                Y, Yh = gather(Y), gather(Yh)
+                allY.append(Y.cpu())
+                allYh.append(Yh.cpu())
 
-        with torch.no_grad():
-            for X, Y in loader:
-                _embed(X, Y)
+        for X, Y in loader:
+            _embed(X, Y)
 
+        torch.cuda.empty_cache()
         return torch.cat(allY), torch.cat(allYh)
 
     def get_centers(self):
         """get learned cls centers"""
-        return F.normalize(self.criterion.weight).detach().cpu()
+        return F.normalize(self.criterion.module.weight).detach().cpu()
 
     def run(self):
         """docstring"""
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
-        Y, Yh = Y.cpu(), Yh.cpu()
-        # centers = plot.make_centers(Y, Yh)
         rknns = plot._RKNN(Y, Yh)
-        kwargs = {
-            "rknns": rknns,
-            "centers": self.get_centers()
-        }
 
         Y, Yh = self.embed(self.loader)
-        Y, Yh = Y.cpu(), Yh.cpu()
+        logits = self.criterion.module.apply_margin(Yh.to(cfg.rank),Y.to(cfg.rank)).detach().cpu()
+
+        kwargs = {
+            "rknns": rknns,
+            "centers": self.get_centers(),
+            "logits": logits,
+        }
+
         if  cfg.master:
             for p in cfg.EXP.PLOTS:
                 plot.PLOTS[p](Y, Yh, **kwargs)

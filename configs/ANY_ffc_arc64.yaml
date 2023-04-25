@@ -15,8 +15,11 @@ LOADER:
   SPLIT: True
   NCLASSES: 5
   SIZE: 38200
-
   LEAVE_OUT: null # could be 0..5
+
+  AUGMENT: True
+  TRAIN_AUGMENT: "ANY"
+  TEST_AUGMENT: "JPEG100"
 
 SOLVER:
   MAX_ITER: 5000
@@ -38,8 +41,10 @@ EXP:
   TRAIN: True
   TEST: True
   PLOTS:
-  - "EMBED"
-  - "DPRIME"
-  - "TSNE"
-  - "PCA"
-  - "CONFUSION"
+  - "AUC"
+    # - "EMBED"
+    # - "DPRIME"
+    # - "RKNN"
+    # - "TSNE"
+    # - "PCA"
+    # - "CONFUSION"

@@ -22,7 +22,9 @@ _C.EXP = CN(
     init_dict=dict(
         BODY="DEFAULT",
         TRAIN=True,
-        TEST=False,
+        TEST=True,
+        REVERSE= False,
+        PARTITION=False, # for 5x2 only... send all jobs to single nodes?
     ),
 )
 
@@ -46,8 +48,8 @@ _C.LOSS= CN(
 _C.LOSS.PFC = CN(
     new_allowed=True,
     init_dict=dict(
-        EMBED_DIM=64,
-        NCLASSES=5,
+        # EMBED_DIM=64,
+        # NCLASSES=5,
         SAMPLE_RATE=1.0,
     ),
 )
@@ -56,7 +58,10 @@ _C.LOSS.PFC = CN(
 _C.LOSS.ARC = CN(
     new_allowed=True,
     init_dict=dict(
-        L6_SCALE=1.0,
+        L5_SCALE=0,
+        L6_SCALE=0,
+        NCLASSES=5,
+        EMBED_DIM=64,
     ),
 )
 
@@ -75,6 +80,9 @@ _C.LOADER = CN(
         SIZE_DIVISIBILITY=0,
         USE_RANDOM_SEED=False,  # Use random sampler during training
         DISTRIBUTE_CHUNK_AMONG_NODE=False,
+        AUGMENT=False,
+        TRAIN_AUGMENT="NOTHING",
+        TEST_AUGMENT="NOTHING",
     ),
 )
 

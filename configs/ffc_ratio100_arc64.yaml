@@ -5,11 +5,12 @@ MODEL:
   FFCR:
     BODY: 50
     OUT_DIM: 64 
+    RATIO: 1.0
     USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  GPU_BATCH_SIZE: 128
+  GPU_BATCH_SIZE: 32
   # BATCH_SIZE:  null
   SHUFFLE: True
   SPLIT: True
@@ -25,7 +26,7 @@ SOLVER:
   CHECKPOINT_PERIOD: 100
 
   OPTIM: 
-    BODY: "LAMB"
+    BODY: "ADAM"
     BASE_LR: 0.04
     DECAY: 0.0005
     MOMENTUM: 0.9 
@@ -38,6 +39,7 @@ EXP:
   TRAIN: True
   TEST: True
   PLOTS:
+  - "AUC"
   - "EMBED"
   - "DPRIME"
   - "TSNE"

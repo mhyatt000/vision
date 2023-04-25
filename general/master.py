@@ -24,7 +24,7 @@ def main():
     print("CONFIG:", cfg.config_file, "\n")
 
     time.sleep(cfg.world_rank / 32)
-    print( f"Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename}",
+    print( f"Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename} {cfg.nodenumber}",
         force=True,)
 
     # hvd.init()
@@ -52,6 +52,14 @@ def main():
     E = build_experiment()
     E.run()
 
+    """
+    if cfg.from_queue:
+        with open(os.path.join(cfg.ROOT,'queue.json'),'r') as file:
+            data = json.load(file)[1:]
+        with open(os.path.join(cfg.ROOT,'queue.json'),'w') as file:
+            json.dump(data,file)
+        
+    """
 
 if __name__ == "__main__":
     main()

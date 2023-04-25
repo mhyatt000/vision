@@ -1,10 +1,9 @@
-DEVICE: 'cuda' 
 MODEL:
   BODY: "FFCR"
 
   FFCR:
     BODY: 50
-    OUT_DIM: 64 
+    OUT_DIM: 3 
     USE_SE: False
 
 LOADER: 
@@ -34,11 +33,16 @@ SOLVER:
 LOSS: 
   BODY: "ARC" 
 
+  ARC:
+    L6_SCALE: 50.0
+    EMBED_DIM: 3
+
 EXP:
   TRAIN: True
   TEST: True
   PLOTS:
   - "EMBED"
+  - "CENTER"
   - "DPRIME"
   - "TSNE"
   - "PCA"

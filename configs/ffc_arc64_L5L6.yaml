@@ -39,6 +39,7 @@ EXP:
   TEST: True
   PLOTS:
   - "EMBED"
+  - "CENTER"
   - "DPRIME"
   - "TSNE"
   - "PCA"

@@ -1,4 +1,5 @@
 from argparse import ArgumentParser as AP
+import json
 import socket
 import torch
 
@@ -11,7 +12,7 @@ from .defaults import _C as cfg
 
 ap = AP(description="PyTorch Object Detection Training")
 
-ap.add_argument( "--config-name", default="", metavar="FILE", help="path to config file", type=str)
+ap.add_argument( "--config-name", default="",  help="path to config file", type=str)
 ap.add_argument( "--deepspeed", action='store_true')
 
 # ap.add_argument( "--config-file", default="", metavar="FILE", help="path to config file", type=str)
@@ -24,13 +25,24 @@ ap.add_argument( "--deepspeed", action='store_true')
 # ap.add_argument("--override_output_dir", default=None)
 
 args = ap.parse_args()
+cfg.ROOT = "/".join(__file__.split("/")[:-3])
+
+"""
+if not args.config_name:
+    with open(os.path.join(cfg.ROOT,'queue.json')) as file:
+        cfg.config_name = json.load(file)[0]
+        cfg.from_queue = True
+else:
+    cfg.From_queue = False
+"""
+
 cfg.config_name = args.config_name.split('/')[-1].replace('.yaml','')
+
 cfg.deepspeed = args.deepspeed
 # for k,v in args.__dict__.items():
 # setattr(cfg,k,v)
 
 cfg.config_name = cfg.config_name or input("config file: ")
-cfg.ROOT = "/".join(__file__.split("/")[:-3])
 cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_name}.yaml")
 cfg.OUT = os.path.join(*[cfg.ROOT,"experiments",f"{cfg.config_name}"])
 cfg.merge_from_file(cfg.config_file)
@@ -64,8 +76,9 @@ cfg.distributed = True
 # cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
 with open(os.environ['PBS_NODEFILE'],'r') as file:
-    nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
-cfg.nodename = 'NODE_' + str(nodes.index(socket.gethostname()))
+    cfg.nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
+cfg.nodename = socket.gethostname()
+cfg.nodenumber = 'NODE_' + str(cfg.nodes.index(cfg.nodename))
 
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size
@@ -76,9 +89,9 @@ if not all_print:
 
 # TODO: fix cast 1e-3 str to float
 cfg.SOLVER.OPTIM.BASE_LR = float(cfg.SOLVER.OPTIM.BASE_LR)
-cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.5) 
+# cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.5) 
 # cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR * (cfg.world_size ** 0.2) 
-# cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR 
+cfg.SOLVER.OPTIM.LR = cfg.SOLVER.OPTIM.BASE_LR 
 
 # cfg.freeze() # some of the experiments need it to be mutable
 

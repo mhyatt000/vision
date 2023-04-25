@@ -14,7 +14,7 @@ import torch
 from torch import distributed as dist
 from torch import optim
 from torch.cuda.amp.grad_scaler import GradScaler
-
+from torch.utils.checkpoint import checkpoint_sequential
 
 def gather(x):
     """simple all gather manuver"""
@@ -104,12 +104,19 @@ class Trainer:
     def step(self, X, Y):
         """training step with adaptive gradient accumulation"""
 
-        # with torch.autograd.detect_anomaly(check_nan=True):
+        # @gpu.timer()
+        # def sendit(X,Y):
+            # return X , Y
+        # X,Y = sendit(X,Y)
+
         X = X.to(cfg.rank, non_blocking=True)
         Y = Y.to(cfg.rank, non_blocking=True)
 
         Yh = self.model(X)
+        # Yh = checkpoint_sequential(self.model, 4, X) # gradient checkpointing
         loss = self.criterion(Yh, Y)
+        # dist.all_reduce(loss, op=dist.ReduceOp.MAX)
+
         self.calc_accuracy(Yh, Y)
         self.back_pass(loss)
 
