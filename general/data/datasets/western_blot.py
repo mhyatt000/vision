@@ -66,15 +66,23 @@ downup90 = A.Sequential(
     ]
 )
 
+jpeg70 = (A.ImageCompression(70, 70, p=1.0))
 jpeg80 = (A.ImageCompression(80, 80, p=1.0))
 jpeg90 = (A.ImageCompression(90, 90, p=1.0))
 jpeg100 = (A.ImageCompression(100, 100, p=1.0))
+
+jpeg = A.Compose( [
+    A.OneOf(
+        [jpeg70, jpeg80, jpeg90, jpeg100]
+        , p=1,),
+])
+
 
 nothing = A.NoOp()
 
 anyof = A.Compose( [
     A.OneOf(
-        [up125, up150, downup50, downup75, downup90, jpeg80, jpeg90, jpeg100, nothing]
+        [up125, up150, downup50, downup75, downup90, jpeg70, jpeg80, jpeg90, jpeg100, nothing]
         , p=1,),
 ])
 
@@ -84,6 +92,8 @@ options = {
     "DOWNUP50": downup50,
     "DOWNUP75": downup75,
     "DOWNUP90": downup90,
+    "JPEG":jpeg,
+    "JPEG70": jpeg70,
     "JPEG80": jpeg80,
     "JPEG90": jpeg90,
     "JPEG100": jpeg100,

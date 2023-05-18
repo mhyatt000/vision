@@ -225,8 +225,8 @@ def _RKNN(Y, Yh):
     """return RKNN for confusion matrix"""
 
     rknns = dict()
-    radii = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
-    radii += [0.1, 0.2, 0.3, 0.4, 0.5]
+    radii = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3] # , 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
+    # radii += [0.1, 0.2, 0.3, 0.4, 0.5]
     for r in radii:
         try:
             rknn = RadiusNeighborsClassifier(
@@ -464,7 +464,7 @@ def show_pca(Y, Yh, *args, centers, **kwargs):
     labels = [CLASSES[int(y)] for y in Y]
     make_sphere(ax)
     make_centers(ax, centers)
-    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=labels, s=20, alpha=0.3)
+    scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=labels, s=20) # , alpha=0.3)
     # ax.view_init(0, 180)
     # plt.legend(*scatter.legend_elements())
     mkfig("pca.png")

@@ -1,4 +1,5 @@
 """ borrowed from official Video Swin Transformer repo """
+
 from general.config import cfg
 
 from functools import lru_cache, reduce

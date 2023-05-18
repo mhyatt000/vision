@@ -60,14 +60,13 @@ class ArcFace(torch.nn.Module):
         loss = 0
         pairs = itertools.combinations(list(range(cfg.LOSS.ARC.NCLASSES)), 2)
         norm = lambda x: F.normalize(self.weight[x], dim=0)
-        # degs = []
         for a, b in pairs:
             similarity = torch.acos(self.clamp(F.linear(norm(a), norm(b))))
             loss += similarity
-            # degs.append(self.todeg(similarity.detach().tolist()))
-        # print(f'avg deg: {sum(degs)/len(degs):.2f} | std: {stats.stdev(degs)}')
         loss /= -3.14 * (cfg.LOSS.ARC.NCLASSES - 1)
-        return loss * cfg.LOSS.ARC.L6_SCALE
+        # wrap sigmoid so it converges to 0 
+        return loss * cfg.LOSS.ARC.L6_SCALE 
+        return F.sigmoid(5*loss) * cfg.LOSS.ARC.L6_SCALE 
 
     def apply_margin(self, embeddings, labels):
         norm = F.normalize

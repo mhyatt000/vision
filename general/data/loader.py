@@ -14,12 +14,12 @@ ds = {
 
 def to_swap():
     version = get_exp_version()
-    return version["swap"] if version else False
+    return (version["swap"] if 'swap' in version else False) if version else False
 
 
 def leave_out():
     version = get_exp_version()
-    return version["LO"] if version else None
+    return (version["LO"] if 'LO' in version else None) if version else None
 
 
 def leave_out_collate(data):
@@ -49,7 +49,7 @@ def build_loaders():
     if cfg.LOADER.SPLIT:
 
         idxs = list(range(len(dataset)))
-        test_size = 0.3 if cfg.EXP.BODY != "5x2" else 0.5
+        test_size = 0.3 if cfg.EXP.BODY != "SERIES" else 0.5
         idxa, idxb = sklearn.model_selection.train_test_split(
             idxs, test_size=test_size, random_state=cfg.SEED)
 
@@ -81,9 +81,9 @@ def build_loaders():
             drop_last=True if split == "train" else False,
             collate_fn=collate_fn if split == "train" else None,
             # for going fast...
-            num_workers=2,
+            num_workers=2, # 4
             pin_memory=True,
-            prefetch_factor=4,
+            prefetch_factor=2,
             persistent_workers=True,
             multiprocessing_context="spawn",
         )

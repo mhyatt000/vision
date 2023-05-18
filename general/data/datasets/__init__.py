@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 from .western_blot import WBLOT
+from .kinetics import Kinetics
 
 """
 from .background import Background

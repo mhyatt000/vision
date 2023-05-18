@@ -17,7 +17,7 @@ def get_exp_version():
         with open(join(cfg.OUT,'versions.json'),'r') as file:
             versions = json.load(file)
 
-        if cfg.EXP.BODY == '5x2' and cfg.EXP.PARTITION:
+        if cfg.EXP.BODY == 'SERIES' and cfg.EXP.PARTITION:
             versions = [{k:v} for k,v in versions.items() if k == cfg.nodename]
             return versions[0][cfg.nodename]
 

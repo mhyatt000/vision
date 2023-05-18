@@ -1,3 +1,5 @@
+#!/bin/bash
+
 clear
 echo running multinode
 # Read the lines of the file into an array

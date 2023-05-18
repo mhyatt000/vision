@@ -25,6 +25,7 @@ _C.EXP = CN(
         TEST=True,
         REVERSE= False,
         PARTITION=False, # for 5x2 only... send all jobs to single nodes?
+        MULTISEED=False, # for 5x2 only... 
     ),
 )
 
@@ -135,7 +136,8 @@ _C.AUGMENT = CN(
 
 _C.DATASETS = CN(
     init_dict=dict(
-        LOC=os.path.join(os.path.expanduser("~"), "cs", ".datasets"),  # location
+        LOC=os.path.join("/grand", "EVITA", "datasets"),  # location
+        # LOC=os.path.join(os.path.expanduser("~"), "cs", ".datasets"),  # old location
         # List of the dataset names for training, as present in paths_catalog.py
         TRAIN=(),
         # List of the dataset names for testing, as present in paths_catalog.py

@@ -1,4 +1,5 @@
 from general.config import cfg
+import time
 import torch
 from torch import distributed as dist
 import itertools
@@ -59,8 +60,9 @@ class Experiment:
             self.tester.run()
 
 
-class Split5x2Experiment(Experiment):
+class SeriesExperiment(Experiment):
     """5 Seeds of 2-fold cross validation"""
+    """ sometimes """
 
     def __init__(self):
         self.versions = os.path.join(cfg.OUT, "versions.json")
@@ -95,7 +97,7 @@ class Split5x2Experiment(Experiment):
 
         for LO in LO_combos:
             for seed, swap in itertools.product(ordered([0, 1, 2, 3, 4]), ordered([False, True])):
-                e = {"LO": LO, "seed": seed, "swap": swap}
+                e = {"LO": LO, "seed": seed, "swap": swap} if cfg.EXP.MULTISEED else {"LO":LO}
                 exp.append(e)
                 mkdir(os.path.join(cfg.OUT, out.d2s(e)))
 
@@ -115,12 +117,27 @@ class Split5x2Experiment(Experiment):
 
             if cfg.EXP.PARTITION:
                 exp = {k:v for k,v in exp.items() if k != cfg.nodename}
+            else:
+                exp = exp[1:]
+
             with open(self.versions, "w") as file:
                 json.dump(exp, file)
+        else: 
+            time.sleep(2) # so that you read the right version next time
+
+    def destroy(self):
+        """destroys objects to allocate data for next experiment in series"""
+
+        keys = list(self.__dict__.keys())
+        for k in keys:
+            if k != 'versions':
+                delattr(self, k)
+
 
     # TODO: can you generalize for many iterations of any hparam? ie: LO
     def run(self):
-        self.mk_versions(force=cfg.EXP.PARTITION)
+        self.mk_versions()
+        dist.barrier()
 
         while True:
             version = out.get_exp_version()
@@ -132,11 +149,12 @@ class Split5x2Experiment(Experiment):
             super().__init__()
             super().run()
             self.pop_versions()
+            self.destroy()
             dist.barrier()
 
 EXPERIMENTS = {
     "DEFAULT": Experiment,
-    "5x2": Split5x2Experiment,
+    "SERIES": SeriesExperiment,
 }
 
 

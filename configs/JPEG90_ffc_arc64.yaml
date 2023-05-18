@@ -1,23 +1,28 @@
+DEVICE: 'cuda' 
 MODEL:
   BODY: "FFCR"
 
   FFCR:
     BODY: 50
-    OUT_DIM: 64 # 5 classes but its  embed dim
+    OUT_DIM: 64 
     USE_SE: False
 
 LOADER: 
   DATASET: "WBLOT"
-  GPU_BATCH_SIZE:  128 
-  LEAVE_N_OUT: 1
-  # BATCH_SIZE:  null 
+  GPU_BATCH_SIZE: 128
+  # BATCH_SIZE:  null
   SHUFFLE: True
   SPLIT: True
   NCLASSES: 5
   SIZE: 38200
-  
+  LEAVE_OUT: null # could be 0..5
+
+  AUGMENT: True
+  TRAIN_AUGMENT: "JPEG90"
+  TEST_AUGMENT: "JPEG90"
+
 SOLVER:
-  MAX_ITER: 5000 
+  MAX_ITER: 5000
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
@@ -25,26 +30,21 @@ SOLVER:
   OPTIM: 
     BODY: "LAMB"
     BASE_LR: 0.04
-    DECAY: 0.0005 # 5e-4
-    MOMENTUM: 0.9
+    DECAY: 0.0005
+    MOMENTUM: 0.9 
     BETAS: [0.9, 0.99]
-
 
 LOSS: 
   BODY: "ARC" 
 
-  ARC:
-      L6_SCALE: 50
-
 EXP:
-  BODY: "5x2"
-  PARTITION: TRUE
   TRAIN: True
   TEST: True
   PLOTS:
+  - "AUC"
   - "EMBED"
-  - "PCA"
   - "DPRIME"
-  - "CONFUSION"
   - "RKNN"
   - "TSNE"
+  - "PCA"
+  - "CONFUSION"

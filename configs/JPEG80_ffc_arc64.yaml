@@ -42,9 +42,9 @@ EXP:
   TEST: True
   PLOTS:
   - "AUC"
-    # - "EMBED"
-    # - "DPRIME"
-    # - "RKNN"
-    # - "TSNE"
-    # - "PCA"
-    # - "CONFUSION"
+  - "EMBED"
+  - "DPRIME"
+  - "RKNN"
+  - "TSNE"
+  - "PCA"
+  - "CONFUSION"

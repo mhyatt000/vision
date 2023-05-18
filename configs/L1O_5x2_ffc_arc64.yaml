@@ -32,27 +32,17 @@ SOLVER:
 
 LOSS: 
   BODY: "ARC" 
-
-  AAM:
-    S: 64.0
-    M: [1.0, 0.5, 0.0]
-    INTER_THRESH: 0
-
-  PFC: 
-    EMBED_DIM: 64
-    NCLASSES: 5
-    SAMPLE_RATE:  1.0
-
+  
 EXP:
-  BODY: "5x2"
-  REVERSE: False
+  BODY: "SERIES"
+  MULTISEED: True
+  # PARTITION: True
   TRAIN: True
   TEST: True
   PLOTS:
-  - "CENTER"
   - "EMBED"
-  - "TSNE"
-  - "PCA"
   - "CONFUSION"
-  - "RKNN"
   - "DPRIME"
+  - "PCA"
+  - "TSNE"
+  - "RKNN"

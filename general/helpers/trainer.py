@@ -109,7 +109,7 @@ class Trainer:
             # return X , Y
         # X,Y = sendit(X,Y)
 
-        X = X.to(cfg.rank, non_blocking=True)
+        X = X.to(cfg.rank, non_blocking=True) 
         Y = Y.to(cfg.rank, non_blocking=True)
 
         Yh = self.model(X)

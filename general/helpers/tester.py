@@ -1,4 +1,5 @@
 import os
+import time
 from general.results import plot
 from general.toolbox import tqdm
 
@@ -13,6 +14,7 @@ from torch import distributed as dist
 from torch import optim
 from torch.cuda.amp.grad_scaler import GradScaler
 import torch.nn.functional as F
+from general.results import out
 
 
 def gather(x):
@@ -82,7 +84,13 @@ class Tester:
             "logits": logits,
         }
 
-        if  cfg.master:
-            for p in cfg.EXP.PLOTS:
-                plot.PLOTS[p](Y, Yh, **kwargs)
+        folder = out.get_path()
+        # while there's not a png for all plots...
+        # keeps dist.barrier() from timing out
+        while not all([any([p in x for x in os.listdir(folder)]) for p in  [p.lower() for p in cfg.EXP.PLOTS]]):
 
+            if  cfg.master:
+                for p in cfg.EXP.PLOTS:
+                    plot.PLOTS[p](Y, Yh, **kwargs)
+            else:
+                time.sleep(2)
