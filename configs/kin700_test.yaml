@@ -1,25 +1,16 @@
-DEVICE: 'cuda' 
 MODEL:
-  BODY: "FFCR"
-
-  FFCR:
-    BODY: 50
-    OUT_DIM: 64 
-    USE_SE: False
+    BODY: "VSWIN"
 
 LOADER: 
-  DATASET: "WBLOT"
+  DATASET: "KIN700"
   GPU_BATCH_SIZE: 128
   # BATCH_SIZE:  null
   SHUFFLE: True
   SPLIT: True
-  NCLASSES: 5
+  NCLASSES: 700 #TODO: write torch dataset superclass to force loader attributes set in cls not yaml
   SIZE: 38200
-  LEAVE_OUT: null # could be 0..5
 
-  AUGMENT: True
-  TRAIN_AUGMENT: "JPEG"
-  TEST_AUGMENT: "JPEG90"
+  LEAVE_OUT: null # could be 0..5
 
 SOLVER:
   MAX_ITER: 5000
@@ -41,10 +32,8 @@ EXP:
   TRAIN: True
   TEST: True
   PLOTS:
-  - "AUC"
   - "EMBED"
-  - "DPRIME"
-  - "RKNN"
-  - "TSNE"
   - "PCA"
   - "CONFUSION"
+  - "DPRIME"
+  - "TSNE"

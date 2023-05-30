@@ -449,8 +449,8 @@ def show_embed(Y, Yh, *args, centers, **kwargs):
 def show_pca(Y, Yh, *args, centers, **kwargs):
     """docstring"""
 
-    fig, ax = plt.subplots(figsize=(10, 10))
-    ax = fig.add_subplot(projection="3d")
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111, projection='3d')
 
     ncomponents = 3  # 2
     pca = PCA(n_components=ncomponents, random_state=cfg.SOLVER.SEED)  # could do 3 dim
@@ -467,6 +467,15 @@ def show_pca(Y, Yh, *args, centers, **kwargs):
     scatter = ax.scatter(Yh[:, 0], Yh[:, 1], Yh[:, 2], c=Y, label=labels, s=20) # , alpha=0.3)
     # ax.view_init(0, 180)
     # plt.legend(*scatter.legend_elements())
+
+    ticks = np.linspace(-1, 1, 9)
+    labels = ['']*9
+
+    plt.xticks(ticks, labels)
+    plt.yticks(ticks, labels)
+    ax.set_zticks(ticks, labels)
+
+    plt.tight_layout()
     mkfig("pca.png")
 
 

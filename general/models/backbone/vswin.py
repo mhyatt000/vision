@@ -1,6 +1,7 @@
 """ borrowed from official Video Swin Transformer repo """
 
-from general.config import cfg
+# from general.config import cfg
+# from general.models.layers.mlp import MLP
 
 from functools import lru_cache, reduce
 from operator import mul
@@ -9,6 +10,7 @@ from einops import rearrange
 
 # from mmaction.utils import get_root_logger
 # from mmcv.runner import load_checkpoint
+
 import numpy as np
 from timm.models.layers import DropPath, trunc_normal_
 import torch
@@ -16,7 +18,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 
-from ..layers.mlp import MLP
 
 # from ..builder import BACKBONES
 
@@ -29,6 +30,25 @@ W: image width
 C: channels
 """
 
+
+class MLP(nn.Module):
+    """Multilayer perceptron."""
+
+    def __init__(self, in_dim, h_dim=None, out_dim=None, activation=nn.GELU, drop=0.0):
+        super().__init__()
+
+        out_dim = out_dim or in_dim
+        h_dim = h_dim or in_dim
+
+        self.mlp = nn.Sequential(
+            nn.Linear(in_dim, h_dim),
+            activation(),
+            nn.Linear(h_dim, out_dim),
+            nn.Dropout(drop),
+        )
+
+    def forward(self, x):
+        return self.mlp(x)
 
 def window_partition(x, wsz):
     """
@@ -67,20 +87,23 @@ def window_reverse(windows, wsz, B, D, H, W):
     return x
 
 
-def get_window_size(x_size, wsz, shift_size=None):
+def get_window_size(x_size, wsz, ssz=None):
     """
     Partition x into a number of windows and shifts
     The min window size is the axis length  in that dimension
     do not shift in a dimension when using the min window size
+    Arguments:
+      wsz: window size
+      ssz: shift size
     """
 
     out_wsz = list(wsz)
-    out_ssz = list(ssz) if shift_size else None
+    out_ssz = list(ssz) if ssz else None
 
     for i in range(len(x_size)):
         if x_size[i] <= wsz[i]:
             out_wsz[i] = x_size[i]
-            if shift_size:
+            if ssz:
                 out_ssz[i] = 0
 
     return tuple(out_wsz) if ssz else tuple(out_wsz), tuple(out_ssz)
@@ -821,3 +844,15 @@ class SwinTransformer3D(nn.Module):
 
         super(SwinTransformer3D, self).train(mode)
         self._freeze_stages()
+
+def main():
+    """docstring"""
+
+    swin = SwinTransformer3D()
+    x = torch.ones((32,3,8,256,256))
+    y = swin(x)
+    print(y.shape)
+
+
+if __name__ == '__main__': 
+    main()

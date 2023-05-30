@@ -11,5 +11,5 @@ mapfile -t NODES < $PBS_NODEFILE
 
 for((rank=0;rank<${#NODES[*]};rank++));
 do
-    ssh ${NODES[rank]} ~/cs/vision/_multinode.sh "<yaml>" ${#NODES[*]} $rank ${NODES[0]} $PBS_NODEFILE &
+    ssh ${NODES[rank]} ~/cs/vision/_dist.sh "/home/mhyatt000/cs/vision/configs/res_ce.yaml" ${#NODES[*]} $rank ${NODES[0]} $PBS_NODEFILE &
 done

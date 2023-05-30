@@ -39,7 +39,7 @@ EXP:
   TEST: True
   PLOTS:
   - "EMBED"
-  - "DPRIME"
-  - "TSNE"
   - "PCA"
   - "CONFUSION"
+  - "DPRIME"
+  - "TSNE"

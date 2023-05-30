@@ -1,22 +1,55 @@
 """kinetics 400, 600, 700 datasets"""
 
 from general.config import cfg
+import torchvision
 
 
 class Kinetics(torchvision.datasets.Kinetics):
     """docstring"""
 
-    def __init__( self, 
-            root='/grand/EVITA/datasets/kinetics700_2020/kinetics-dataset/k700-2020', 
-            *args, 
-            **kwargs):
-
+    def __init__(
+        self,
+        *args,
+        root="/grand/EVITA/datasets/kinetics700_2020/kinetics-dataset/k700-2020",
+        **kwargs
+    ):
         try:
             self.root = join(cfg.DATASETS.LOC, root)
         except:
             self.root = root
 
-        super.__init__(root, *args, **kwargs)
+        frames_per_clip = (16,)
+        step_between_clips = (16,)
+
+        super(Kinetics, self).__init__(
+            root,
+            frames_per_clip=frames_per_clip,
+            step_between_clips=step_between_clips,
+            *args,
+            **kwargs
+        )
+
+
+class Kinetics400(Kinetics):
+    """docstring"""
+
+    def __init__(self, *args, num_classes="400", **kwargs):
+        super(Kinetics400, self).__init__(*args, num_classes=num_classes, **kwargs)
+
+
+class Kinetics600(Kinetics):
+    """docstring"""
+
+    def __init__(self, *args, num_classes="600", **kwargs):
+        super(Kinetics600, self).__init__(*args, num_classes=num_classes, **kwargs)
+
+
+class Kinetics700(Kinetics):
+    """docstring"""
+
+    def __init__(self, *args, num_classes="700", **kwargs):
+        super(Kinetics700, self).__init__(*args, num_classes=num_classes, **kwargs)
+
 
 """
 torchvision.datasets.Kinetics(
@@ -41,3 +74,10 @@ torchvision.datasets.Kinetics(
     output_format="TCHW",
 )
 """
+
+k = Kinetics700()
+
+quit()
+for x, y in k:
+    print(y)
+quit()

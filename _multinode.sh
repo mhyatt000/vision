@@ -1,3 +1,5 @@
+echo running rank $3
+
 MASTER_ADDR=$4
 MASTER_PORT=29400
 NCCL_DEBUG=INFO
@@ -18,3 +20,8 @@ torchrun \
 ~/cs/vision/general/master.py --config-name $1 
 
 # --max-restarts=3 \
+
+# --master_addr=$4 \
+# --master_port=2345 \ 
+
+# torchrun --nproc_per_node=4 --nnodes=1 --node_rank=0 --rdzv_id=456 --rdzv_backend=c10d --rdzv_endpoint=x3003c0s13b0n0 ~/cs/vision/general/master.py --config-name configs/multi_ffc_arc64.yaml
