@@ -1,8 +1,8 @@
 MODEL:
-    BODY: "VSWIN"
+  BODY: "VSWIN" 
 
 LOADER: 
-  DATASET: "KIN700"
+  DATASET: "K700"
   GPU_BATCH_SIZE: 128
   # BATCH_SIZE:  null
   SHUFFLE: True
@@ -26,7 +26,7 @@ SOLVER:
     BETAS: [0.9, 0.99]
 
 LOSS: 
-  BODY: "ARC" 
+  BODY: "CE" 
 
 EXP:
   TRAIN: True
@@ -37,3 +37,7 @@ EXP:
   - "CONFUSION"
   - "DPRIME"
   - "TSNE"
+
+
+
+

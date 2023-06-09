@@ -1,0 +1,64 @@
+running multinode
+running rank 0
+OMP_NUM_THREADS: 62
+CONFIG: /home/mhyatt000/cs/vision/configs/res_ce.yaml 
+
+Rank  0 of 4 online | 0 of 4 on x3212c0s7b0n0 NODE_0
+Rank  1 of 4 online | 1 of 4 on x3212c0s7b0n0 NODE_0
+Rank  2 of 4 online | 2 of 4 on x3212c0s7b0n0 NODE_0
+Rank  3 of 4 online | 3 of 4 on x3212c0s7b0n0 NODE_0
+BODY: DEFAULT
+MULTISEED: False
+PARTITION: False
+PLOTS: ['CONFUSION']
+REVERSE: False
+TEST: True
+TRAIN: True
+init exp
+building loader...
+
+AUGMENT: False
+BATCH_SIZE: 128
+DATASET: WBLOT
+DISTRIBUTE_CHUNK_AMONG_NODE: False
+GPU_BATCH_SIZE: 32
+LEAVE_N_OUT: None
+LEAVE_OUT: None
+NCLASSES: 5
+NUM_WORKERS: 4
+SHUFFLE: True
+SIZE: 38200
+SIZE_DIVISIBILITY: 0
+SPLIT: True
+TEST_AUGMENT: NOTHING
+TRAIN_AUGMENT: NOTHING
+USE_RANDOM_SEED: False 
+
+None
+loaders are built
+RESNET_FROM_SCRATCH
+building model...
+building ddp...
+model is built
+ARC:
+  EMBED_DIM: 64
+  L5_SCALE: 0
+  L6_SCALE: 0
+  NCLASSES: 5
+BODY: CE
+PFC:
+  SAMPLE_RATE: 1.0
+
+BASE_LR: 0.04
+BETAS: [0.9, 0.99]
+BODY: LAMB
+DECAY: 0.0005
+LR: 0.04
+MOMENTUM: 0.9
+BODY: POLY
+GAMMA: 0.99
+WARMUP: 0
+GPU used: 1024 MB
+No snapshot found for /home/mhyatt000/cs/vision/experiments/res_ce/snapshot.pt
+
+begin training loop...

@@ -96,3 +96,16 @@ class VLRCNN(nn.Module):
         """
         docstring
         """
+
+
+def main():
+    """docstring"""
+
+    model = VLRCNN()
+    x = torch.ones((32,3,8,256,256))
+    y = model(x)
+    print(y.shape)
+
+
+if __name__ == '__main__': 
+    main()

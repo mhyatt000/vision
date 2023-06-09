@@ -75,10 +75,16 @@ if True and not cfg.rank:
 cfg.distributed = True
 # cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
-with open(os.environ['PBS_NODEFILE'],'r') as file:
-    cfg.nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
-cfg.nodename = socket.gethostname()
-cfg.nodenumber = 'NODE_' + str(cfg.nodes.index(cfg.nodename))
+try:
+    with open(os.environ['PBS_NODEFILE'],'r') as file:
+        cfg.nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
+    cfg.nodename = socket.gethostname()
+    cfg.nodenumber = 'NODE_' + str(cfg.nodes.index(cfg.nodename))
+except: # probably using the login node :(
+    pass
+    cfg.nodes = ['LOGIN']
+    cfg.nodename = cfg.nodes[0]
+    cfg.nodenumber = 0
 
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size

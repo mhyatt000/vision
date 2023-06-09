@@ -1,3 +1,6 @@
+echo "running dist"
+echo "rank $3"
+
 MASTER_ADDR=$4
 MASTER_PORT=29400
 NCCL_DEBUG=INFO
