@@ -19,7 +19,7 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_ITER: 10000 # 5000
+  MAX_ITER: 5000
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
@@ -32,14 +32,18 @@ SOLVER:
     BETAS: [0.9, 0.99]
 
 LOSS: 
-  BODY: "ARC" 
+  BODY: "PFC" 
+
+SCHEDULER:
+  BODY: "PATIENT"
+  STEP_BY: "EPOCH"
 
 EXP:
   TRAIN: True
   TEST: True
   PLOTS:
+  - "CONFUSION"
   - "EMBED"
   - "PCA"
-  - "CONFUSION"
   - "DPRIME"
   - "TSNE"

@@ -1,5 +1,7 @@
 echo running rank $3
 
+NODE=${NODES[$3]}
+
 MASTER_ADDR=$4
 MASTER_PORT=29400
 NCCL_DEBUG=INFO
@@ -20,4 +22,4 @@ torchrun \
 ~/cs/vision/general/master.py --config-name $1 
 
 # stay alive communication
-touch "~/nodefile_return/node_$3"
+touch "$HOME/node_alive/${PBS_JOBID}_node_${NODE}"

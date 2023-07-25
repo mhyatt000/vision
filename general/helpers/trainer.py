@@ -16,6 +16,7 @@ from torch import optim
 from torch.cuda.amp.grad_scaler import GradScaler
 from torch.utils.checkpoint import checkpoint_sequential
 
+
 def gather(x):
     """simple all gather manuver"""
 
@@ -36,7 +37,7 @@ class Trainer:
         self.criterion = make_loss()
 
         params = [{"params": model.parameters()}]
-        if cfg.LOSS.BODY in ["ARC", "ANGULAR_SM"]:
+        if cfg.LOSS.BODY in ["ARC", "PFC"]:
             params.append({"params": self.criterion.parameters()})
 
         self.optimizer = make_optimizer(params)
@@ -72,6 +73,8 @@ class Trainer:
     def update_epoch(self):
         """update after the training loop like housekeeping"""
 
+        if cfg.SCHEDULER.STEP_BY == "EPOCH":
+            self.step_scheduler(self.loss)
         self.epoch += 1
 
     def calc_accuracy(self, Yh, Y):
@@ -99,30 +102,42 @@ class Trainer:
         else:
             self.optimizer.step()
         self.optimizer.zero_grad()
-        self.scheduler.step()
+
+    def step_scheduler(self, loss):
+        """docstring"""
+        if cfg.SCHEDULER.BODY == "PATIENT":
+            self.scheduler.step(loss)
+        else:
+            self.scheduler.step()
 
     def step(self, X, Y):
         """training step with adaptive gradient accumulation"""
 
         # @gpu.timer()
         # def sendit(X,Y):
-            # return X , Y
+        # return X , Y
         # X,Y = sendit(X,Y)
 
-        X = X.to(cfg.rank, non_blocking=True) 
+        X = X.to(cfg.rank, non_blocking=True)
         Y = Y.to(cfg.rank, non_blocking=True)
 
-        Yh = self.model(X)
+        out_dict = self.model(X)
+        embed, output = out_dict.values()
+
         # Yh = checkpoint_sequential(self.model, 4, X) # gradient checkpointing
-        loss = self.criterion(Yh, Y)
+        loss = self.criterion(output, Y)
         # dist.all_reduce(loss, op=dist.ReduceOp.MAX)
 
-        self.calc_accuracy(Yh, Y)
+        self.calc_accuracy(output, Y)
         self.back_pass(loss)
 
         self.loss = float(loss.detach())
+
+        if cfg.SCHEDULER.STEP_BY == "ITER":
+            self.step_scheduler(self.loss)
+
         self.losses.append(self.loss)
-        self.lrs.append(self.scheduler.get_last_lr()[0])
+        self.lrs.append(self.get_lr())
         loss /= cfg.SOLVER.GRAD_ACC_EVERY
 
         # only update every k steps
@@ -143,6 +158,11 @@ class Trainer:
         # rebuild the same loader w sam hparam
         # half the batch size
 
+    def get_lr(self):
+        """docstring"""
+        return self.scheduler._last_lr[0] if '_last_lr' in self.scheduler.__dict__ else cfg.SOLVER.OPTIM.LR
+
+
     def run(self):
         """trains model"""
 
@@ -154,7 +174,19 @@ class Trainer:
         @tqdm.prog(steps_left)
         def _step(X, Y):
             self.step(X, Y)
-            desc = f"loss: {self.loss:.4f} | best: {self.stopper.get_best():.4f} | accuracy: {self.accs[-1]:.2f} | patience: {self.stopper.get_patience()} | lr: {self.scheduler.get_last_lr()[0]:.2e} | amp: {self.scaler.get_scale():.1e} | {gpu.gpu_utilization()}"
+            desc = " | ".join(
+                [
+                    f"loss: {self.loss:.4f}",
+                    f"best: {self.stopper.get_best():.4f}",
+                    f"accuracy: {self.accs[-1]:.2f}",
+                    f"patience: {self.stopper.get_patience()}",
+                    f"lr: {self.get_lr():.2e}",
+                    # f'lr: {self.optimizer.param_groups[0]['lr']:.2e }',
+                    f"amp: {self.scaler.get_scale():.1e}",
+                    f"{gpu.gpu_utilization()}",
+                ]
+            )
+
             return desc
 
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):

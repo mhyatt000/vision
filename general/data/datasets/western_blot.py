@@ -199,7 +199,8 @@ class WBLOT(Dataset):
         else:
             image = read_image(img_path).float()
 
-        if cfg.LOSS.BODY in ["ARC", "ANGULAR_SM"]:
+        # TODO label = torch.Tensor() ... if CE then label = F.one_hot(label)
+        if cfg.LOSS.BODY in ["ARC", "PFC"]:
             label = torch.Tensor([label])
         else:
             nclasses = len(self.datafolders)
@@ -209,6 +210,7 @@ class WBLOT(Dataset):
             image = self.augment(image)
         if self.transform:
             image = self.transform(image)
+
         if self.target_transform:
             label = self.target_transform(label)
 

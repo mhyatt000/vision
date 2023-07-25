@@ -1,14 +1,10 @@
+from general.config import cfg
 import math
-import time
 from typing import Callable
 
 import torch
 from torch import distributed
 from torch.nn.functional import linear, normalize
-
-from general.config import cfg
-from .arcloss import CombinedMarginLoss
-
 
 
 class PartialFC_V2(torch.nn.Module):
@@ -30,7 +26,6 @@ class PartialFC_V2(torch.nn.Module):
     >>>     loss.backward()
     >>>     optimizer.step()
     """
-
     _version = 2
 
     def __init__(
@@ -62,24 +57,18 @@ class PartialFC_V2(torch.nn.Module):
         self.embedding_size = embedding_size
         self.sample_rate: float = sample_rate
         self.fp16 = fp16
-
-        self.num_local: int = num_classes // self.world_size + int( self.rank < num_classes % self.world_size)
-        self.class_start: int = num_classes // self.world_size * self.rank + min( self.rank, num_classes % self.world_size)
-
-        # @mhyatt000 modification for multi-node
-        # multinode = self.world_size > num_classes
-        # if multinode:
-            # self.class_start = self.rank % num_classes 
-            # self.num_local = 1 
-
+        self.num_local: int = num_classes // self.world_size + int(
+            self.rank < num_classes % self.world_size
+        )
+        self.class_start: int = num_classes // self.world_size * self.rank + min(
+            self.rank, num_classes % self.world_size
+        )
         self.num_sample: int = int(self.sample_rate * self.num_local)
         self.last_batch_size: int = 0
 
         self.is_updated: bool = True
         self.init_weight_update: bool = True
-        self.weight = torch.nn.Parameter(
-            torch.normal(0, 0.01, (self.num_local, embedding_size))
-        )
+        self.weight = torch.nn.Parameter(torch.normal(0, 0.01, (self.num_local, embedding_size)))
 
         # margin_loss
         if isinstance(margin_loss, Callable):
@@ -89,12 +78,15 @@ class PartialFC_V2(torch.nn.Module):
 
     def sample(self, labels, index_positive):
         """
-        This functions will change the value of labels
-        Parameters:
-        -----------
-        labels: torch.Tensor
-        index_positive: torch.Tensor
-        optimizer: torch.optim.Optimizer
+            This functions will change the value of labels
+            Parameters:
+            -----------
+            labels: torch.Tensor
+                pass
+            index_positive: torch.Tensor
+                pass
+            optimizer: torch.optim.Optimizer
+                pass
         """
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).to(cfg.rank)
@@ -111,7 +103,11 @@ class PartialFC_V2(torch.nn.Module):
 
         return self.weight[self.weight_index]
 
-    def forward( self, local_embeddings, local_labels):
+    def forward(
+        self,
+        local_embeddings: torch.Tensor,
+        local_labels: torch.Tensor,
+    ):
         """
         Parameters:
         ----------
@@ -122,21 +118,16 @@ class PartialFC_V2(torch.nn.Module):
         Returns:
         -------
         loss: torch.Tensor
+            pass
         """
-
-        # print(local_embeddings.shape)
-        # print(local_labels.shape)
-
         local_labels.squeeze_()
         local_labels = local_labels.long()
 
         batch_size = local_embeddings.size(0)
         if self.last_batch_size == 0:
             self.last_batch_size = batch_size
-
-        assert (
-            self.last_batch_size == batch_size
-        ), f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}"
+        assert self.last_batch_size == batch_size, (
+            f"last batch size do not equal current batch size: {self.last_batch_size} vs {batch_size}")
 
         _gather_embeddings = [
             torch.zeros((batch_size, self.embedding_size)).to(cfg.rank)
@@ -145,7 +136,6 @@ class PartialFC_V2(torch.nn.Module):
         _gather_labels = [
             torch.zeros(batch_size).long().to(cfg.rank) for _ in range(self.world_size)
         ]
-
         _list_embeddings = AllGather(local_embeddings, *_gather_embeddings)
         distributed.all_gather(_gather_labels, local_labels)
 
@@ -153,7 +143,9 @@ class PartialFC_V2(torch.nn.Module):
         labels = torch.cat(_gather_labels)
 
         labels = labels.view(-1, 1)
-        index_positive = (self.class_start <= labels) & ( labels < self.class_start + self.num_local)
+        index_positive = (self.class_start <= labels) & (
+            labels < self.class_start + self.num_local
+        )
         labels[~index_positive] = -1
         labels[index_positive] -= self.class_start
 
@@ -163,35 +155,16 @@ class PartialFC_V2(torch.nn.Module):
             weight = self.weight
 
         with torch.cuda.amp.autocast(self.fp16):
-            norm_embeddings = normalize(embeddings).cpu()
-            norm_weight_activated = normalize(weight).cpu()
-            logits = linear(norm_embeddings, norm_weight_activated)
+            norm_embeddings = normalize(embeddings)
+            norm_weight_activated = normalize(weight)
+            logits = linear(norm_embeddings.to(cfg.rank), norm_weight_activated)
         if self.fp16:
             logits = logits.float()
-        logits = logits.clamp(-1, 1).to(cfg.rank)
-
-        # print(self.class_start, '-->', self.class_start + self.num_local)
-        # print(logits.shape)
+        logits = logits.clamp(-1, 1)
 
         logits = self.margin_softmax(logits, labels)
-
-        # print(labels.shape)
-        # print(logits.shape)
-
         loss = self.dist_cross_entropy(logits, labels)
         return loss
-
-
-class PFC(PartialFC_V2):
-    def __init__(self):
-        super(PFC, self).__init__(
-            margin_loss=CombinedMarginLoss(),
-            embedding_size=cfg.LOSS.PFC.EMBED_DIM,
-            num_classes=cfg.LOSS.PFC.NCLASSES,
-            sample_rate=cfg.LOSS.PFC.SAMPLE_RATE,
-            fp16=cfg.AMP,
-        )
-
 
 
 class DistCrossEntropyFunc(torch.autograd.Function):
@@ -231,12 +204,16 @@ class DistCrossEntropyFunc(torch.autograd.Function):
             gradients for each input in forward function
             `None` gradients for one-hot label
         """
-        (index, logits, label) = ctx.saved_tensors
+        (
+            index,
+            logits,
+            label,
+        ) = ctx.saved_tensors
         batch_size = logits.size(0)
         one_hot = torch.zeros(
             size=[index.size(0), logits.size(1)], device=logits.device
         )
-        one_hot.scatter_(1, label[index], 1)
+        one_hot.scatter_(1, label[index].to(cfg.rank), 1)
         logits[index] -= one_hot
         logits.div_(batch_size)
         return logits * loss_gradient.item(), None
@@ -273,7 +250,6 @@ class AllGatherFunc(torch.autograd.Function):
             )
             for i in range(distributed.get_world_size())
         ]
-
         for _op in dist_ops:
             _op.wait()
 

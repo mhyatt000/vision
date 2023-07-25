@@ -23,9 +23,9 @@ _C.EXP = CN(
         BODY="DEFAULT",
         TRAIN=True,
         TEST=True,
-        REVERSE= False,
-        PARTITION=False, # for 5x2 only... send all jobs to single nodes?
-        MULTISEED=False, # for 5x2 only... 
+        REVERSE=False,
+        PARTITION=False,  # for 5x2 only... send all jobs to single nodes?
+        MULTISEED=False,  # for 5x2 only...
     ),
 )
 
@@ -36,22 +36,30 @@ _C.SCHEDULER = CN(
         BODY="POLY",
         GAMMA=0.99,
         WARMUP=0,
+        STEP_BY="ITER", # or EPOCH
     ),
 )
 
-_C.LOSS= CN(
+_C.LOSS = CN(
     new_allowed=True,
-    init_dict=dict(
-    ),
+    init_dict=dict(),
 )
 
 
 _C.LOSS.PFC = CN(
     new_allowed=True,
     init_dict=dict(
-        # EMBED_DIM=64,
-        # NCLASSES=5,
+        EMBED_DIM=64,
+        NCLASSES=5,
         SAMPLE_RATE=1.0,
+        AAM=CN(
+            new_allowed=True,
+            init_dict=dict(
+                SCALE=64.0,
+                MARGIN=[1.0,0.5,0.0],
+                INTER_THRESH=0,
+            ),
+        ),
     ),
 )
 
@@ -63,9 +71,10 @@ _C.LOSS.ARC = CN(
         L6_SCALE=0,
         NCLASSES=5,
         EMBED_DIM=64,
+        MARGIN=[],
+        SCALE=1,
     ),
 )
-
 
 
 _C.MODEL = MODEL

@@ -433,7 +433,8 @@ def show_embed(Y, Yh, *args, centers, **kwargs):
     ax = fig.add_subplot(projection="3d")
 
     make_sphere(ax)
-    make_centers(ax, centers)
+    if centers:
+        make_centers(ax, centers)
 
     Y = Y.view(-1).tolist()
     labels = [CLASSES[int(y)] for y in Y]

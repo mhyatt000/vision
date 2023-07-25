@@ -1,6 +1,6 @@
+from general.config import cfg
 import torch
 import math
-from general.config import cfg
 
 
 class CombinedMarginLoss(torch.nn.Module):
@@ -25,9 +25,7 @@ class CombinedMarginLoss(torch.nn.Module):
             with torch.no_grad():
                 dirty = logits > self.interclass_filtering_threshold
                 dirty = dirty.float()
-                mask = torch.ones(
-                    [index_positive.size(0), logits.size(1)], device=logits.device
-                )
+                mask = torch.ones([index_positive.size(0), logits.size(1)], device=logits.device)
                 mask.scatter_(1, labels[index_positive], 0)
                 dirty[index_positive] *= mask
                 tensor_mul = 1 - dirty
@@ -36,19 +34,12 @@ class CombinedMarginLoss(torch.nn.Module):
         target_logit = logits[index_positive, labels[index_positive].view(-1)]
 
         if self.m1 == 1.0 and self.m3 == 0.0:
-            sin_theta = torch.sqrt(1.0 - torch.pow(target_logit, 2))
-            cos_theta_m = (
-                target_logit * self.cos_m - sin_theta * self.sin_m
-            )  # cos(target+margin)
-            if self.easy_margin:
-                final_target_logit = torch.where(
-                    target_logit > 0, cos_theta_m, target_logit
-                )
-            else:
-                final_target_logit = torch.where(
-                    target_logit > self.theta, cos_theta_m, target_logit - self.sinmm
-                )
-            logits[index_positive, labels[index_positive].view(-1)] = final_target_logit
+            with torch.no_grad():
+                target_logit.arccos_()
+                logits.arccos_()
+                final_target_logit = target_logit + self.m2
+                logits[index_positive, labels[index_positive].view(-1)] = final_target_logit
+                logits.cos_()
             logits = logits * self.s
 
         elif self.m3 > 0:
@@ -66,32 +57,25 @@ class ArcFace(torch.nn.Module):
 
     def __init__(self, s=64.0, margin=0.5):
         super(ArcFace, self).__init__()
-        self.scale = s
+        self.s = s
+        self.margin = margin
         self.cos_m = math.cos(margin)
         self.sin_m = math.sin(margin)
         self.theta = math.cos(math.pi - margin)
         self.sinmm = math.sin(math.pi - margin) * margin
         self.easy_margin = False
 
-    def forward(self, logits, labels):
+    def forward(self, logits: torch.Tensor, labels: torch.Tensor):
         index = torch.where(labels != -1)[0]
         target_logit = logits[index, labels[index].view(-1)]
 
-        sin_theta = torch.sqrt(1.0 - torch.pow(target_logit, 2))
-        cos_theta_m = (
-            target_logit * self.cos_m - sin_theta * self.sin_m
-        )  # cos(target+margin)
-        if self.easy_margin:
-            final_target_logit = torch.where(
-                target_logit > 0, cos_theta_m, target_logit
-            )
-        else:
-            final_target_logit = torch.where(
-                target_logit > self.theta, cos_theta_m, target_logit - self.sinmm
-            )
-
-        logits[index, labels[index].view(-1)] = final_target_logit
-        logits = logits * self.scale
+        with torch.no_grad():
+            target_logit.arccos_()
+            logits.arccos_()
+            final_target_logit = target_logit + self.margin
+            logits[index, labels[index].view(-1)] = final_target_logit
+            logits.cos_()
+        logits = logits * self.s
         return logits
 
 

@@ -36,7 +36,8 @@ class Tester:
         self.model = model
         self.loader = loader
         self.trainloader = trainloader
-        self.criterion = criterion
+        # extract from DDP
+        self.criterion = criterion.module if 'module' in criterion.__dict__ else criterion
 
     def embed(self, loader):
         """docstring"""
@@ -47,7 +48,6 @@ class Tester:
         # decorator was to fix printnode problem but its clunky
         @tqdm.prog(len(loader), desc="Embed")
         def _embed(X, Y):
-
             X = X.to(cfg.rank, non_blocking=True)
             Y = Y.to(cfg.rank, non_blocking=True)
 
@@ -66,30 +66,38 @@ class Tester:
 
     def get_centers(self):
         """get learned cls centers"""
-        return F.normalize(self.criterion.module.weight).detach().cpu()
+        return F.normalize(self.criterion.weight).detach().cpu()
 
     def run(self):
         """docstring"""
+
+        print('begin eval loop...')
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
         rknns = plot._RKNN(Y, Yh)
 
         Y, Yh = self.embed(self.loader)
-        logits = self.criterion.module.apply_margin(Yh.to(cfg.rank),Y.to(cfg.rank)).detach().cpu()
 
         kwargs = {
             "rknns": rknns,
-            "centers": self.get_centers(),
-            "logits": logits,
         }
+
+        if cfg.LOSS.BODY in ["ARC","PFC"]:
+            kwargs["centers"] = self.get_centers()
+        if cfg.LOSS.BODY == "ARC":
+            logits = (
+                self.criterion.apply_margin(Yh.to(cfg.rank), Y.to(cfg.rank)).detach().cpu()
+            )
+            kwargs["logits"] = logits
 
         folder = out.get_path()
         # while there's not a png for all plots...
         # keeps dist.barrier() from timing out
-        while not all([any([p in x for x in os.listdir(folder)]) for p in  [p.lower() for p in cfg.EXP.PLOTS]]):
-
-            if  cfg.master:
+        while not all(
+            [any([p in x for x in os.listdir(folder)]) for p in [p.lower() for p in cfg.EXP.PLOTS]]
+        ):
+            if cfg.master:
                 for p in cfg.EXP.PLOTS:
                     plot.PLOTS[p](Y, Yh, **kwargs)
             else:

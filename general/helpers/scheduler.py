@@ -8,6 +8,7 @@ from general.config import cfg
 import torch
 
 
+# TODO use torch PolyLR
 class PolyScheduler(_LRScheduler):
     def __init__(self, optimizer, last_epoch=-1):
         # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
@@ -42,6 +43,7 @@ class PolyScheduler(_LRScheduler):
 
 
 schedulers = {
+    "PATIENT":lambda optim: ReduceLROnPlateau(optim),
     "STEP": lambda optim: StepLR(optim, step_size=1, gamma=cfg.SCHEDULER.GAMMA),
     "POLY": PolyScheduler,
 }

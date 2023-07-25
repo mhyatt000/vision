@@ -19,27 +19,28 @@ LOADER:
   LEAVE_OUT: null # could be 0..5
 
 SOLVER:
-  MAX_ITER: 10000 # 5000
+  MAX_ITER: 10000
   GRAD_CLIP: 5.0
   CHECKPOINT_PER_EPOCH: 1.0
   CHECKPOINT_PERIOD: 100
 
   OPTIM: 
-    BODY: "LAMB"
+    BODY: "ADAM"
     BASE_LR: 0.04
     DECAY: 0.0005
     MOMENTUM: 0.9 
     BETAS: [0.9, 0.99]
 
 LOSS: 
-  BODY: "ARC" 
+  BODY: "PFC" 
+
 
 EXP:
   TRAIN: True
   TEST: True
   PLOTS:
+  - "CONFUSION"
   - "EMBED"
   - "PCA"
-  - "CONFUSION"
   - "DPRIME"
   - "TSNE"
