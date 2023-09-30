@@ -13,6 +13,7 @@ _C = CN(
         # DEVICE="cuda",
         AMP=True,
         SEED=0,
+        TRAINER="BASE",
     ),
 )
 

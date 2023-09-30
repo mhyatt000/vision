@@ -30,46 +30,54 @@ class ResBlock(nn.Module):
         return F.relu(self.norm(self.conv(x) + x))
 
 
-class Generator(nn.Module):
+class Conv_INA:
+    """docstring"""
 
+    def __init__(self, inc, onc, kernel, stride, padding):
+        self.net = nn.Sequential(
+            nn.Conv2d(inc, onc, kernel, stride, padding),
+            nn.InstanceNorm2d(onc),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+"""
+class Generator(nn.Module):
     def __init__(self, f=64, blocks=6):
         super(Generator, self).__init__()
 
         layers = [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(3, f, 7, 1, 0),
-            norm(f),
-            nn.ReLU(True),
-            nn.Conv2d(f, 2 * f, 3, 2, 1),
-            norm(2 * f),
-            nn.ReLU(True),
-            nn.Conv2d(2 * f, 4 * f, 3, 2, 1),
-            norm(4 * f),
-            nn.ReLU(True),
+            Conv_INA(3, f, 7, 1, 0),
+            Conv_INA(f, 2 * f, 3, 2, 1),
+            Conv_INA(2 * f, 4 * f, 3, 2, 1),
         ]
 
         for i in range(blocks):
             layers.append(ResBlock(4 * f))
 
         layers += [
-                nn.ConvTranspose2d(4 * f, 4 * 2 * f, 3, 1, 1),
-                nn.PixelShuffle(2),
-                norm(2 * f),
-                nn.ReLU(True),
-                nn.ConvTranspose2d(2 * f, 4 * f, 3, 1, 1),
-                nn.PixelShuffle(2),
-                norm(f),
-                nn.ReLU(True),
-                nn.ReflectionPad2d(3),
-                nn.Conv2d(f, 3, 7, 1, 0),
-                nn.Tanh(),
-            ]
+            nn.ConvTranspose2d(4 * f, 4 * 2 * f, 3, 1, 1),
+            nn.PixelShuffle(2),
+            norm(2 * f),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(2 * f, 4 * f, 3, 1, 1),
+            nn.PixelShuffle(2),
+            norm(f),
+            nn.ReLU(True),
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(f, 3, 7, 1, 0),
+            nn.Tanh(),
+        ]
 
-        self.conv = nn.Sequential(*layers)
+        self.net = nn.Sequential(*layers)
 
     def forward(self, x):
-        return self.conv(x)
-
+        return self.net(x)
+"""
 
 class G_block(nn.Module):
     def __init__(self, ic=3, oc=64, kernel_size=4, strides=2, padding=1, **kwargs):
@@ -99,11 +107,10 @@ class Generator(nn.Module):
     """default generator"""
 
     def __init__(self, *, c=64):
-
         super(Generator, self).__init__()
 
         self.model = nn.Sequential(
-            G_block(ic=100, oc=c * 8, strides=1, padding=0),
+            G_block(ic=3, oc=c * 8, strides=1, padding=0),
             G_block(ic=c * 8, oc=c * 4),
             G_block(ic=c * 4, oc=c * 2),
             G_block(ic=c * 2, oc=c),
@@ -123,7 +130,6 @@ class Discriminator(nn.Module):
     """default discriminator"""
 
     def __init__(self, *, c=64):
-
         super(Discriminator, self).__init__()
         self.model = nn.Sequential(
             D_block(ic=3, oc=c),

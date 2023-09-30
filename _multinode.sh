@@ -19,7 +19,7 @@ torchrun \
 --rdzv_id=456 \
 --rdzv_backend=c10d \
 --rdzv_endpoint=$4:29400 \
-~/cs/vision/general/master.py --config-name $1 
+~/cs/vision/general/master.py --config-file $1 
 
 # stay alive communication
 touch "$HOME/node_alive/${PBS_JOBID}_node_${NODE}"

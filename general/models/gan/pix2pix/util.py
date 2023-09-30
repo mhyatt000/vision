@@ -5,10 +5,15 @@ import functools
 from torch.optim import lr_scheduler
 
 
-class Identity(nn.Module):
-    def forward(self, x):
-        return x
-
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start= time.time()
+        result = func(*args, **kwargs)
+        end= time.time()
+        execution= end- start
+        print(f"Function '{func.__name__}' took {execution} seconds to execute.")
+        return result
+    return wrapper
 
 def get_norm_layer(norm_type='instance'):
     """Return a normalization layer
@@ -25,7 +30,7 @@ def get_norm_layer(norm_type='instance'):
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
         def norm_layer(x):
-            return Identity()
+            return nn.Identity()
     else:
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
@@ -131,9 +136,11 @@ class GANLoss(nn.Module):
         LSGAN needs no sigmoid. vanilla GANs will handle it with BCEWithLogitsLoss.
         """
         super(GANLoss, self).__init__()
+
         self.register_buffer('real_label', torch.tensor(target_real_label))
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
         self.gan_mode = gan_mode
+
         if gan_mode == 'lsgan':
             self.loss = nn.MSELoss()
         elif gan_mode == 'vanilla':

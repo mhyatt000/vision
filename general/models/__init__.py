@@ -36,8 +36,21 @@ models = {
     "CUSTOM": CUSTOM,
 }
 
+def group_DDP(ngroups):
+    """creates DDP groups for dist training multiple models"""
+
+    if ngroups > cfg.world_size or ngroups <= 1:
+        return
+
+    groups = [[i for i in world_size if not i%n ] for n in range(ngroups)]
+    for group in groups:
+        torch.distributed.new_group(ranks=group)
+    
 
 def build_model():
+
+    groups = group_DDP()_
+
     print(cfg.MODEL.BODY)
     print('building model...')
 

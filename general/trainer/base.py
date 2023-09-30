@@ -31,9 +31,9 @@ def gather(x):
 class Trainer:
     """manages and abstracts options from the training loop"""
 
-    def __init__(self, model, loader):
-        # essentials
-        self.model = model
+    def __init__(self):
+
+        self.model = build_model()
         self.criterion = make_loss()
 
         params = [{"params": model.parameters()}]
@@ -45,7 +45,9 @@ class Trainer:
         self.scaler = GradScaler(growth_interval=100)  # default is 2k
         self.ckp = Checkpointer(self)
         self.stopper = Stopper()
-        self.loader = loader
+
+        self.loaders = build_loaders()
+        self.loader = loader['train']
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
 
@@ -162,6 +164,22 @@ class Trainer:
         """docstring"""
         return self.scheduler._last_lr[0] if '_last_lr' in self.scheduler.__dict__ else cfg.SOLVER.OPTIM.LR
 
+    def display():
+        """displays training status"""
+
+        return = " | ".join(
+            [
+                f"loss: {self.loss:.4f}",
+                f"best: {self.stopper.get_best():.4f}",
+                f"accuracy: {self.accs[-1]:.2f}",
+                f"patience: {self.stopper.get_patience()}",
+                f"lr: {self.get_lr():.2e}",
+                # f'lr: {self.optimizer.param_groups[0]['lr']:.2e }',
+                f"amp: {self.scaler.get_scale():.1e}",
+                f"{gpu.gpu_utilization()}",
+            ]
+        )
+
 
     def run(self):
         """trains model"""
@@ -174,20 +192,7 @@ class Trainer:
         @tqdm.prog(steps_left)
         def _step(X, Y):
             self.step(X, Y)
-            desc = " | ".join(
-                [
-                    f"loss: {self.loss:.4f}",
-                    f"best: {self.stopper.get_best():.4f}",
-                    f"accuracy: {self.accs[-1]:.2f}",
-                    f"patience: {self.stopper.get_patience()}",
-                    f"lr: {self.get_lr():.2e}",
-                    # f'lr: {self.optimizer.param_groups[0]['lr']:.2e }',
-                    f"amp: {self.scaler.get_scale():.1e}",
-                    f"{gpu.gpu_utilization()}",
-                ]
-            )
-
-            return desc
+            return self.display()
 
         # for epoch in range(self.epoch, cfg.SOLVER.MAX_EPOCH-1):
         while self.nstep < cfg.SOLVER.MAX_ITER:
@@ -200,6 +205,7 @@ class Trainer:
                     return
             self.update_epoch()
 
+        """this was going to be flexible batch size"""
         # except torch.cuda.OutOfMemoryError as ex:
         # raise ex # TODO: shouldnt this work?
         # self.rebuild_loader()
