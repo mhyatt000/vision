@@ -12,40 +12,30 @@ from .defaults import _C as cfg
 
 ap = AP(description="PyTorch Object Detection Training")
 
-ap.add_argument( "--config-name", default="",  help="path to config file", type=str)
-ap.add_argument( "--deepspeed", action='store_true')
-
-# ap.add_argument( "--config-file", default="", metavar="FILE", help="path to config file", type=str)
-# ap.add_argument("--local_rank", type=int, default=0)
-# ap.add_argument( "--skip-test", dest="skip_test", help="Do not test the final model", action="store_true",)
-# ap.add_argument( "--use-tensorboard", dest="use_tensorboard", help="Use tensorboardX logger (Requires tensorboardX installed)", action="store_true", default=False,)
-# ap.add_argument( "opts", help="Modify config options using the command-line", default=None, nargs=argparse.REMAINDER,)
-# ap.add_argument("--save_original_config", action="store_true")
-# ap.add_argument("--disable_output_distributed", action="store_true")
-# ap.add_argument("--override_output_dir", default=None)
+ap.add_argument( "--config-file", default="",  help="path to config file", type=str)
 
 args = ap.parse_args()
 cfg.ROOT = "/".join(__file__.split("/")[:-3])
 
-"""
-if not args.config_name:
-    with open(os.path.join(cfg.ROOT,'queue.json')) as file:
-        cfg.config_name = json.load(file)[0]
-        cfg.from_queue = True
-else:
-    cfg.From_queue = False
-"""
+# strip so it can be used for experiment folder
+file = args.config_file.split('/')
+print(file)
+file = file[file.index("configs"):-1] + [file[-1].replace('.yaml','') ]
 
-cfg.config_name = args.config_name.split('/')[-1].replace('.yaml','')
+print(file)
+quit()
 
-cfg.deepspeed = args.deepspeed
-# for k,v in args.__dict__.items():
-# setattr(cfg,k,v)
-
-cfg.config_name = cfg.config_name or input("config file: ")
-cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{cfg.config_name}.yaml")
-cfg.OUT = os.path.join(*[cfg.ROOT,"experiments",f"{cfg.config_name}"])
+cfg.config_file = os.path.join(cfg.ROOT, "configs", f"{file}.yaml")
+cfg.OUT = os.path.join(cfg.ROOT,"experiments",f"{file}")
 cfg.merge_from_file(cfg.config_file)
+
+def import_cfg():
+    """TODO
+    if IMPORT is specified in a cfg file,
+    recursively override default with child and child with parent
+    """
+    pass
+
 
 # cfg.path = os.path.join(cfg.ROOT, "experiments", cfg.config_name)
 
@@ -75,10 +65,16 @@ if True and not cfg.rank:
 cfg.distributed = True
 # cfg.distributed = cfg.world_size > 1 and cfg.DEVICE != "cpu"
 
-with open(os.environ['PBS_NODEFILE'],'r') as file:
-    cfg.nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
-cfg.nodename = socket.gethostname()
-cfg.nodenumber = 'NODE_' + str(cfg.nodes.index(cfg.nodename))
+try:
+    with open(os.environ['PBS_NODEFILE'],'r') as file:
+        cfg.nodes = [n.strip('\n').split('.')[0] for n in file.readlines()]
+    cfg.nodename = socket.gethostname()
+    cfg.nodenumber = 'NODE_' + str(cfg.nodes.index(cfg.nodename))
+except: # probably using the login node :(
+    pass
+    cfg.nodes = ['LOGIN']
+    cfg.nodename = cfg.nodes[0]
+    cfg.nodenumber = 0
 
 if cfg.LOADER.GPU_BATCH_SIZE is None:
     cfg.LOADER.GPU_BATCH_SIZE = cfg.LOADER.BATCH_SIZE // cfg.world_size

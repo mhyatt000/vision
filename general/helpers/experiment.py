@@ -11,7 +11,7 @@ import torch
 from general.data.loader import build_loaders
 from general.models import build_model
 from .tester import Tester
-from .trainer import Trainer
+from general.trainer import _Trainer
 from general.results import out
 
 
@@ -41,15 +41,11 @@ class Experiment:
     def __init__(self):
         mkdir(cfg.OUT)
         print("init exp")
-        loaders = build_loaders()
-        print("loaders are built")
-        model = build_model()
-        print("model is built")
-        self.trainer = Trainer(model, loaders["train"])
-        self.tester = Tester(
-            self.trainer.model,
-            loaders["test"],
-            trainloader=loaders["train"],
+
+        self.trainer = Trainer()
+        self.tester = Tester( # self.trainer.__dict__
+            self.trainer.models,
+            self.trainer.loaders,
             criterion=self.trainer.criterion,
         )
 
@@ -153,7 +149,7 @@ class SeriesExperiment(Experiment):
             dist.barrier()
 
 EXPERIMENTS = {
-    "DEFAULT": Experiment,
+    "BASE": Experiment,
     "SERIES": SeriesExperiment,
 }
 

@@ -10,9 +10,9 @@ import torch.nn.functional as F
 class ArcFace(torch.nn.Module):
     """ArcFace (https://arxiv.org/pdf/1801.07698v1.pdf):"""
 
-    def __init__(self, s=64.0, margin=0.5):
+    def __init__(self, margin=0.5):
         super(ArcFace, self).__init__()
-        self.scale = s
+        self.scale = cfg.LOSS.ARC.SCALE
         self.cos_m = math.cos(margin)
         self.sin_m = math.sin(margin)
         self.theta = math.cos(math.pi - margin)
@@ -102,4 +102,5 @@ class ArcFace(torch.nn.Module):
     def forward(self, logits, labels):
         margin_logits = self.apply_margin(logits, labels)
         loss = F.cross_entropy(margin_logits, labels.view(-1).long())
-        return loss + self.get_l6() + self.get_l5(logits, labels)
+        return loss
+        # return loss + self.get_l6() + self.get_l5(logits, labels)

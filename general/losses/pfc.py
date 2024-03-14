@@ -67,10 +67,10 @@ class PartialFC_V2(torch.nn.Module):
         self.class_start: int = num_classes // self.world_size * self.rank + min( self.rank, num_classes % self.world_size)
 
         # @mhyatt000 modification for multi-node
-        multinode = self.world_size > num_classes
-        if multinode:
-            self.class_start = self.rank % num_classes 
-            self.num_local = 1 
+        # multinode = self.world_size > num_classes
+        # if multinode:
+            # self.class_start = self.rank % num_classes 
+            # self.num_local = 1 
 
         self.num_sample: int = int(self.sample_rate * self.num_local)
         self.last_batch_size: int = 0

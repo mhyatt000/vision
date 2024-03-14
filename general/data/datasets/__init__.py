@@ -1,6 +1,6 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 from .western_blot import WBLOT
-from .kinetics import Kinetics
+from .kinetics import K700
+# from .kinetics import K400, K6000, K700
 
 """
 from .background import Background

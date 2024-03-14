@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from general.models.layers.ffc import *
 
 from general.config import cfg
@@ -70,9 +72,7 @@ class BasicBlock(nn.Module):
             norm_layer=norm_layer,
             enable_lfu=lfu,
         )
-        self.se_block = (
-            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
-        )
+        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
 
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
@@ -144,9 +144,7 @@ class Bottleneck(nn.Module):
             ratio_gout=ratio_gout,
             enable_lfu=lfu,
         )
-        self.se_block = (
-            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
-        )
+        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -165,6 +163,36 @@ class Bottleneck(nn.Module):
         x_g = self.relu_g(x_g + id_g)
 
         return x_l, x_g
+
+
+class HighPassFilter:
+    """docstring"""
+
+    def __init__(self):
+        pass
+
+    def high_pass(self, x):
+        """applies median blur filter"""
+
+        x = F.pad(x, (1, 1, 1, 1), "reflect")
+        b, c, w, h = x.shape
+
+        unfold = torch.nn.Unfold(3, padding=1)
+        windows = unfold(x).permute(0, 2, 1)
+        d = windows.shape[1]
+        windows = windows.reshape(b, d, c, -1)
+
+        medians, _ = windows.median(-1)
+        medians = medians.permute(0, 2, 1)
+        n = int(medians.shape[2] ** 0.5)
+
+        out = medians.reshape(b, c, n, n)
+        out = (x - out)[:, :, 1:-1, 1:-1]  # dont need the padding anymore
+        return out
+
+    def __call__(self, x):
+        hp = self.high_pass(x)
+        return torch.cat([x, hp], 1)
 
 
 class FFCResNet(nn.Module):
@@ -196,12 +224,16 @@ class FFCResNet(nn.Module):
         self.base_width = width_per_group
         self.lfu = lfu
         self.use_se = use_se
+
+        self.use_hp = False  # this code is super messy... any way to simplify?
         self.conv1 = nn.Conv2d(
-            3, inplanes, kernel_size=7, stride=2, padding=3, bias=False
+            3 * (2 if self.use_hp else 1), inplanes, kernel_size=7, stride=2, padding=3, bias=False
         )
+
         self.bn1 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.highpass = HighPassFilter() if self.use_hp else nn.Identity()
 
         self.layer1 = self._make_layer(
             block, inplanes * 1, layers[0], stride=1, ratio_gin=0, ratio_gout=ratio
@@ -237,9 +269,7 @@ class FFCResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(
-        self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5
-    ):
+    def _make_layer(self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5):
         norm_layer = self._norm_layer
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion or ratio_gin == 0:
@@ -287,11 +317,14 @@ class FFCResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def embed(self, x):
+        """docstring"""
+
+        x = self.highpass(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        # x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
@@ -300,8 +333,15 @@ class FFCResNet(nn.Module):
         x = self.avgpool(x[0])
 
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
         return x
+
+    def forward(self, x):
+        embed = self.embed(x)
+        x = self.fc(embed)
+        return {
+            "embed": embed,
+            "output": x,
+        }
 
 
 def FFCR18(**kwargs):

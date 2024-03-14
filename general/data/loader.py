@@ -4,11 +4,12 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from torch.utils.data.distributed import DistributedSampler
 import sklearn
-from .datasets import WBLOT
+from general.data import datasets 
 from general.results.out import get_exp_version
 
 ds = {
-    "WBLOT": WBLOT,
+    "WBLOT": datasets.WBLOT,
+    "K700": datasets.K700
 }
 
 

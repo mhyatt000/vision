@@ -4,7 +4,7 @@ from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from . import backbone, head, layers, rpn  # lang
-from .backbone import ffcresnet, iresnet, resnet, swint, vit, srnet, resnet_from_scratch
+from .backbone import ffcresnet, iresnet, resnet, swint, vswin, vit, srnet, resnet_from_scratch
 from .vlrcnn import VLRCNN
 from .layers import basic
 from . import custom
@@ -22,6 +22,7 @@ def CUSTOM():
 models = {
     "VLRCNN": VLRCNN,
     "SWINT": swint.SwinTransformer,
+    "VSWIN": vswin.SwinTransformer3D,
     "RESNET": resnet.ResNet,
     "RESNET_FROM_SCRATCH": resnet_from_scratch.ResNet,
     "VIT": vit.VIT,
@@ -35,8 +36,21 @@ models = {
     "CUSTOM": CUSTOM,
 }
 
+def group_DDP(ngroups):
+    """creates DDP groups for dist training multiple models"""
+
+    if ngroups > cfg.world_size or ngroups <= 1:
+        return
+
+    groups = [[i for i in world_size if not i%n ] for n in range(ngroups)]
+    for group in groups:
+        torch.distributed.new_group(ranks=group)
+    
 
 def build_model():
+
+    groups = group_DDP()_
+
     print(cfg.MODEL.BODY)
     print('building model...')
 

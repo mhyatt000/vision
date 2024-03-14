@@ -7,9 +7,9 @@ class CombinedMarginLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.s = cfg.LOSS.AAM.S
-        self.m1, self.m2, self.m3 = cfg.LOSS.AAM.M
-        self.interclass_filtering_threshold = cfg.LOSS.AAM.INTER_THRESH
+        self.s = cfg.LOSS.PFC.AAM.SCALE
+        self.m1, self.m2, self.m3 = cfg.LOSS.PFC.AAM.MARGIN
+        self.interclass_filtering_threshold = cfg.LOSS.PFC.AAM.INTER_THRESH
 
         # For ArcFace
         self.cos_m = math.cos(self.m2)
