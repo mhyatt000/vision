@@ -447,6 +447,7 @@ def show_dprime(Y, Yh, *args, **kwargs):
     mkfig("dprime.png")
 
 
+"""
 PLOTS = {
     "LOSS": show_loss,
     "CONFUSION": show_confusion,
@@ -457,6 +458,7 @@ PLOTS = {
     "DPRIME": show_dprime,
     "AUC": show_auc,
 }
+"""
 
 
 class PlotManager:
