@@ -2,7 +2,7 @@ defaults:
   - data: wblot
   - augment: nothing
 
-gpu_batch_size: 128
+gpu_batch_size: 64
 batch_size:  null
 
 shuffle: True

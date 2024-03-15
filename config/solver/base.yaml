@@ -3,7 +3,7 @@ defaults:
   - scheduler: poly
 
 max_iter: 5000
-patience: 5
+patience: null
 amp: true
 
 grad_clip: 5.0

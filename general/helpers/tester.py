@@ -18,7 +18,7 @@ from general.toolbox import tqdm
 def gather(x):
     """simple all gather manuver"""
 
-    if not cfg.distributed:
+    if not cfg.util.machine.dist:
         return x
 
     _gather = [
@@ -31,8 +31,9 @@ def gather(x):
 class Tester:
     """manages and abstracts options from evaluation"""
 
-    def __init__(self, model, loaders,  *, criterion):
+    def __init__(self, cfg, model, loaders, *, criterion):
         # essentials
+        self.cfg = cfg
         self.model = model
         self.loaders = loaders
         self.trainloader = self.loaders["train"]
@@ -49,10 +50,10 @@ class Tester:
 
         # TODO: fix this so its clean in toolbox.tqdm.py
         # decorator was to fix printnode problem but its clunky
-        @tqdm.prog(len(loader), desc="Embed")
+        @tqdm.prog(self.cfg, len(loader), desc="Embed")
         def _embed(X, Y):
-            X = X.to(cfg.rank, non_blocking=True)
-            Y = Y.to(cfg.rank, non_blocking=True)
+            X = X.to(self.cfg.rank, non_blocking=True)
+            Y = Y.to(self.cfg.rank, non_blocking=True)
 
             with torch.no_grad():
                 Yh = self.model(X).view((Y.shape[0], -1))
