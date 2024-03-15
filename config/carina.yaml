@@ -1,0 +1,7 @@
+defaults:
+  - loader: base
+  - solver: base
+  - model: ffc
+  - exp: base
+  - loss: ce
+  - util: carina

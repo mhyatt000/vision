@@ -1,0 +1,4 @@
+defaults:
+  - machine: carina
+
+all_print: false

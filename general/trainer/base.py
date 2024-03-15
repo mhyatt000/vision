@@ -161,7 +161,7 @@ class Trainer:
             else self.cfg.solver.optim.lr
         )
 
-    def display():
+    def display(self):
         """displays training status"""
 
         return " | ".join(
