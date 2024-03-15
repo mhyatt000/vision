@@ -1,4 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+from general.config import cfg
 import pdb
 
 from maskrcnn_benchmark.structures.image_list import to_image_list

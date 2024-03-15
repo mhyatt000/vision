@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 import itertools
 
-from general.config import cfg
 import torch
 
 from .lr_scheduler import (
@@ -11,7 +10,7 @@ from .lr_scheduler import (
 )
 
 
-def make_optimizer(model):
+def make_optimizer(model,cfg):
     def maybe_add_full_model_gradient_clipping(optim):  # optim: the optimizer class
         # detectron2 doesn't have full model gradient clipping now
 
@@ -66,7 +65,7 @@ def make_optimizer(model):
     return optimizer
 
 
-def make_lr_scheduler(optimizer):
+def make_lr_scheduler(optimizer, cfg):
 
     """add cfg to solver files"""
     _kwargs = dict(

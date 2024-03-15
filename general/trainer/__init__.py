@@ -1,10 +1,11 @@
-from .base import BaseTrainer
-from .cyclegan import CycleGanTrainer
+from .base import Trainer  # BaseTrainer
+# from .cyclegan import CycleGanTrainer
 
 trainers = {
-        "BASE":BaseTrainer,
-        "CYCLEGAN":CycleGanTrainer,
-    }
+    "BASE": Trainer,
+    # "CYCLEGAN": CycleGanTrainer,
+}
+
 
 def _Trainer():
     """trainer factory"""

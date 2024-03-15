@@ -1,5 +1,4 @@
 from torch import nn
-from general.config import cfg
 
 
 class FastRCNNPredictor(nn.Module):

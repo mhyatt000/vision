@@ -1,6 +1,5 @@
 """ Miscellaneous utility functions """
 
-from general.config import cfg
 from general.models.layers import Conv2d, DYReLU
 from general.models.poolers import Pooler
 import torch

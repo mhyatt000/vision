@@ -4,7 +4,6 @@ import random
 
 import numpy as np
 
-from general.config import cfg
 import torch
 import torch.distributed as dist
 from torch.utils.data import DistributedSampler as _DistributedSampler

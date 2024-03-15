@@ -1,0 +1,4 @@
+body: POLY
+gamma: 0.99
+warmup: 0
+step_by: ITER

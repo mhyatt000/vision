@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from general.models.layers.ffc import *
 
-from general.config import cfg
+from general.models.layers.ffc import *
 
 __all__ = [
     "FFCResNet",
@@ -72,7 +71,9 @@ class BasicBlock(nn.Module):
             norm_layer=norm_layer,
             enable_lfu=lfu,
         )
-        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        self.se_block = (
+            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        )
 
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
@@ -144,7 +145,9 @@ class Bottleneck(nn.Module):
             ratio_gout=ratio_gout,
             enable_lfu=lfu,
         )
-        self.se_block = FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        self.se_block = (
+            FFC_SE(planes * self.expansion, ratio_gout) if use_se else nn.Identity()
+        )
         self.relu_l = nn.Identity() if ratio_gout == 1 else nn.ReLU(inplace=True)
         self.relu_g = nn.Identity() if ratio_gout == 0 else nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -200,14 +203,15 @@ class FFCResNet(nn.Module):
         self,
         block,
         layers,
-        outdim=cfg.MODEL.FFCR.OUT_DIM or 1000,
+        out_dim=1000,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
         norm_layer=None,
-        ratio=cfg.MODEL.FFCR.RATIO,
+        ratio=0.5,
         lfu=True,
-        use_se=cfg.MODEL.FFCR.USE_SE or False,
+        use_se=False,
+        **kwargs,
     ):
         super(FFCResNet, self).__init__()
 
@@ -225,15 +229,17 @@ class FFCResNet(nn.Module):
         self.lfu = lfu
         self.use_se = use_se
 
-        self.use_hp = False  # this code is super messy... any way to simplify?
         self.conv1 = nn.Conv2d(
-            3 * (2 if self.use_hp else 1), inplanes, kernel_size=7, stride=2, padding=3, bias=False
+            3, inplanes, kernel_size=7, stride=2, padding=3, bias=False
         )
 
         self.bn1 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
-        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.highpass = HighPassFilter() if self.use_hp else nn.Identity()
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        # @mhyatt000
+        # self.use_hp = False  # this code is super messy... any way to simplify?
+        # self.highpass = HighPassFilter() if self.use_hp else nn.Identity()
 
         self.layer1 = self._make_layer(
             block, inplanes * 1, layers[0], stride=1, ratio_gin=0, ratio_gout=ratio
@@ -249,7 +255,7 @@ class FFCResNet(nn.Module):
         )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(inplanes * 8 * block.expansion, outdim)
+        self.fc = nn.Linear(inplanes * 8 * block.expansion, out_dim)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -269,7 +275,9 @@ class FFCResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5):
+    def _make_layer(
+        self, block, planes, blocks, stride=1, ratio_gin=0.5, ratio_gout=0.5
+    ):
         norm_layer = self._norm_layer
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion or ratio_gin == 0:
@@ -320,11 +328,11 @@ class FFCResNet(nn.Module):
     def embed(self, x):
         """docstring"""
 
-        x = self.highpass(x)
+        # x = self.highpass(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        # x = self.maxpool(x)
+        x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
@@ -335,13 +343,13 @@ class FFCResNet(nn.Module):
         x = x.view(x.size(0), -1)
         return x
 
-    def forward(self, x):
+    def forward(self, x, mode='default'):
         embed = self.embed(x)
         x = self.fc(embed)
         return {
             "embed": embed,
             "output": x,
-        }
+        } if mode == 'embed' else x
 
 
 def FFCR18(**kwargs):
@@ -360,6 +368,7 @@ def FFCR26(**kwargs):
 
 
 def FFCR50(**kwargs):
+    print(kwargs)
     model = FFCResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     return model
 
@@ -380,18 +389,28 @@ def FFCR200(**kwargs):
 
 
 def FFCRX50_32x4d(**kwargs):
-    kwargs["groups"] = 32
-    kwargs["width_per_group"] = 4
-    model = FFCResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    """Merge defaults with provided kwargs, with precedence to kwargs"""
 
+    defaults = {
+        "block": Bottleneck,
+        "layers": [3, 4, 6, 3],
+        "groups": 32,
+        "width_per_group": 4,
+    }
+    defaults.update(kwargs)
+    model = FFCResNet(Bottleneck, [3, 4, 6, 3], **defaults)
     return model
 
 
 def FFCRX101_32x8d(**kwargs):
-    kwargs["groups"] = 32
-    kwargs["width_per_group"] = 8
-    model = FFCResNet(Bottleneck, [3, 4, 32, 3], **kwargs)
-
+    defaults = {
+        "block": Bottleneck,
+        "layers": [3, 4, 32, 3],
+        "groups": 32,
+        "width_per_group": 8,
+    }
+    defaults.update(kwargs)
+    model = FFCResNet(Bottleneck, [3, 4, 32, 3], **defaults)
     return model
 
 
@@ -406,8 +425,8 @@ models = {
 }
 
 
-def FFCR():
+def FFC(cfg):
     """default builder for ffc resnet variants"""
 
     """TODO include resNEXT variants"""
-    return models[cfg.MODEL.FFCR.BODY]()
+    return models[cfg.model.size](**cfg.model)

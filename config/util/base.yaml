@@ -1,0 +1,4 @@
+defaults:
+  - machine: local
+
+all_print: false

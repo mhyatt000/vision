@@ -1,5 +1,4 @@
 import torch
-from general.config import cfg
 from torch import nn
 
 """

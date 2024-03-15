@@ -6,7 +6,6 @@
 import numpy as np
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-from general.config import cfg
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -555,7 +554,6 @@ class SwinTransformer(nn.Module):
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
     """
 
-    # TODO change param so that it accepts a cfg
     def __init__(
         self,
         pretrain_img_size=224,

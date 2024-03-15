@@ -4,7 +4,6 @@ import math
 
 import torch
 
-from general.config import cfg
 
 
 def assert_milestones(milestones):

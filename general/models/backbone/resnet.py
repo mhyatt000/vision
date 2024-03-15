@@ -20,7 +20,6 @@ Custom implementations may be written in user code and hooked in via the
 
 from collections import namedtuple
 
-from general.config import cfg
 from general.models.layers import (
     Conv2d,
     DFConv2d,
@@ -89,7 +88,7 @@ ResNet152FPNStagesTo5 = tuple(
 
 
 class ResNet(nn.Module):
-    def __init__(self):
+    def __init__(self, cfg):
         super(ResNet, self).__init__()
 
         # Translate string names to implementations

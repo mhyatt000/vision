@@ -1,0 +1,5 @@
+data: '~/cs/.datasets'
+name: local
+
+dist: false
+device: cpu

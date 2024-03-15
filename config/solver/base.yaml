@@ -1,0 +1,13 @@
+defaults:
+  - optim: lamb
+  - scheduler: poly
+
+max_iter: 5000
+patience: 5
+amp: true
+
+grad_clip: 5.0
+grad_acc_every: 1
+
+checkpoint_per_epoch: 1.0
+checkpoint_period: 100

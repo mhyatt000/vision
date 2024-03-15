@@ -1,0 +1,44 @@
+use_amp: false
+max_iter: 5000
+multi_max_iter: []
+max_epoch: 0
+multi_max_epoch: []
+optimizer: SGD
+base_lr: 0.001
+
+backbone_body_lr_factor: 1.0
+bias_lr_factor: 2
+grad_clip: 0.0
+grad_acc_every: 1
+clip_gradients:
+  enabled: false
+  clip_value: 0.0
+  clip_type: full_model
+  norm_type: 2.0
+
+model_ema: 0.0
+momentum: 0.9
+
+weight_decay: 0.0005
+weight_decay_bias: 0.0
+weight_decay_norm_factor: 1.0
+
+use_cosine: false
+min_lr: 0.000001
+gamma: 0.1
+steps: [30000]
+
+use_autostep: false
+step_patience: 5
+
+warmup_factor: 0.3333333333
+warmup_iters: 500
+warmup_method: linear
+
+checkpoint_period: 2500
+checkpoint_per_epoch: -1.0
+
+auto_terminate_patience: -1
+early_stopping: -1
+ims_per_batch: 16
+max_neg_per_batch: 0.1

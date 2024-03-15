@@ -4,7 +4,6 @@ import copy
 import logging
 import os
 
-from general.config import cfg
 from general.utils.comm import get_world_size
 from general.utils.imports import import_file
 import torch.distributed as dist
@@ -307,7 +306,7 @@ def make_data_loader(is_train=True, num_replicas=None, rank=None, start_iter=0):
         "of GPUs ({}) used.".format(images_per_batch, num_gpus)
         images_per_gpu = images_per_batch // num_gpus
         shuffle = True
-        num_iters = cfg.SOLVER.MAX_ITER
+        num_iters = cAUGMENTfg.SOLVER.MAX_ITER
 
     else:
         images_per_batch = cfg.TEST.IMS_PER_BATCH

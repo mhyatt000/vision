@@ -1,6 +1,5 @@
 """ borrowed from official Video Swin Transformer repo """
 
-# from general.config import cfg
 # from general.models.layers.mlp import MLP
 
 from functools import lru_cache, reduce
@@ -639,7 +638,6 @@ class SwinTransformer3D(nn.Module):
         use_checkpoint=False,
     ):
         super().__init__()
-        " TODO: modify to accept cfg param "
 
         self.pretrained = pretrained
         self.pretrained2d = pretrained2d

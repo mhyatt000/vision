@@ -1,0 +1,17 @@
+defaults:
+  - data: wblot
+  - augment: nothing
+
+gpu_batch_size: 128
+batch_size:  null
+
+shuffle: True
+split: True
+
+leave_out: null # could be 0..5
+leave_n_out: null
+
+num_workers: 4
+size_divisibility: 0
+use_random_seed: false
+distribute_chunk_among_node: false

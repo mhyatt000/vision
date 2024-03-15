@@ -2,7 +2,6 @@
 
 import torch
 from torch import nn
-from general.config import cfg
 
 
 class Select(nn.Module):

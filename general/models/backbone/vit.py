@@ -5,7 +5,6 @@ from torch import nn
 
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
-from general.config import cfg
 
 
 class PreNorm(nn.Module):

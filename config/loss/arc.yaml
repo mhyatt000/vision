@@ -1,0 +1,7 @@
+
+l5_scale: 0
+l6_scale: 0
+nclasses: 5
+embed_dim: 64
+margin: []
+scale: 1

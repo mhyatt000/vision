@@ -1,0 +1,9 @@
+seed: 0
+body: base
+train: true
+test: true
+reverse: false
+partition: false
+multiseed: false
+
+plots: ['auc', 'embed', 'dprime', 'rknn', 'tsne', 'pca', 'confusion']

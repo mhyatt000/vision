@@ -1,6 +1,5 @@
 from collections import namedtuple
 
-from general.config import cfg
 from general.models.backbone import resnet
 from general.models.layers.util import group_norm, make_fc
 from general.models.poolers import Pooler

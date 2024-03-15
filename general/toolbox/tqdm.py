@@ -1,8 +1,7 @@
 from tqdm import tqdm
-from general.config import cfg
 
 
-def prog(length, desc=None):
+def prog(cfg, length, desc=None):
     """
     creates a tqdm progress bar for the wrapped function when it is called
     of length length and desc equal to function output or desc

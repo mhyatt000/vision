@@ -1,20 +1,18 @@
 import os
 import time
-from general.results import plot
-from general.toolbox import tqdm
 
 import matplotlib.pyplot as plt
-
-from general.config import cfg
-from general.data import build_loaders
-from general.helpers import Checkpointer, make_scheduler
-from general.losses import make_loss
 import torch
+import torch.nn.functional as F
 from torch import distributed as dist
 from torch import optim
 from torch.cuda.amp.grad_scaler import GradScaler
-import torch.nn.functional as F
-from general.results import out
+
+from general.data import build_loaders
+from general.helpers import Checkpointer, make_scheduler
+from general.losses import make_loss
+from general.results import out, plot
+from general.toolbox import tqdm
 
 
 def gather(x):
@@ -23,7 +21,9 @@ def gather(x):
     if not cfg.distributed:
         return x
 
-    _gather = [torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())]
+    _gather = [
+        torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())
+    ]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
 
@@ -31,13 +31,16 @@ def gather(x):
 class Tester:
     """manages and abstracts options from evaluation"""
 
-    def __init__(self, model, loader, trainloader, *, criterion):
+    def __init__(self, model, loaders,  *, criterion):
         # essentials
         self.model = model
-        self.loader = loader
-        self.trainloader = trainloader
+        self.loaders = loaders
+        self.trainloader = self.loaders["train"]
+
         # extract from DDP
-        self.criterion = criterion.module if 'module' in criterion.__dict__ else criterion
+        self.criterion = (
+            criterion.module if "module" in criterion.__dict__ else criterion
+        )
 
     def embed(self, loader):
         """docstring"""
@@ -71,7 +74,7 @@ class Tester:
     def run(self):
         """docstring"""
 
-        print('begin eval loop...')
+        print("begin eval loop...")
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
@@ -83,11 +86,13 @@ class Tester:
             "rknns": rknns,
         }
 
-        if cfg.LOSS.BODY in ["ARC","PFC"]:
+        if cfg.LOSS.BODY in ["ARC", "PFC"]:
             kwargs["centers"] = self.get_centers()
         if cfg.LOSS.BODY == "ARC":
             logits = (
-                self.criterion.apply_margin(Yh.to(cfg.rank), Y.to(cfg.rank)).detach().cpu()
+                self.criterion.apply_margin(Yh.to(cfg.rank), Y.to(cfg.rank))
+                .detach()
+                .cpu()
             )
             kwargs["logits"] = logits
 
@@ -95,7 +100,10 @@ class Tester:
         # while there's not a png for all plots...
         # keeps dist.barrier() from timing out
         while not all(
-            [any([p in x for x in os.listdir(folder)]) for p in [p.lower() for p in cfg.EXP.PLOTS]]
+            [
+                any([p in x for x in os.listdir(folder)])
+                for p in [p.lower() for p in cfg.EXP.PLOTS]
+            ]
         ):
             if cfg.master:
                 for p in cfg.EXP.PLOTS:

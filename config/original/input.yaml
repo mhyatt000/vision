@@ -1,0 +1,10 @@
+
+min_size_train: 800
+max_size_train: 1333
+min_size_test: 800
+max_size_test: 1333
+pixel_mean: [102.9801, 115.9465, 122.7717]
+pixel_std: [1.0, 1.0, 1.0]
+to_bgr255: true
+format: ""
+fix_res: false

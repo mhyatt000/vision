@@ -1,0 +1,15 @@
+size: 50
+body: ffc
+out_dim: 5
+
+ratio: 0.5 # Assuming a default value, adjust as necessary
+use_se: false
+zero_init_residual: false
+groups: 1
+width_per_group: 64
+norm_layer: null # Define the norm_layer or leave as null to be filled in
+lfu: true
+
+# CONFLICT
+# block: null # Specify the block type here or leave as null to be filled in
+# layers: [3, 4, 6, 3]

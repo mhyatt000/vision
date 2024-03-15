@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
-from general.config import cfg
 
 __all__ = ["iresnet18", "iresnet34", "iresnet50", "iresnet100", "iresnet200"]
 using_ckpt = False
@@ -85,7 +84,7 @@ class _IResNet(nn.Module):
         block,
         layers,
         dropout=0,
-        outdim=cfg.MODEL.IRESNET.OUT_DIM or 512,
+        outdim=512,
         zero_init_residual=False,
         groups=1,
         width_per_group=64,
@@ -214,4 +213,4 @@ def IResNet(**kwargs):
         "IR100": _IResNet(IBasicBlock, [3, 13, 30, 3], **kwargs),
         "IR200": _IResNet(IBasicBlock, [6, 26, 60, 6], **kwargs),
     }
-    return ARCH[cfg.MODEL.IRESNET.BODY]
+    return ARCH[kwargs.size]

@@ -7,7 +7,6 @@ from typing import Iterable
 
 import numpy as np
 
-from general.config import cfg
 import torch
 from torch import distributed
 from torch.utils.data import DataLoader, Dataset

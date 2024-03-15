@@ -1,0 +1,74 @@
+loader:
+  data:
+    name: wblot
+    n_classes: 5
+    size: 38200
+  augment:
+    train: NOTHING
+    test: NOTHING
+    flag: false
+  gpu_batch_size: 128
+  batch_size: null
+  shuffle: true
+  split: true
+  leave_out: null
+  leave_n_out: null
+  num_workers: 4
+  size_divisibility: 0
+  use_random_seed: false
+  distribute_chunk_among_node: false
+solver:
+  optim:
+    body: lamb
+    base_lr: 0.04
+    decay: 0.0005
+    momentum: 0.9
+    betas:
+    - 0.9
+    - 0.99
+  scheduler:
+    body: POLY
+    gamma: 0.99
+    warmup: 0
+    step_by: ITER
+  max_iter: 5000
+  grad_clip: 5.0
+  checkpoint_per_epoch: 1.0
+  checkpoint_period: 100
+  patience: 5
+model:
+  size: 50
+  body: ffc
+  out_dim: 64
+  ratio: 0.5
+  use_se: false
+  zero_init_residual: false
+  groups: 1
+  width_per_group: 64
+  norm_layer: null
+  lfu: true
+exp:
+  seed: 0
+  body: base
+  train: true
+  test: true
+  reverse: false
+  partition: false
+  multiseed: false
+  plots:
+  - auc
+  - embed
+  - dprime
+  - rknn
+  - tsne
+  - pca
+  - confusion
+loss:
+  body: ce
+util:
+  machine:
+    data: ~/cs/.datasets
+    name: local
+    dist: false
+    device: cpu
+  all_print: false

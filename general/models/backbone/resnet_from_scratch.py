@@ -5,7 +5,6 @@ https://blog.paperspace.com/writing-resnet-from-scratch-in-pytorch/
 
 import torch
 from torch import nn
-from general.config import cfg
 
 
 class ResidualBlock(nn.Module):
@@ -40,7 +39,7 @@ class ResidualBlock(nn.Module):
 class ResNet(nn.Module):
     # 3,4,6,3 is r50
     def __init__(
-        self, block=ResidualBlock, layers=(3, 4, 6, 3), num_classes=cfg.MODEL.ODIM
+        self, block=ResidualBlock, layers=(3, 4, 6, 3), num_classes=None
     ):
         super(ResNet, self).__init__()
 

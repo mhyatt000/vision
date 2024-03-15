@@ -1,4 +1,3 @@
-from general.config import cfg
 import torch
 
 from .box.head import BoxHead

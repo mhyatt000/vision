@@ -1,5 +1,3 @@
-from general.config import cfg
-
 from . import resnet, vswin, vit, ffcresnet, iresnet  # fbnet
 from .vswin import SwinTransformer3D as VSWIN
 
@@ -13,5 +11,5 @@ def build_backbone():
     # ), f"cfg.MODEL.BACKBONE.CONV_BODY: {cfg.MODEL.BACKBONE.CONV_BODY} are not registered in registry"
     # return registry.BACKBONES[cfg.MODEL.BACKBONE.CONV_BODY](cfg)
 
-    assert "VIDEO-SWIN" == cfg.MODEL.VISION.BODY, "must be VIDEO-SWIN"
+    # assert "VIDEO-SWIN" == cfg.model.vision.body, "must be VIDEO-SWIN"
     return VSWIN()

@@ -1,19 +1,17 @@
 import os
-import numpy as np
-from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
-from general.toolbox import gpu
+import os.path as osp
 from os.path import join
 
-from PIL import Image, ImageDraw
-
-from general.config import cfg
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
-from torch.utils.data import Dataset
 import torchvision
+import torchvision.transforms.functional as F
+from PIL import Image, ImageDraw
+from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.io import read_image
-import torchvision.transforms.functional as F
+from torchvision.utils import make_grid
 
 """ from Mandelli et al. "Forensic Analysis of Synthetic Western Blots"
 1 an upscaling post-processing, in which the images are
@@ -30,9 +28,8 @@ quality.
 """
 
 import albumentations as A
-from albumentations import pytorch as AP
 import cv2
-
+from albumentations import pytorch as AP
 
 up125 = A.Sequential(
     [
@@ -66,25 +63,42 @@ downup90 = A.Sequential(
     ]
 )
 
-jpeg70 = (A.ImageCompression(70, 70, p=1.0))
-jpeg80 = (A.ImageCompression(80, 80, p=1.0))
-jpeg90 = (A.ImageCompression(90, 90, p=1.0))
-jpeg100 = (A.ImageCompression(100, 100, p=1.0))
+jpeg70 = A.ImageCompression(70, 70, p=1.0)
+jpeg80 = A.ImageCompression(80, 80, p=1.0)
+jpeg90 = A.ImageCompression(90, 90, p=1.0)
+jpeg100 = A.ImageCompression(100, 100, p=1.0)
 
-jpeg = A.Compose( [
-    A.OneOf(
-        [jpeg70, jpeg80, jpeg90, jpeg100]
-        , p=1,),
-])
+jpeg = A.Compose(
+    [
+        A.OneOf(
+            [jpeg70, jpeg80, jpeg90, jpeg100],
+            p=1,
+        ),
+    ]
+)
 
 
 nothing = A.NoOp()
 
-anyof = A.Compose( [
-    A.OneOf(
-        [up125, up150, downup50, downup75, downup90, jpeg70, jpeg80, jpeg90, jpeg100, nothing]
-        , p=1,),
-])
+anyof = A.Compose(
+    [
+        A.OneOf(
+            [
+                up125,
+                up150,
+                downup50,
+                downup75,
+                downup90,
+                jpeg70,
+                jpeg80,
+                jpeg90,
+                jpeg100,
+                nothing,
+            ],
+            p=1,
+        ),
+    ]
+)
 
 options = {
     "UP125": up125,
@@ -92,7 +106,7 @@ options = {
     "DOWNUP50": downup50,
     "DOWNUP75": downup75,
     "DOWNUP90": downup90,
-    "JPEG":jpeg,
+    "JPEG": jpeg,
     "JPEG70": jpeg70,
     "JPEG80": jpeg80,
     "JPEG90": jpeg90,
@@ -136,16 +150,18 @@ class WBLOT(Dataset):
 
     def __init__(
         self,
-        root="western_blots",
+        cfg,
+        root="wblot",
         transform=transform,
         target_transform=None,
     ):
         super(WBLOT, self).__init__()
 
-        try:
-            self.root = join(cfg.DATASETS.LOC, root)
-        except:
-            self.root = root
+        self.cfg = cfg
+        self.root = osp.expanduser(
+            osp.join(cfg.util.machine.data, cfg.loader.data.name)
+        )
+        print(f"WBLOT root: {self.root}")
 
         self.real = join(self.root, "real")
         self.synth = join(self.root, "synth")
@@ -174,11 +190,14 @@ class WBLOT(Dataset):
         self.transform = transform
         self.target_transform = target_transform
 
+        if cfg.loader.augment.flag:
+            self.set_augment(cfg.loader.augment.train)
+
     def __len__(self):
         return len(self.data)
 
     def set_augment(self, aug):
-        print(f'set WBLOT augment to: {aug}')
+        print(f"set WBLOT augment to: {aug}")
         self._augment = A.Compose(
             [
                 options[aug],
@@ -193,20 +212,20 @@ class WBLOT(Dataset):
         rel_path, label = self.data[idx]
         img_path = join(self.datafolders[label], rel_path)
 
-        if cfg.LOADER.AUGMENT:  # albumentations needs cv2
+        if self.cfg.loader.augment.flag:  # albumentations needs cv2
             image = cv2.imread(img_path)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         else:
             image = read_image(img_path).float()
 
         # TODO label = torch.Tensor() ... if CE then label = F.one_hot(label)
-        if cfg.LOSS.BODY in ["ARC", "PFC"]:
+        if self.cfg.loss.body in ["ARC", "PFC"]:
             label = torch.Tensor([label])
         else:
             nclasses = len(self.datafolders)
             label = torch.Tensor([int(i == label) for i in range(nclasses)])
 
-        if cfg.LOADER.AUGMENT:
+        if self.cfg.loader.augment.flag:
             image = self.augment(image)
         if self.transform:
             image = self.transform(image)
@@ -214,16 +233,37 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        return image.pin_memory(), label.pin_memory()
+        if self.cfg.util.machine.device == "cuda":
+            return image.pin_memory(), label.pin_memory()
+        else:
+            return image, label
 
 
-"""
-w = WBLOT()
-for i in range(10):
-    x , y= w.__getitem__(i)
-    print(x.shape)
-    showtens(x,i)
-    import time
-    time.sleep(1)
-quit()
-"""
+class AugmenterWrapper(torch.utils.data.DataLoader):
+    def __init__(self, loader, *args, **kwargs):
+        super(AugmenterWrapper, self).__init__()
+
+        self.loader = loader
+        self._augment = augment
+
+    def set_augment(self, aug):
+        print(f"set WBLOT augment to: {aug}")
+        self._augment = A.Compose([options[aug], AP.ToTensorV2()])
+
+    def augment(self, x):
+        return self._augment(x)
+
+    def __iter__(self):
+        return ((x.augment(), y) for x, y in self.loader.__iter__())
+
+
+class PinMemoryWrapper(torch.utils.data.DataLoader):
+    def __init__(self, loader):
+        super(PinMemoryWrapper, self).__init__()
+
+        self.loader = loader
+        self.pin_memory = True
+
+    def __iter__(self):
+        return ((x.pin_memory(), y.pin_memory()) for x, y in self.loader.__iter__())
+

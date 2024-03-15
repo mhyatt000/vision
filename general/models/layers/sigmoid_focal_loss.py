@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
 
-from general.config import cfg
 
 
 # TODO: Use JIT to replace CUDA implementation in the future.

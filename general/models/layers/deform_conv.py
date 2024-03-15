@@ -1,6 +1,5 @@
 import math
 
-from general.config import cfg
 from general.utils.amp import custom_bwd, custom_fwd
 import torch
 from torch import nn

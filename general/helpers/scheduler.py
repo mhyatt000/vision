@@ -1,21 +1,16 @@
-from torch.optim.lr_scheduler import (
-    MultiStepLR,
-    ReduceLROnPlateau,
-    StepLR,
-    _LRScheduler,
-)
-from general.config import cfg
 import torch
+from torch.optim.lr_scheduler import (MultiStepLR, ReduceLROnPlateau, StepLR,
+                                      _LRScheduler)
 
 
 # TODO use torch PolyLR
 class PolyScheduler(_LRScheduler):
-    def __init__(self, optimizer, last_epoch=-1):
+    def __init__(self, cfg, optimizer, last_epoch=-1):
         # nbatch = cfg.LOADER.SIZE // cfg.LOADER.BATCH_SIZE
-        self.max_steps = cfg.SOLVER.MAX_ITER
-        self.warmup_steps = self.max_steps // 10 # cfg.SCHEDULER.WARMUP_ITER
+        self.max_steps = cfg.solver.max_iter
+        self.warmup_steps = self.max_steps // 10  # cfg.solver.scheduler.WARMUP_ITER
 
-        self.base_lr = cfg.SOLVER.OPTIM.LR
+        self.base_lr = cfg.solver.optim.lr
         self.warmup_lr_init = 1e-4
         self.power = 2
 
@@ -43,15 +38,17 @@ class PolyScheduler(_LRScheduler):
 
 
 schedulers = {
-    "PATIENT":lambda optim: ReduceLROnPlateau(optim),
-    "STEP": lambda optim: StepLR(optim, step_size=1, gamma=cfg.SCHEDULER.GAMMA),
+    "PATIENT": lambda cfg, optim: ReduceLROnPlateau(optim),
+    "STEP": lambda cfg, optim: StepLR(
+        optim, step_size=1, gamma=cfg.solver.scheduler.gamma
+    ),
     "POLY": PolyScheduler,
 }
 
 
-def make_scheduler(optimizer):
-    print(cfg.SCHEDULER)
-    return schedulers[cfg.SCHEDULER.BODY](optimizer)
+def make_scheduler(cfg, optimizer):
+    print(cfg.solver.scheduler)
+    return schedulers[cfg.solver.scheduler.body](cfg, optimizer)
 
 
 def test_scheduler():
@@ -59,7 +56,7 @@ def test_scheduler():
 
     net = torch.nn.Linear(1, 1)
     scheduler = make_scheduler(torch.optim.Adam(net.parameters()))
-    for _ in range(cfg.SOLVER.MAX_ITER):
+    for _ in range(cfg.solver.max_iter):
         lr = scheduler.get_lr()
         scheduler.step()
         print(lr)

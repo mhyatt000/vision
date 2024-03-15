@@ -1,0 +1,5 @@
+
+idim: 512
+hdim: 64
+odim: 64
+dropout: 0.0

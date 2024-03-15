@@ -1,8 +1,8 @@
-from general.config import cfg
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch import nn
 
+"""
 # from .arcloss import CombinedMarginLoss
 # from .pfc import PFC
 from .arc2 import ArcFace
@@ -20,22 +20,23 @@ class PFC(PartialFC_V2):
             fp16=cfg.AMP,
         )
 
+"""
 
 LOSSES = {
-    "PFC": PFC,
-    "ARC": ArcFace, 
-    "CE": nn.CrossEntropyLoss,
+    # "PFC": PFC,
+    # "ARC": ArcFace, 
+    "ce": nn.CrossEntropyLoss,
 }
 
-def make_loss():
-    print(cfg.LOSS)
+def make_loss(cfg):
+    print(cfg.loss)
     print()
 
-    loss = LOSSES[cfg.LOSS.BODY]()
-    if cfg.LOSS.BODY in ["ARC","PFC"]:
+    loss = LOSSES[cfg.loss.body]()
+    if cfg.loss.body in ["ARC","PFC"]:
         loss.to(cfg.rank).train()
 
-        if cfg.distributed and cfg.LOSS.BODY == 'ARC':
+        if cfg.util.machine.dist and cfg.loss.body == 'ARC':
             loss = DDP( loss, device_ids=[cfg.rank])
             loss.train()
 

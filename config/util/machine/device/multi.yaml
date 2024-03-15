@@ -1,0 +1,2 @@
+dist: true
+device: cuda

@@ -1,0 +1,21 @@
+
+defaults:
+  - mlp: mlp
+  - conv: conv
+  - ffcr: ffcr
+
+rpn_only: false
+box_on: true
+mask_on: false
+keypoint_on: false
+device: cuda
+meta_architecture: GeneralizedRCNN
+rpn_architecture: RPN
+debug: false
+onnx: false
+weight: ""
+pretrain_name: ""
+linear_prob: false
+multitask: {}
+body: RESNET
+odim: 1

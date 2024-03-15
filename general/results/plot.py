@@ -13,12 +13,11 @@ from sklearn.decomposition import PCA
 import torch
 import torch.nn.functional as F
 
-from general.config import cfg
 from general.results import out
 
 warnings.filterwarnings("ignore")
 
-CLASSES = WBLOT().classes
+CLASSES = [f'c{i}' for i in range(5)] # WBLOT().classes
 
 
 def label_matx():

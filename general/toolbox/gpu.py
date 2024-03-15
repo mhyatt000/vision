@@ -3,7 +3,11 @@ from pynvml import *
 import time
 from functools import wraps
 
-nvmlInit()
+try:
+    nvmlInit()
+except: 
+    print("No GPU found")
+    cpu = True
 
 def timer():
     def decorator(func):
@@ -19,6 +23,8 @@ def timer():
 
 
 def gpu_free():
+    if cpu:
+        return "CPU"
     handle = nvmlDeviceGetHandleByIndex(0)
     info = nvmlDeviceGetMemoryInfo(handle)
     gb = info.free // 1042**3
@@ -26,6 +32,8 @@ def gpu_free():
 
 
 def gpu_utilization():
+    if cpu:
+        return "CPU"
     handle = nvmlDeviceGetHandleByIndex(0)
     info = nvmlDeviceGetMemoryInfo(handle)
     gb = info.used // 1042**3
