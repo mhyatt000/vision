@@ -22,13 +22,7 @@ def main(cfg):
     print("CONFIG:", cfg.exp.name, "\n")
 
     if cfg.util.machine.dist:
-        print(
-            "Distributed training with",
-            cfg.world_size,
-            "nodes and",
-            cfg.world_size,
-            "gpus per node.",
-        )
+        print( "Distributed training with", cfg.world_size, "nodes and", cfg.world_size, "gpus per node.",)
         print("World rank:", cfg.world_rank, "Node rank:", cfg.rank)
         print("Node name:", cfg.nodename, "Node number:", cfg.nodenumber)
 
