@@ -39,10 +39,11 @@ class Tester:
         self.trainloader = self.loaders["train"]
 
         # extract from DDP
+        self.criterion = trainer.criterion
         self.criterion = (
-            trainer.criterion.module
-            if "module" in criterion.__dict__
-            else trainer.criterion
+            self.criterion.module
+            if "module" in self.criterion.__dict__
+            else self.criterion
         )
 
     def embed(self, loader):
