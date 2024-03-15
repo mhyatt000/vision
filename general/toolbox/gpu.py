@@ -5,6 +5,7 @@ from functools import wraps
 
 try:
     nvmlInit()
+    cpu = False
 except: 
     print("No GPU found")
     cpu = True
