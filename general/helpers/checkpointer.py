@@ -14,9 +14,7 @@ def mkdir(path):
 
 
 class Checkpointer:
-    """
-    manages and saves snapshots
-    """
+    """ manages and saves snapshots """
 
     def __init__(self, cfg, trainer):
         self.cfg = cfg
@@ -55,7 +53,7 @@ class Checkpointer:
         snap.update(
             {a.upper(): getattr(self.trainer, a).state_dict() for a in self.states}
         )
-        mod = self.trainer.model.module if self.cfg.distributed else self.trainer.model
+        mod = self.trainer.model.module if self.cfg.util.machine.dist else self.trainer.model
         snap["MODEL"] = mod.state_dict()
         torch.save(snap, self.psnap)
 
@@ -69,7 +67,7 @@ class Checkpointer:
 
         snap = torch.load(self.psnap)
 
-        mod = self.trainer.model.module if self.cfg.distributed else self.trainer.model
+        mod = self.trainer.model.module if self.cfg.util.machine.dist else self.trainer.model
         mod.load_state_dict(snap["MODEL"])
         for k, v in snap.items():
             if k.lower() in self.remember + self.states:
