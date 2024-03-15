@@ -58,14 +58,11 @@ def build_model(cfg):
         # groups = group_DDP()
         print("building ddp...")
 
-        if cfg.distributed:
-            model = DDP(
-                model,
-                device_ids=[cfg.rank],
-                # output_device=cfg.rank,
-                # broadcast_buffers=False,
-                # find_unused_parameters=True, ... this could prob be turned on
-            )
+        if cfg.util.machine.dist:
+            model = DDP(model, device_ids=[cfg.rank])
+            # output_device=cfg.rank,
+            # broadcast_buffers=False,
+            # find_unused_parameters=True, ... this could prob be turned on
 
     if cfg.exp.train:
         model.train()

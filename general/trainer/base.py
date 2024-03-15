@@ -20,7 +20,7 @@ from general.toolbox import gpu, tqdm
 def gather(x):
     """simple all gather manuver"""
 
-    if not cfg.distributed:
+    if not cfg.util.machine.dist:
         return x
 
     _gather = [
