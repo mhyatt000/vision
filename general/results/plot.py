@@ -503,7 +503,7 @@ class PlotManager:
         if legend:
             plt.legend()
         plt.tight_layout()
-        plt.savefig(os.path.join(out.get_path(), fname))
+        plt.savefig(os.path.join(out.get_path(self.cfg), fname))
         if verbose:
             print(f"Saved: {fname}")
         plt.close("all")
@@ -511,7 +511,7 @@ class PlotManager:
     def serialize(self, k, v):
         """Serialize and save a key-value pair as JSON."""
         v = self.to_json(v)
-        fname = os.path.join(out.get_path(), "results.json")
+        fname = os.path.join(out.get_path(self.cfg), "results.json")
         try:
             with open(fname, "r") as file:
                 data = json.load(file)
