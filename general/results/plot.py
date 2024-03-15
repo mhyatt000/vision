@@ -534,7 +534,7 @@ class PlotManager:
 
         if lr:
             X = (list(range(len(lr))),)
-            axs[2].plot(X, lr, color="red", lw=3, label="learning rate")
+            axs[2].plot(X, lr.flatten().tolist(), color="red", lw=3, label="learning rate")
 
         for ax in axs:
             ax.grid()
