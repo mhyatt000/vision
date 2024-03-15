@@ -47,7 +47,7 @@ def use_mpi():
     pass
 
 
-def use_pbs(cfg):
+def try_pbs(cfg):
     try:
         with open(os.environ["PBS_NODEFILE"], "r") as file:
             cfg.nodes = [n.strip("\n").split(".")[0] for n in file.readlines()]
@@ -84,8 +84,7 @@ def process(cfg):
 
     # set up distributed nodes
     find_world(cfg)
-    if cfg.util.machine.name == "polaris":
-        use_pbs(cfg)
+    try_pbs(cfg)
 
     if cfg.loader.gpu_batch_size is None:
         cfg.loader.gpu_batch_size = cfg.loader.batch_size // cfg.world_size
