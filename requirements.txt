@@ -14,4 +14,4 @@ matplotlib
 plotly
 mkdocs
 nvidia-ml-py3
-
+albumentations
