@@ -31,16 +31,18 @@ def gather(x):
 class Tester:
     """manages and abstracts options from evaluation"""
 
-    def __init__(self, cfg, model, loaders, *, criterion):
+    def __init__(self, cfg, trainer):
         # essentials
         self.cfg = cfg
-        self.model = model
-        self.loaders = loaders
+        self.model = trainer.model
+        self.loaders = trainer.loaders
         self.trainloader = self.loaders["train"]
 
         # extract from DDP
         self.criterion = (
-            criterion.module if "module" in criterion.__dict__ else criterion
+            trainer.criterion.module
+            if "module" in criterion.__dict__
+            else trainer.criterion
         )
 
     def embed(self, loader):

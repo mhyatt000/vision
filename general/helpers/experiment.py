@@ -46,10 +46,9 @@ class Experiment:
         print("init exp")
 
         self.trainer = Trainer(self.cfg)
-        self.tester = Tester(  # self.trainer.__dict__
-            self.trainer.model,
-            self.trainer.loaders,
-            criterion=self.trainer.criterion,
+        self.tester = Tester(  
+            self.cfg, 
+            self.trainer, 
         )
 
     def run(self):
