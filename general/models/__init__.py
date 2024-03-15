@@ -55,7 +55,7 @@ def build_model(cfg):
     model = models[cfg.model.body](cfg).to(cfg.rank)
 
     if cfg.util.machine.dist:
-        groups = group_DDP()
+        # groups = group_DDP()
         print("building ddp...")
 
         if cfg.distributed:
