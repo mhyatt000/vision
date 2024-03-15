@@ -13,7 +13,7 @@ from general.helpers import Checkpointer, Stopper, make_scheduler
 from general.losses import make_loss
 from general.models import build_model
 from general.optim import make_optimizer
-from general.results import plot
+from general.results.plot import PlotManager
 from general.toolbox import gpu, tqdm
 
 
@@ -52,6 +52,7 @@ class Trainer:
         self.loader = self.loaders["train"]
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
+        self.plot = PlotManager(cfg)
 
         """ what is ema -> exponential moving average """
 
@@ -71,8 +72,8 @@ class Trainer:
         self.nstep += 1
 
         if self.nstep % self.cfg.solver.checkpoint_period == 0:
-            plot.show_loss(self.losses, lr=self.lrs)
-            plot.show_accuracy(self.accs)
+            self.plot.show_loss(self.losses, lr=self.lrs)
+            self.plot.show_accuracy(self.accs)
             self.ckp.save()
 
     def update_epoch(self):
