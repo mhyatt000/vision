@@ -85,7 +85,8 @@ class Tester:
         # Y, Yh = self.embed(self.trainloader)
         # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
 
-        Y, Yh = self.embed(self.testloader)
+        if self.cfg.exp.plots != ['cam']: # not only cam (which doesnt need this)
+            Y, Yh = self.embed(self.testloader)
 
         # kwargs = { "rknns": rknns }
         kwargs = {
