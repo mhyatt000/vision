@@ -1,5 +1,5 @@
 
-from plotter import Plotter
+from .plotter import Plotter
 
 class AUCPlotter(Plotter):
 

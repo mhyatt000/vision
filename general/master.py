@@ -26,7 +26,7 @@ def main(cfg):
 
         time.sleep(cfg.world_rank / 32)
         print(
-            f"Rank {cfg.world_rank:2d} of {cfg.world_size} online |" 
+            f"Rank {cfg.world_rank:2d} of {cfg.world_size} online |"
             f"{cfg.rank} of {cfg.world_size/len(cfg.nodes)} on {cfg.nodename} {cfg.nodenumber}",
             force=True,
         )

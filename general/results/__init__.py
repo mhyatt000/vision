@@ -1,3 +1,4 @@
+from . import out
 from .auc import AUCPlotter
 from .confusion import ConfusionPlotter
 from .dprime import DPrimePlotter

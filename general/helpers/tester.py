@@ -11,7 +11,7 @@ from torch.cuda.amp.grad_scaler import GradScaler
 from general.data import build_loaders
 from general.helpers import Checkpointer, make_scheduler
 from general.losses import make_loss
-from general.results import out, plot
+from general.results import PlotManager, out
 from general.toolbox import tqdm
 
 
@@ -100,18 +100,14 @@ class Tester:
             )
             kwargs["logits"] = logits
 
-        folder = out.get_path(self.cfg)
+        if self.cfg.master:
+            for p in cfg.exp.plots:
+                self.plot.plots[p](Y, Yh, **kwargs)
+            done = torch.tensor([1], dtype=torch.int)  # 1 indicates completion
 
-        # while there's not a png for all plots...
-        # keeps dist.barrier() from timing out
-        while not all(
-            [
-                any(p.lower() in x.lower() for x in os.listdir(folder))
-                for p in self.cfg.exp.plots
-            ]
-        ):
-            if self.cfg.master:
-                for p in self.cfg.exp.plots:
-                    self.plot.plots[p](Y, Yh, **kwargs)
-            else:
-                time.sleep(2)
+        else:
+            done = torch.tensor([0], dtype=torch.int)
+
+        dist.broadcast(done, src=0)
+        if done.item() == 1: # all nodes wait until master is done
+            pass

@@ -1,25 +1,24 @@
-from plotter import Plotter
 import torch
+from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
-
     def calc(self, Y, Yh):
-        
         if self.cfg.loss.body == "CE":
             self.confusion, self.acc = calc_confusion(Y, Yh)
         else:
             self.confusion, self.acc = arc_confusion(Y, Yh, centers)
 
-
     def show(Y, Yh, centers=None, **kwargs):
         """builds confusion matrix"""
 
-        fname = "confusion.png")
+        fname = "confusion.png"
         plt.matshow(self.confusion, cmap=plt.cm.Blues, alpha=0.3)
         label_matx()
 
-        getname = lambda x: CLASSES[x] if x < len(CLASSES) else f"unknown{x-len(CLASSES)}"
+        getname = (
+            lambda x: CLASSES[x] if x < len(CLASSES) else f"unknown{x-len(CLASSES)}"
+        )
         for i in range(self.confusion.shape[0]):
             for j in range(self.confusion.shape[1]):
                 plt.text(
@@ -35,19 +34,21 @@ class ConfusionPlotter(Plotter):
         plt.xlabel("Predictions")
         plt.ylabel("Ground Truth")
         plt.xticks(
-            [i for i in range(len(self.confusion))], [getname(i) for i in range(len(self.confusion))]
+            [i for i in range(len(self.confusion))],
+            [getname(i) for i in range(len(self.confusion))],
         )
         plt.yticks(
-            [i for i in range(len(self.confusion))], [getname(i) for i in range(len(self.confusion))]
+            [i for i in range(len(self.confusion))],
+            [getname(i) for i in range(len(self.confusion))],
         )
         plt.setp(plt.xticks()[1], rotation=30)
         plt.setp(plt.yticks()[1], rotation=30)
         plt.tight_layout()
         mkfig(fname, legend=False)
 
-            # for thresh in [55,60,65,70,75]:
-            # confusion, acc =  arc_confusion_openset(Y, Yh, centers,thresh)
-            # _plot_confusion(confusion,acc,f'confusion_openset{thresh}.png')
+        # for thresh in [55,60,65,70,75]:
+        # confusion, acc =  arc_confusion_openset(Y, Yh, centers,thresh)
+        # _plot_confusion(confusion,acc,f'confusion_openset{thresh}.png')
 
     def calc_confusion(Y, Yh):
         """calculate confusion matrix"""
@@ -95,7 +96,8 @@ class ConfusionPlotter(Plotter):
         Y = Y.cpu().view(-1).tolist()
         Yh = Yh.cpu().tolist()
 
-        while Y: ( y, yh) = ( Y.pop(), torch.Tensor(Yh.pop()))
+        while Y:
+            (y, yh) = (Y.pop(), torch.Tensor(Yh.pop()))
             a = torch.Tensor(
                 [angle(yh, c) if c.sum() else 360 for c in centers]
             )  # dont want 0 centers with no values
@@ -132,7 +134,6 @@ class ConfusionPlotter(Plotter):
         serialize("confusion_from_centers", confusion)
         return confusion, acc
 
-
     def show_RKNN_confusion(Y, Yh, rknns, logits, **kwargs):
         """docstring"""
 
@@ -156,5 +157,3 @@ class ConfusionPlotter(Plotter):
             _plot_confusion(confusion, acc, f"rknn_openset{r}.png")
 
         # plot_auc(fprs, accs)
-
-

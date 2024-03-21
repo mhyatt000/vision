@@ -1,10 +1,10 @@
-
 import os
 import statistics as stats
 from os.path import expanduser
 
 import matplotlib.pyplot as plt
-from plotter import Plotter
+
+from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):

@@ -1,20 +1,23 @@
-from .plotter import Plotter
-from .auc import AUCPlotter
 from .all import *
+from .auc import AUCPlotter
+from .confusion import ConfusionPlotter
+from .dprime import DPrimePlotter
+from .embed import EmbedPlotter
+from .plotter import Plotter
 
-class PlotManager(Plotter):.
 
+class PlotManager(Plotter):
     def __init__(self, cfg, classes=None):
         self.cfg = cfg
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]
 
         self.plots = {
             "confusion": ConfusionPlotter(cfg, self.classes),
-            "rknn": show_RKNN_confusion,
-            "tsne": show_tsne,
-            "pca": show_pca,
-            "embed": show_embed,
-            "dprime": show_dprime,
+            # "rknn": show_RKNN_confusion,
+            # "tsne": show_tsne,
+            # "pca": show_pca,
+            "embed": EmbedPlotter(cfg, self.classes),
+            "dprime": DPrimePlotter(cfg, self.classes),
             "auc": AUCPlotter(cfg, self.classes),
         }
 
@@ -52,5 +55,3 @@ class PlotManager(Plotter):.
         plt.plot(list(range(len(acc))), acc, color="red", label="accuracy")
         self.serialize("accuracy", acc)
         self.mkfig("accuracy.png", verbose=False)
-
-
