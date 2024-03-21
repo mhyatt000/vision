@@ -79,7 +79,7 @@ def process(cfg):
 
     # names
     cfg.exp.root = "/".join(__file__.split("/")[:-2])
-    cfg.exp.name = "temp"
+    cfg.exp.name = "_".join([cfg.model.body, cfg.loss.body, cfg.loader.data.name])
     cfg.exp.out = os.path.join(cfg.exp.root, "experiments", cfg.exp.name)
 
     # set up distributed nodes
