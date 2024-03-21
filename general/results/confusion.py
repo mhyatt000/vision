@@ -41,7 +41,7 @@ class ConfusionPlotter(Plotter):
         names = [getname(i) for i in range(len(self.confusion))]
 
         plt.xticks(places, names)
-        plt.yticks(place, names)
+        plt.yticks(places, names)
         plt.setp(plt.xticks()[1], rotation=30)
         plt.setp(plt.yticks()[1], rotation=30)
 

@@ -48,9 +48,7 @@ class CAMPlotter(Plotter):
 
         # Note: input_tensor can be a batch tensor with several images!
         # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
-        grayscale_cam = [
-            cam(input_tensor=x, eigen_smooth=False, targets=[t]) for t in targets
-        ]
+        grayscale_cam = [ cam(input_tensor=x, eigen_smooth=False, targets=) ]
 
         fig, ax = plt.subplots(1, 5)
         for ax, gcam in zip(ax, grayscale_cam):

@@ -88,7 +88,10 @@ class Tester:
         Y, Yh = self.embed(self.testloader)
 
         # kwargs = { "rknns": rknns }
-        kwargs = {}
+        kwargs = {
+            "testloader": self.testloader,
+            "model": self.model,
+        }
 
         """
         if self.cfg.loss.body in ["ARC", "PFC"]:
@@ -110,5 +113,5 @@ class Tester:
 
         if self.cfg.util.machine.dist:
             dist.broadcast(done, src=0)
-            if done.item() == 1: # all nodes wait until master is done
+            if done.item() == 1:  # all nodes wait until master is done
                 pass
