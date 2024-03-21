@@ -54,7 +54,7 @@ class ConfusionPlotter(Plotter):
         # confusion, acc =  arc_confusion_openset(Y, Yh, centers,thresh)
         # _plot_confusion(confusion,acc,f'confusion_openset{thresh}.png')
 
-    def calc_confusion(self, Y, Yh):
+    def calc_confusion(self, Y, Yh, *args, **kwargs):
         """calculate confusion matrix"""
 
         confusion = torch.zeros(

@@ -37,11 +37,27 @@ class ResidualBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    # 3,4,6,3 is r50
+    """
+    ResNet
+
+    params:
+    block: ResidualBlock
+    cfg: config
+        layers: tuple ... [3,4,6,3] is r50
+    """
+
     def __init__(
-        self, block=ResidualBlock, layers=(3, 4, 6, 3), num_classes=None
+        self,
+        cfg,
+        block=ResidualBlock,
+        *args,
+        **kwargs,
     ):
         super(ResNet, self).__init__()
+
+        layers = cfg.model.layers
+        num_classes = cfg.loader.n_classes
+        self.cfg = cfg
 
         self.inplanes = 64
         self.conv1 = nn.Sequential(
@@ -59,7 +75,6 @@ class ResNet(nn.Module):
         self.fc = nn.Linear(512, num_classes)
 
     def _make_layer(self, block, planes, blocks, stride=1):
-
         downsample = None
         if stride != 1 or self.inplanes != planes:
             downsample = nn.Sequential(
@@ -92,7 +107,6 @@ class ResNet(nn.Module):
 
 
 if __name__ == "__main__":
-
     layers = (3, 4, 6, 3)
     r = ResNet(block=ResidualBlock, layers=layers)
     t = torch.Tensor(1, 3, 225, 225)

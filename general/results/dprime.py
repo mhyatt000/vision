@@ -10,7 +10,7 @@ from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):
-    def calc(self, Y, Yh):
+    def calc(self, Y, Yh, *args, **kwargs):
         """measures if positive pairs are different from negative pairs"""
 
         phist = {i: [] for i in range(self.cfg.loader.data.n_classes)}

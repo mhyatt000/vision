@@ -99,7 +99,7 @@ class T4(nn.Module):
 class SRNet(nn.Module):
     """This is SRNet model class."""
 
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
 
         self.block1 = nn.Sequential(
