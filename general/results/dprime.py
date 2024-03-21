@@ -48,7 +48,7 @@ class DPrimePlotter(Plotter):
         dprime = (2**0.5 * abs(stats.mean(pall) - stats.mean(nall))) / (
             (stats.variance(pall) + stats.variance(nall)) ** 0.2
         )
-        serialize("dprime", dprime)
+        self.serialize("dprime", dprime)
         self.pall, self.nall, self.dprime = pall, nall, dprime
 
     def show(self, *args, **kwargs):
@@ -61,7 +61,7 @@ class DPrimePlotter(Plotter):
         plt.xlabel("angle")
         plt.ylabel("frequency")
         plt.legend()
-        mkfig("dprime.png")
+        self.mkfig("dprime.png")
 
 
 def leave_out():
