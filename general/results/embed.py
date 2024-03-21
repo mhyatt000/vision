@@ -17,7 +17,7 @@ class EmbedPlotter(Plotter):
             self.make_centers(ax, centers)
 
         Y = Y.view(-1).tolist()
-        labels = [CLASSES[int(y)] for y in Y]
+        labels = [self.classes[int(y)] for y in Y]
         if Yh.shape[-1] > 3:
             Yh = F.normalize(Yh[:, :3])
         scatter = ax.scatter(
@@ -35,7 +35,7 @@ class EmbedPlotter(Plotter):
     def make_centers(self, ax, centers):
         """plot cls centers"""
 
-        colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
+        colors = plt.cm.viridis(np.linspace(0, 1, self.cfg.loader.n_classes))
 
         # can only plot 3d centers... not all dimensions
         if len(centers[0]) > 3:
@@ -43,7 +43,7 @@ class EmbedPlotter(Plotter):
 
         for i, C in enumerate(centers.tolist()):
             C = [(0, c) for c in C]
-            ax.plot(*C, c=colors[i], label=CLASSES[i], lw=3)
+            ax.plot(*C, c=colors[i], label=self.classes[i], lw=3)
         ax.legend()
 
 

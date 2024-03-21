@@ -23,7 +23,7 @@ class ConfusionPlotter(Plotter):
         self.label_matrix()
 
         getname = (
-            lambda x: CLASSES[x] if x < len(CLASSES) else f"unknown{x-len(CLASSES)}"
+            lambda x: self.classes[x] if x < len(self.classes) else f"unknown{x-len(self.classes)}"
         )
         for i in range(self.confusion.shape[0]):
             for j in range(self.confusion.shape[1]):
