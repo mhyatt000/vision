@@ -91,7 +91,7 @@ class CAMPlotter(Plotter):
                 Y = Y.to(self.cfg.rank, non_blocking=True)
 
                 gcam = cam(input_tensor=X, eigen_smooth=False)
-                allgcam.append(gcam.cpu())
+                allgcam.append(gcam)
                 allX.append(X.cpu())
                 allY.append(Y.cpu())
 
