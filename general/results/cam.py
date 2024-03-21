@@ -27,6 +27,7 @@ class CAMPlotter(Plotter):
     def __init__(self, cfg, classes=None):
         super().__init__(cfg, classes)
 
+    def mk_layers(self, model):
         # hard coded for now
         main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
 
@@ -54,6 +55,8 @@ class CAMPlotter(Plotter):
         return torch.cat(_gather)
 
     def calc(self, *args, **kwargs):
+
+        self.mk_layers(model)
 
         for layer in self.layer_groups:
             allY, allgcam, allX = [], [], []  
