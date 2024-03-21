@@ -98,7 +98,7 @@ class CAMPlotter(Plotter):
 
                     print(image.min(), image.max())
 
-                    image_np = np.transpose(image.cpu().numpy() / 255, (1, 2, 0))
+                    image_np = np.transpose(image.cpu().numpy() , (1, 2, 0))
                     visualization = show_cam_on_image(image_np, gcam, use_rgb=True)
 
                     # Plotting
