@@ -60,8 +60,14 @@ class CAMPlotter(Plotter):
         dist.all_gather(_gather, x)
         return torch.cat(_gather)
 
-    def calc(self, *args, model=None, trainloader=None, **kwargs):
+    def calc(self, *args, model=None, testloader=None, **kwargs):
         self.mk_layers(model)
+
+        path = out.get_path(self.cfg)
+        os.mkdir(osp.join(path, "cam"))
+
+        for c in self.classes:
+            self.mkdir(osp.join("cam", c))
 
         for layer in self.layer_groups:
             allY, allgcam, allX = [], [], []
@@ -89,6 +95,7 @@ class CAMPlotter(Plotter):
             for i in range(allX.size(0)):
                 image = allX[i]
                 gcam = allgcam[i]
+                label = torch.argmax(allY[i], dim=0)
 
                 image_np = np.transpose(image.numpy() / 255, (1, 2, 0))
                 visualization = show_cam_on_image(image_np, gcam.numpy(), use_rgb=True)
@@ -112,9 +119,7 @@ class CAMPlotter(Plotter):
                 ) as tmpfile:
                     fname = tmpfile.name
 
-                out.get_path(self.cfg)
-                os.mkdir(osp.join(self.cfg.exp.out, "cam"))
-                fname = osp.join("cam", fname)
+                fname = osp.join("cam", self.classes[label], fname)
                 self.mkdir(fname)
 
     def show(self, *args, **kwargs):
