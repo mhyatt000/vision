@@ -127,7 +127,7 @@ class SRNet(nn.Module):
             self.block3,
             self.block4,
         )
-        self.dense = nn.Linear(512, cfg.MODEL.ODIM)
+        self.dense = nn.Linear(512, cfg.model.odim)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):

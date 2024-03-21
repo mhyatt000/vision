@@ -56,7 +56,7 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
 
         layers = cfg.model.layers
-        num_classes = cfg.loader.n_classes
+        num_classes = cfg.loader.data.n_classes
         self.cfg = cfg
 
         self.inplanes = 64
