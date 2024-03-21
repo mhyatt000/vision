@@ -69,7 +69,7 @@ class CAMPlotter(Plotter):
         os.mkdir(osp.join(path, "cam"))
 
         for c in self.classes:
-            self.mkdir(osp.join("cam", c))
+            os.mkdir(osp.join("cam", c))
 
         for layer in self.layer_groups:
             allY, allgcam, allX = [], [], []
@@ -122,7 +122,7 @@ class CAMPlotter(Plotter):
                     fname = tmpfile.name
 
                 fname = osp.join("cam", self.classes[label], fname)
-                self.mkdir(fname)
+                self.mkfig(fname)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""
