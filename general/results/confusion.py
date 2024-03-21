@@ -20,7 +20,7 @@ class ConfusionPlotter(Plotter):
 
         fname = "confusion.png"
         plt.matshow(self.confusion, cmap=plt.cm.Blues, alpha=0.3)
-        self.label_matx()
+        self.label_matrix()
 
         getname = (
             lambda x: CLASSES[x] if x < len(CLASSES) else f"unknown{x-len(CLASSES)}"
