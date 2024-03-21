@@ -149,7 +149,7 @@ def trapezoid_score(x1, y1, x2, y2):
     return width * height
 
 
-def calculate_auc(points):
+def calc_auc(points):
     points = sorted(points, key=lambda p: p[0])  # sort points by x value
     x1, y1 = points[0]
     auc = 0.0
@@ -452,6 +452,13 @@ class PlotManager:
         self.cfg = cfg
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]
 
+        self.calcs = {
+            "confusion": calc_confusion,
+            "rknn": _RKNN,
+            "dprime": calc_dprime,
+            "auc": calc_auc,
+        }
+
         self.plots = {
             "loss": self.show_loss,
             "confusion": show_confusion,
@@ -462,8 +469,6 @@ class PlotManager:
             "dprime": show_dprime,
             "auc": show_auc,
         }
-
-
 
     def label_matrix(self):
         """Set labels for plt matrix. To be implemented."""
