@@ -31,10 +31,6 @@ class CAMPlotter(Plotter):
     def mk_layers(self, model):
         # hard coded for now
 
-        if self.cfg.model.body == "resnet":
-            self.layer_groups = [model.layer1, model.layer2, model.layer3, model.layer0]
-            self.layer_groups += [self.layer_groups]
-
         if self.cfg.model.body == "ffc":
             main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
 
@@ -52,6 +48,11 @@ class CAMPlotter(Plotter):
         elif self.cfg.model.body == "srnet":
             self.layer_groups = [model.block1, model.block2, model.block3, model.block4]
             self.layer_groups += [self.layer_groups]
+
+        elif "resnet" in self.cfg.model.body :
+            self.layer_groups = [model.layer1, model.layer2, model.layer3, model.layer0]
+            self.layer_groups += [self.layer_groups]
+
 
         # selects highest value when None
         targets = None  # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
