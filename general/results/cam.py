@@ -1,6 +1,4 @@
 """pip install grad-cam"""
-import tempfile
-
 import os
 import os.path as osp
 
@@ -98,6 +96,8 @@ class CAMPlotter(Plotter):
                     gcam = G[i]
                     label = torch.argmax(Y[i].cpu(), dim=0)
 
+                    print(image.shape, gcam.shape)
+
                     image_np = np.transpose(image.cpu().numpy() / 255, (1, 2, 0))
                     visualization = show_cam_on_image(image_np, gcam, use_rgb=True)
 
@@ -114,11 +114,8 @@ class CAMPlotter(Plotter):
                         ax.axis("off")  # Turn off axis
 
                     # Save figure with a temporary filename
-                    fname = ""
-                    with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=".png", prefix="plot_", dir="./"
-                    ) as tmpfile:
-                        fname = tmpfile.name
+                    import random
+                    fname = random.randint(0, 1000)
 
                     fname = osp.join("cam", self.classes[label], fname)
                     self.mkfig(fname)
