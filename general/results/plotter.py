@@ -12,6 +12,7 @@ from general.results import out
 
 
 class Plotter:
+
     def __init__(self, cfg, classes=None):
         self.cfg = cfg
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]
@@ -73,7 +74,7 @@ class Plotter:
             json.dump(data, file, indent=4)
 
     @abstractmethod
-    def calc(self, data):
+    def calc(self, *args, **kwargs):
         """
         Calculate necessary statistics or results from data.
 
@@ -83,7 +84,7 @@ class Plotter:
         pass
 
     @abstractmethod
-    def show(self):
+    def show(self, *args, **kwargs):
         """
         Display the plot or results.
         """

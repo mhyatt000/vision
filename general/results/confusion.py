@@ -7,6 +7,7 @@ from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
+
     def calc(self, Y, Yh):
         if self.cfg.loss.body == "ce":
             self.confusion, self.acc = self.calc_confusion(Y, Yh)
@@ -14,7 +15,7 @@ class ConfusionPlotter(Plotter):
             raise NotImplementedError
             self.confusion, self.acc = arc_confusion(Y, Yh, centers)
 
-    def show(self, **kwargs):
+    def show(self, *args, **kwargs):
         """builds confusion matrix"""
 
         fname = "confusion.png"
@@ -69,7 +70,7 @@ class ConfusionPlotter(Plotter):
         self.serialize("confusion_from_cross_entropy", confusion)
         return confusion, acc
 
-    def arc_confusion(Y, Yh, centers):
+    def arc_confusion(self, Y, Yh, centers):
         """confusion matrix with arc embeddings"""
 
         norm = torch.linalg.norm
@@ -91,7 +92,7 @@ class ConfusionPlotter(Plotter):
         serialize("confusion_from_centers", confusion)
         return confusion, acc
 
-    def arc_confusion_openset(Y, Yh, centers, thresh):
+    def arc_confusion_openset(self, Y, Yh, centers, thresh):
         """confusion matrix with arc embeddings"""
 
         norm = torch.linalg.norm
@@ -143,7 +144,7 @@ class ConfusionPlotter(Plotter):
         serialize("confusion_from_centers", confusion)
         return confusion, acc
 
-    def show_RKNN_confusion(Y, Yh, rknns, logits, **kwargs):
+    def show_RKNN_confusion(self, Y, Yh, rknns, logits, **kwargs):
         """docstring"""
 
         accs = []
