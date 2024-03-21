@@ -6,7 +6,7 @@ from .plotter import Plotter
 
 class EmbedPlotter(Plotter):
 
-    def show(self, Y, Yh, *args, centers, **kwargs):
+    def show(self, Y, Yh, *args, centers=None, **kwargs):
         """plots image embeddings"""
 
         fig, ax = plt.subplots(figsize=(10, 10))
