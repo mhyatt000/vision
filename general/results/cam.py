@@ -31,6 +31,10 @@ class CAMPlotter(Plotter):
     def mk_layers(self, model):
         # hard coded for now
 
+        if self.cfg.model.body == "resnet":
+            self.layer_groups = [model.layer1, model.layer2, model.layer3, model.layer0]
+            self.layer_groups += [self.layer_groups]
+
         if self.cfg.model.body == "ffc":
             main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
 
@@ -86,7 +90,7 @@ class CAMPlotter(Plotter):
             cam = GradCAM(model=model, target_layers=layer)
 
             @tqdm.prog(self.cfg, len(testloader), desc="CAM")
-            def _cam(X, Y, PATH):
+            def _cam(X, Y):
                 X = X.to(self.cfg.rank, non_blocking=True)
                 Y = Y.to(self.cfg.rank, non_blocking=True)
                 G = cam(input_tensor=X, eigen_smooth=False)
@@ -115,12 +119,13 @@ class CAMPlotter(Plotter):
 
                     # Save figure with a temporary filename
                     import random
+                    fname = f"{random.randint(0, 100)}")
 
-                    fname = osp.join("cam", self.classes[label], PATH[i])
+                    fname = osp.join("cam", self.classes[label], fname)
                     self.mkfig(fname)
 
-            for i in iter(testloader):
-                X, Y, PATH = i.items()
+            for X,Y in testloader:
+                # X, Y, PATH = i.items()
                 _cam(X, Y)
 
     def show(self, *args, **kwargs):
