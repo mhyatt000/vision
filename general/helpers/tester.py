@@ -82,7 +82,7 @@ class Tester:
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
-        rknns = self.plot.calcs["rknn"](Y, Yh) # rknn centers depend on train data
+        rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
 
         Y, Yh = self.embed(self.testloader)
 
@@ -90,11 +90,11 @@ class Tester:
             "rknns": rknns,
         }
 
-        if cfg.loss.body in ["ARC", "PFC"]:
+        if self.cfg.loss.body in ["ARC", "PFC"]:
             kwargs["centers"] = self.get_centers()
-        if cfg.loss.body == "ARC":
+        if self.cfg.loss.body == "ARC":
             logits = (
-                self.criterion.apply_margin(Yh.to(cfg.rank), Y.to(cfg.rank))
+                self.criterion.apply_margin(Yh.to(self.cfg.rank), Y.to(self.cfg.rank))
                 .detach()
                 .cpu()
             )
@@ -107,11 +107,11 @@ class Tester:
         while not all(
             [
                 any([p in x for x in os.listdir(folder)])
-                for p in [p.lower() for p in cfg.exp.plots]
+                for p in [p.lower() for p in self.cfg.exp.plots]
             ]
         ):
-            if cfg.master:
-                for p in cfg.exp.plots:
+            if self.cfg.master:
+                for p in self.cfg.exp.plots:
                     self.plot.plots[p](Y, Yh, **kwargs)
             else:
                 time.sleep(2)
