@@ -54,7 +54,7 @@ class CAMPlotter(Plotter):
         dist.all_gather(_gather, x)
         return torch.cat(_gather)
 
-    def calc(self, *args, **kwargs):
+    def calc(self, *args, model=None, trainloader=None , **kwargs):
 
         self.mk_layers(model)
 
