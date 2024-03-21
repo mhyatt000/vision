@@ -100,14 +100,14 @@ class Tester:
             )
             kwargs["logits"] = logits
 
-        folder = out.get_path()
+        folder = out.get_path(self.cfg)
 
         # while there's not a png for all plots...
         # keeps dist.barrier() from timing out
         while not all(
             [
-                any([p in x for x in os.listdir(folder)])
-                for p in [p.lower() for p in self.cfg.exp.plots]
+                any(p.lower() in x.lower() for x in os.listdir(folder))
+                for p in self.cfg.exp.plots
             ]
         ):
             if self.cfg.master:
