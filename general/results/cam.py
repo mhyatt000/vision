@@ -38,6 +38,8 @@ class CAMPlotter(Plotter):
         local_layers = sum(local_layers, [])
         all_layers = [global_layers + local_layers]
 
+        layer_groups = [global_layers, local_layers, all_layers]
+
         # selects highest value when None
         targets = None  # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
 
@@ -52,39 +54,59 @@ class CAMPlotter(Plotter):
         return torch.cat(_gather)
 
     def calc(self, *args, **kwargs):
-        allY, allYh = [], []
 
-        # Construct the CAM object once, and then re-use it on many images:
-        cam = GradCAM(model=model, target_layers=layer)
+        for layer in self.layer_groups:
+            allY, allgcam, allX = [], [], []  
 
-        # TODO: fix this so its clean in toolbox.tqdm.py
-        # decorator was to fix printnode problem but its clunky
-        @tqdm.prog(self.cfg, len(testloader), desc="CAM")
-        def _cam(X, Y):
-            X = X.to(self.cfg.rank, non_blocking=True)
-            Y = Y.to(self.cfg.rank, non_blocking=True)
+            # Construct the CAM object once, and then re-use it on many images
+            cam = GradCAM(model=model, target_layers=layer)
 
-            Yh = self.model(X).view((Y.shape[0], -1))
-            Yh = F.normalize(Yh)
-            if self.cfg.util.machine.dist:
-                Y, Yh = self.gather(Y, cfg.rank), self.gather(Yh, cfg.rank)
-            allY.append(Y.cpu())
-            allYh.append(Yh.cpu())
+            @tqdm.prog(self.cfg, len(testloader), desc="CAM")
+            def _cam(X, Y):
+                X = X.to(self.cfg.rank, non_blocking=True)
+                Y = Y.to(self.cfg.rank, non_blocking=True)
 
-        for X, Y in testloader:
-            _cam(X, Y)
+                gcam = cam(input_tensor=X, eigen_smooth=False)
+                allgcam.append(gcam.cpu())  
+                allX.append(X.cpu())  
+                allY.append(Y.cpu())
 
-        gcam = self.cam(input_tensor=x, eigen_smooth=False)
+            for X, Y in testloader:
+                _cam(X, Y)
 
-        image = np.transpose(image.numpy() / 255, (1, 2, 0))
-        visualization = show_cam_on_image(image, gcam, use_rgb=True)
+            allY = torch.cat(allY, dim=0)
+            allgcam = torch.cat(allgcam, dim=0)
+            allX = torch.cat(allX, dim=0)
 
-        # plt plot the image and visualization
-        fig, ax = plt.subplots(1, 3)
-        ax[0].imshow(image)
-        ax[1].imshow(visualization)
-        ax[2].imshow(gcam, cmap="jet", alpha=0.5)
-        plt.show()
+            for i in range(allX.size(0)):
+                image = allX[i]
+                gcam = allgcam[i]
 
-        # You can also get the model outputs without having to re-inference
-        model_outputs = cam.outputs
+                image_np = np.transpose(image.numpy() / 255, (1, 2, 0))
+                visualization = show_cam_on_image(image_np, gcam.numpy(), use_rgb=True)
+
+                # Plotting
+                fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+                axs[0].imshow(image_np)
+                axs[0].set_title('Original Image')
+                axs[1].imshow(visualization)
+                axs[1].set_title('CAM Visualization')
+                axs[2].imshow(gcam.numpy(), cmap="jet", alpha=0.5)
+                axs[2].set_title('CAM Heatmap')
+
+                for ax in axs:
+                    ax.axis('off')  # Turn off axis
+
+                # Save figure with a temporary filename
+                fname = ''
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png', prefix='plot_', dir='./') as tmpfile:
+                    fname = tmpfile.name
+
+                out.get_path(self.cfg)
+                os.mkdir(osp.join(self.cfg.exp.out, 'cam'))
+                fname = osp.join('cam',fname)
+                self.mkdir(fname)
+
+    def show(self, *args, **kwargs):
+        """images are already plotted in calc because it is memory intensive"""
+        pass
