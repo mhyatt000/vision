@@ -24,7 +24,7 @@ class PlotManager(Plotter):
     def __call__(self, *args, **kwargs):
         """Calculate and shows all plots."""
 
-        for p in cfg.exp.plots:
+        for p in self.cfg.exp.plots:
             if p in self.plots:
                 p(*args, **kwargs)
             else:
