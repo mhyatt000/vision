@@ -62,6 +62,7 @@ class CAMPlotter(Plotter):
         dist.all_gather(_gather, x)
         return torch.cat(_gather)
 
+
     def calc(self, *args, model=None, testloader=None, **kwargs):
         self.mk_layers(model)
 
@@ -73,7 +74,10 @@ class CAMPlotter(Plotter):
             print('cam folder already exists')
 
         for c in self.classes:
-            os.mkdir(osp.join("cam", c))
+            try:
+                os.mkdir(osp.join(path, c))
+            except:
+                print(f"{c} already exists")
 
         for layer in self.layer_groups:
             allY, allgcam, allX = [], [], []
