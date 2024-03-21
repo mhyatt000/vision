@@ -38,36 +38,52 @@ class CAMPlotter(Plotter):
         local_layers = sum(local_layers, [])
         all_layers = [global_layers + local_layers]
 
+        # selects highest value when None
+        targets = None  # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
+
+    @staticmethod
+    def gather(x, device):
+        """simple all gather manuver"""
+
+        _gather = [
+            torch.zeros(x.shape, device=device) for _ in range(dist.get_world_size())
+        ]
+        dist.all_gather(_gather, x)
+        return torch.cat(_gather)
+
+    def calc(self, *args, **kwargs):
+        allY, allYh = [], []
+
         # Construct the CAM object once, and then re-use it on many images:
         cam = GradCAM(model=model, target_layers=layer)
 
-        # selects highest value when None
-        targets = None # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
+        # TODO: fix this so its clean in toolbox.tqdm.py
+        # decorator was to fix printnode problem but its clunky
+        @tqdm.prog(self.cfg, len(testloader), desc="CAM")
+        def _cam(X, Y):
+            X = X.to(self.cfg.rank, non_blocking=True)
+            Y = Y.to(self.cfg.rank, non_blocking=True)
 
-    def calc(self, X,Y, *args, **kwargs):
+            Yh = self.model(X).view((Y.shape[0], -1))
+            Yh = F.normalize(Yh)
+            if self.cfg.util.machine.dist:
+                Y, Yh = self.gather(Y, cfg.rank), self.gather(Yh, cfg.rank)
+            allY.append(Y.cpu())
+            allYh.append(Yh.cpu())
 
-        # Note: input_tensor can be a batch tensor with several images!
-        # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
-        grayscale_cam = [ cam(input_tensor=x, eigen_smooth=False, targets=) ]
+        for X, Y in testloader:
+            _cam(X, Y)
 
-        fig, ax = plt.subplots(1, 5)
-        for ax, gcam in zip(ax, grayscale_cam):
-            ax.imshow(gcam, cmap="jet")
-        plt.show()
-
-        # In this example grayscale_cam has only one image in the batch:
-        # grayscale_cam = grayscale_cam[0, :]
+        gcam = self.cam(input_tensor=x, eigen_smooth=False)
 
         image = np.transpose(image.numpy() / 255, (1, 2, 0))
-        visualization = show_cam_on_image(image, grayscale_cam, use_rgb=True)
-
-        print(type(visualization))
+        visualization = show_cam_on_image(image, gcam, use_rgb=True)
 
         # plt plot the image and visualization
         fig, ax = plt.subplots(1, 3)
         ax[0].imshow(image)
         ax[1].imshow(visualization)
-        ax[2].imshow(grayscale_cam, cmap="jet", alpha=0.5)
+        ax[2].imshow(gcam, cmap="jet", alpha=0.5)
         plt.show()
 
         # You can also get the model outputs without having to re-inference
