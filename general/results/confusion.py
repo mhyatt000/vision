@@ -7,7 +7,7 @@ from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
-    def calc(self, Y, Yh):
+    def calc(self, Y, Yh, *args, **kwargs):
         if self.cfg.loss.body == "ce":
             self.confusion, self.acc = self.calc_confusion(Y, Yh)
         else:
