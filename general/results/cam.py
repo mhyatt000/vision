@@ -92,7 +92,7 @@ class CAMPlotter(Plotter):
 
                 G = cam(input_tensor=X, eigen_smooth=False)
 
-                for i in range(allX.size(0)):
+                for i in range(X.size(0)):
                     image = X[i]
                     gcam = G[i]
                     label = torch.argmax(Y[i], dim=0)
