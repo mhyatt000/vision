@@ -447,24 +447,23 @@ def show_dprime(Y, Yh, *args, **kwargs):
     mkfig("dprime.png")
 
 
-"""
-PLOTS = {
-    "LOSS": show_loss,
-    "CONFUSION": show_confusion,
-    "RKNN": show_RKNN_confusion,
-    "TSNE": show_tsne,
-    "PCA": show_pca,
-    "EMBED": show_embed,
-    "DPRIME": show_dprime,
-    "AUC": show_auc,
-}
-"""
-
-
 class PlotManager:
     def __init__(self, cfg, classes=None):
         self.cfg = cfg
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]
+
+        self.plots = {
+            "LOSS": show_loss,
+            "CONFUSION": show_confusion,
+            "RKNN": show_RKNN_confusion,
+            "TSNE": show_tsne,
+            "PCA": show_pca,
+            "EMBED": show_embed,
+            "DPRIME": show_dprime,
+            "AUC": show_auc,
+        }
+
+
 
     def label_matrix(self):
         """Set labels for plt matrix. To be implemented."""

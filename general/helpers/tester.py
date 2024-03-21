@@ -15,14 +15,11 @@ from general.results import out, plot
 from general.toolbox import tqdm
 
 
-def gather(x):
+def gather(x, device):
     """simple all gather manuver"""
 
-    if not cfg.util.machine.dist:
-        return x
-
     _gather = [
-        torch.zeros(x.shape, device=cfg.rank) for _ in range(dist.get_world_size())
+        torch.zeros(x.shape, device=device) for _ in range(dist.get_world_size())
     ]
     dist.all_gather(_gather, x)
     return torch.cat(_gather)
@@ -45,6 +42,7 @@ class Tester:
             if "module" in self.criterion.__dict__
             else self.criterion
         )
+        self.plot = self.trainer.plot
 
     def embed(self, loader):
         """docstring"""
@@ -61,7 +59,8 @@ class Tester:
             with torch.no_grad():
                 Yh = self.model(X).view((Y.shape[0], -1))
                 Yh = F.normalize(Yh)
-                Y, Yh = gather(Y), gather(Yh)
+                if cfg.util.machine.dist:
+                    Y, Yh = gather(Y, cfg.rank), gather(Yh, cfg.rank)
                 allY.append(Y.cpu())
                 allYh.append(Yh.cpu())
 
@@ -82,7 +81,7 @@ class Tester:
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
-        rknns = plot._RKNN(Y, Yh)
+        rknns = self.plot._RKNN(Y, Yh)
 
         Y, Yh = self.embed(self.loader)
 
@@ -90,9 +89,9 @@ class Tester:
             "rknns": rknns,
         }
 
-        if cfg.LOSS.BODY in ["ARC", "PFC"]:
+        if cfg.loss.body in ["ARC", "PFC"]:
             kwargs["centers"] = self.get_centers()
-        if cfg.LOSS.BODY == "ARC":
+        if cfg.loss.body == "ARC":
             logits = (
                 self.criterion.apply_margin(Yh.to(cfg.rank), Y.to(cfg.rank))
                 .detach()
@@ -101,16 +100,17 @@ class Tester:
             kwargs["logits"] = logits
 
         folder = out.get_path()
+
         # while there's not a png for all plots...
         # keeps dist.barrier() from timing out
         while not all(
             [
                 any([p in x for x in os.listdir(folder)])
-                for p in [p.lower() for p in cfg.EXP.PLOTS]
+                for p in [p.lower() for p in cfg.exp.plots]
             ]
         ):
             if cfg.master:
-                for p in cfg.EXP.PLOTS:
-                    plot.PLOTS[p](Y, Yh, **kwargs)
+                for p in cfg.exp.plots:
+                    self.plot.plots[p](Y, Yh, **kwargs)
             else:
                 time.sleep(2)
