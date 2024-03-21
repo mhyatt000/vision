@@ -106,7 +106,7 @@ class CAMPlotter(Plotter):
                     axs[0].set_title("Original Image")
                     axs[1].imshow(visualization)
                     axs[1].set_title("CAM Visualization")
-                    axs[2].imshow(gcam.numpy(), cmap="jet", alpha=0.5)
+                    axs[2].imshow(gcam, cmap="jet", alpha=0.5)
                     axs[2].set_title("CAM Heatmap")
 
                     for ax in axs:
