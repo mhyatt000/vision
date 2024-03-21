@@ -453,14 +453,14 @@ class PlotManager:
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]
 
         self.plots = {
-            "LOSS": show_loss,
-            "CONFUSION": show_confusion,
-            "RKNN": show_RKNN_confusion,
-            "TSNE": show_tsne,
-            "PCA": show_pca,
-            "EMBED": show_embed,
-            "DPRIME": show_dprime,
-            "AUC": show_auc,
+            "loss": self.show_loss,
+            "confusion": show_confusion,
+            "rknn": show_RKNN_confusion,
+            "tsne": show_tsne,
+            "pca": show_pca,
+            "embed": show_embed,
+            "dprime": show_dprime,
+            "auc": show_auc,
         }
 
 
