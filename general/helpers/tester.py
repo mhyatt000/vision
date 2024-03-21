@@ -81,15 +81,15 @@ class Tester:
         print("begin eval loop...")
 
         self.model.eval()
-        Y, Yh = self.embed(self.trainloader)
-        rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
+
+        # Y, Yh = self.embed(self.trainloader)
+        # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
 
         Y, Yh = self.embed(self.testloader)
 
-        kwargs = {
-            "rknns": rknns,
-        }
+        # kwargs = { "rknns": rknns }
 
+        """
         if self.cfg.loss.body in ["ARC", "PFC"]:
             kwargs["centers"] = self.get_centers()
         if self.cfg.loss.body == "ARC":
@@ -99,6 +99,7 @@ class Tester:
                 .cpu()
             )
             kwargs["logits"] = logits
+        """
 
         if self.cfg.master:
             for p in cfg.exp.plots:
