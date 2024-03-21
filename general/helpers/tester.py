@@ -88,6 +88,7 @@ class Tester:
         Y, Yh = self.embed(self.testloader)
 
         # kwargs = { "rknns": rknns }
+        kwargs = {}
 
         """
         if self.cfg.loss.body in ["ARC", "PFC"]:
