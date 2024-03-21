@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import torch
 
 from .all import *
 from .plotter import Plotter
@@ -16,6 +17,8 @@ class EmbedPlotter(Plotter):
         if centers:
             self.make_centers(ax, centers)
 
+        # use argmax to turn one hot into class labels
+        Y = torch.argmax(Y, dim=-1)
         Y = Y.view(-1).tolist()
         labels = [self.classes[int(y)] for y in Y]
         if Yh.shape[-1] > 3:
