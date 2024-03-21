@@ -47,7 +47,7 @@ class AUCPlotter(Plotter):
                 fprs.append((fp / (fp + tn)))
 
             points = [(x1, y1) for x1, y1 in zip(fprs, tprs)]
-            auc = calculate_auc(points)
+            auc = calc(points)
             ax.plot(fprs, tprs, label=f"{CLASSES[i]:15s} AUC:{auc:.4f}")
 
         ax.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")

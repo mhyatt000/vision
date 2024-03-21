@@ -18,7 +18,7 @@ class PlotManager(Plotter):
             # "pca": show_pca,
             "embed": EmbedPlotter(cfg, self.classes),
             "dprime": DPrimePlotter(cfg, self.classes),
-            "auc": AUCPlotter(cfg, self.classes),
+            # "auc": AUCPlotter(cfg, self.classes),
         }
 
     def __call__(self, *args, **kwargs):

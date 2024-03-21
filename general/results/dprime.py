@@ -8,6 +8,7 @@ from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):
+
     def calc(Y, Yh):
         """measures if positive pairs are different from negative pairs"""
 
@@ -48,7 +49,7 @@ class DPrimePlotter(Plotter):
         serialize("dprime", dprime)
         self.pall, self.nall, self.dprime = pall, nall, dprime
 
-    def show(Y, Yh, *args, **kwargs):
+    def show( *args, **kwargs):
         """Shows dprime plot."""
 
         plt.hist(self.pall, label="positive", bins=30, alpha=0.5)

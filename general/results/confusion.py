@@ -3,13 +3,14 @@ from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
+
     def calc(self, Y, Yh):
-        if self.cfg.loss.body == "CE":
-            self.confusion, self.acc = calc_confusion(Y, Yh)
+        if self.cfg.loss.body == "ce":
+            self.confusion, self.acc = self.calc_confusion(Y, Yh)
         else:
             self.confusion, self.acc = arc_confusion(Y, Yh, centers)
 
-    def show(Y, Yh, centers=None, **kwargs):
+    def show(**kwargs):
         """builds confusion matrix"""
 
         fname = "confusion.png"
