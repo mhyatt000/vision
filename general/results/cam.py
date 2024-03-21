@@ -122,7 +122,10 @@ class CAMPlotter(Plotter):
                     self.mkfig(fname)
 
             for X, Y in testloader:
-                _cam(X, Y)
+                try:
+                    _cam(X, Y)
+                except Exception as ex:
+                    print(ex)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""
