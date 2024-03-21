@@ -66,8 +66,8 @@ class CAMPlotter(Plotter):
         self.mk_layers(model)
 
         try:
-            path = out.get_path(self.cfg)
-            os.mkdir(osp.join(path, "cam"))
+            path = osp.join(out.get_path(self.cfg),'cam')
+            os.mkdir(path)
         except FileExistsError as ex:
             print(ex)
             print('cam folder already exists')
