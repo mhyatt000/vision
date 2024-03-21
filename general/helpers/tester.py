@@ -102,7 +102,7 @@ class Tester:
         """
 
         if self.cfg.master:
-            self.plot.(Y, Yh, **kwargs)
+            self.plot(Y, Yh, **kwargs)
             done = torch.tensor([1], dtype=torch.int)  # 1 indicates completion
 
         else:
