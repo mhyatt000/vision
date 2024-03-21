@@ -34,6 +34,7 @@ class Tester:
         self.model = trainer.model
         self.loaders = trainer.loaders
         self.trainloader = self.loaders["train"]
+        self.testloader = self.loaders["test"]
 
         # extract from DDP
         self.criterion = trainer.criterion
@@ -44,14 +45,14 @@ class Tester:
         )
         self.plot = trainer.plot
 
-    def embed(self, loader):
+    def embed(self, testloader):
         """docstring"""
 
         allY, allYh = [], []
 
         # TODO: fix this so its clean in toolbox.tqdm.py
         # decorator was to fix printnode problem but its clunky
-        @tqdm.prog(self.cfg, len(loader), desc="Embed")
+        @tqdm.prog(self.cfg, len(testloader), desc="Embed")
         def _embed(X, Y):
             X = X.to(self.cfg.rank, non_blocking=True)
             Y = Y.to(self.cfg.rank, non_blocking=True)
@@ -64,7 +65,7 @@ class Tester:
                 allY.append(Y.cpu())
                 allYh.append(Yh.cpu())
 
-        for X, Y in loader:
+        for X, Y in testloader:
             _embed(X, Y)
 
         torch.cuda.empty_cache()
@@ -81,9 +82,9 @@ class Tester:
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
-        rknns = self.plot.calcs["rknn"](Y, Yh)
+        rknns = self.plot.calcs["rknn"](Y, Yh) # rknn centers depend on train data
 
-        Y, Yh = self.embed(self.loader)
+        Y, Yh = self.embed(self.testloader)
 
         kwargs = {
             "rknns": rknns,
