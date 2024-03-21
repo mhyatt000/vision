@@ -1,4 +1,5 @@
 import os
+import hydra
 import os.path as osp
 from os.path import join
 
@@ -233,6 +234,8 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
+        print(f"WBLOT image shape: {image.shape}, label shape: {label.shape}")
+
         if self.cfg.util.machine.device == "cuda":
             return image.pin_memory(), label.pin_memory()
         else:
@@ -267,3 +270,24 @@ class PinMemoryWrapper(torch.utils.data.DataLoader):
     def __iter__(self):
         return ((x.pin_memory(), y.pin_memory()) for x, y in self.loader.__iter__())
 
+
+@hydra.main(config_path="../../../config", config_name="main")
+def main(cfg):
+    wb = WBLOT(cfg)
+    i=0
+
+    X,Y = [],[]
+    for x,y in wb:
+        print(x.shape, y.shape)
+        X.append(x)
+        Y.append(y)
+        i+= 1
+        if i > 10:
+            break
+
+    X = torch.stack(X)
+    Y = torch.stack(Y)
+    print(X.shape, Y.shape)
+
+if __name__ == "__main__":
+    main()
