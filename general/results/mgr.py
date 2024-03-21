@@ -26,7 +26,7 @@ class PlotManager(Plotter):
 
         for p in self.cfg.exp.plots:
             if p in self.plots:
-                p(*args, **kwargs)
+                self.plots[p](*args, **kwargs)
             else:
                 print(f"Plotter of kind {p} not found")
         # self.show_loss()
