@@ -35,8 +35,8 @@ class CAMPlotter(Plotter):
             main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
 
             real = lambda x: not isinstance(x, nn.Identity)
-            global_layers = [[y.relu_g for y in x if not real(y)] for x in main_layers]
-            local_layers = [[y.relu_l for y in x if not real(y)] for x in main_layers]
+            global_layers = [[y.relu_g for y in x if real(y)] for x in main_layers]
+            local_layers = [[y.relu_l for y in x if real(y)] for x in main_layers]
 
             global_layers = sum(global_layers, [])
             local_layers = sum(local_layers, [])
