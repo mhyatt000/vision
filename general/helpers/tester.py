@@ -82,17 +82,18 @@ class Tester:
 
         self.model.eval()
 
-        # Y, Yh = self.embed(self.trainloader)
-        # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
-
-        self.plot.plots['cam'](**kwargs)
-        Y, Yh = self.embed(self.testloader)
-
         # kwargs = { "rknns": rknns }
         kwargs = {
             "testloader": self.testloader,
             "model": self.model,
         }
+
+
+        # Y, Yh = self.embed(self.trainloader)
+        # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
+
+        self.plot.plots['cam'](**kwargs)
+        Y, Yh = self.embed(self.testloader)
 
         """
         if self.cfg.loss.body in ["ARC", "PFC"]:
