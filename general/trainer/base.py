@@ -13,7 +13,7 @@ from general.helpers import Checkpointer, Stopper, make_scheduler
 from general.losses import make_loss
 from general.models import build_model
 from general.optim import make_optimizer
-from general.results.plot import PlotManager
+from general.results import PlotManager
 from general.toolbox import gpu, tqdm
 
 
