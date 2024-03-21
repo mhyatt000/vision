@@ -13,7 +13,7 @@ from general.helpers import Checkpointer, Stopper, make_scheduler
 from general.losses import make_loss
 from general.models import build_model
 from general.optim import make_optimizer
-from general.results import out, PlotManager
+from general.results import PlotManager, out
 from general.toolbox import gpu, tqdm
 
 
@@ -52,8 +52,8 @@ class Trainer:
         self.loader = self.loaders["train"]
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
-        
-        # loader dataset is a subset of the dataset class 
+
+        # loader dataset is a subset of the dataset class
         self.plot = PlotManager(cfg, classes=self.loader.dataset.dataset.classes)
 
         """ what is ema -> exponential moving average """
@@ -131,7 +131,10 @@ class Trainer:
         X = X.to(self.cfg.rank, non_blocking=True)
         Y = Y.to(self.cfg.rank, non_blocking=True)
 
-        output = self.model(X, mode="default")
+        if cfg.model.body == "ffc":
+            output = self.model(X, mode="default")
+        else:
+            output = self.model(X)
         # embed, output = out_dict.values()
 
         # Yh = checkpoint_sequential(self.model, 4, X) # gradient checkpointing
