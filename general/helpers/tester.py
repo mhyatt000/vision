@@ -42,7 +42,7 @@ class Tester:
             if "module" in self.criterion.__dict__
             else self.criterion
         )
-        self.plot = self.trainer.plot
+        self.plot = trainer.plot
 
     def embed(self, loader):
         """docstring"""
