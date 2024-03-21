@@ -81,7 +81,7 @@ class Tester:
 
         self.model.eval()
         Y, Yh = self.embed(self.trainloader)
-        rknns = self.plot.calc["rknn"](Y, Yh)
+        rknns = self.plot.calcs["rknn"](Y, Yh)
 
         Y, Yh = self.embed(self.loader)
 
