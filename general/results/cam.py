@@ -43,7 +43,7 @@ class CAMPlotter(Plotter):
             all_layers = [global_layers + local_layers]
 
             self.layer_groups = [global_layers, local_layers]
-            #  self.layer_groups = [[model.relu]]
+            self.layer_groups = [[model.relu, model.fc]]
 
         elif self.cfg.model.body == "srnet":
             self.layer_groups = [model.block1, model.block2, model.block3, model.block4]
@@ -122,10 +122,7 @@ class CAMPlotter(Plotter):
                     self.mkfig(fname)
 
             for X, Y in testloader:
-                try:
                     _cam(X, Y)
-                except Exception as ex:
-                    print(ex)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""
