@@ -45,8 +45,8 @@ class DPrimePlotter(Plotter):
             pall += [float(x) if not torch.isnan(x) else -1 for x in phist[c][:1000]]
             nall += [float(x) for x in nhist[c][:1000]]
 
-        dprime = (2**0.5 * abs(mean(pall) - mean(nall))) / (
-            (variance(pall) + variance(nall)) ** 0.2
+        dprime = (2**0.5 * abs(stats.mean(pall) - stats.mean(nall))) / (
+            (stats.variance(pall) + stats.variance(nall)) ** 0.2
         )
         serialize("dprime", dprime)
         self.pall, self.nall, self.dprime = pall, nall, dprime
