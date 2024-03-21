@@ -22,13 +22,12 @@ def main(cfg):
     print("CONFIG:", cfg.exp.name, "\n")
 
     if cfg.util.machine.dist:
-        print( "Distributed training with", cfg.world_size, "nodes and", cfg.world_size, "gpus per node.",)
-        print("World rank:", cfg.world_rank, "Node rank:", cfg.rank)
-        print("Node name:", cfg.nodename, "Node number:", cfg.nodenumber)
+        # print( "Distributed with", cfg.world_size, "nodes and", cfg.world_size, "gpus per node.",)
 
         time.sleep(cfg.world_rank / 32)
         print(
-            f"Rank {cfg.world_rank:2d} of {cfg.world_size} online | {cfg.rank} of 4 on {cfg.nodename} {cfg.nodenumber}",
+            f"Rank {cfg.world_rank:2d} of {cfg.world_size} online |" 
+            f"{cfg.rank} of {cfg.world_size/len(cfg.nodes)} on {cfg.nodename} {cfg.nodenumber}",
             force=True,
         )
 
