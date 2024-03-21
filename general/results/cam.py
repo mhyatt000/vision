@@ -86,10 +86,9 @@ class CAMPlotter(Plotter):
             cam = GradCAM(model=model, target_layers=layer)
 
             @tqdm.prog(self.cfg, len(testloader), desc="CAM")
-            def _cam(X, Y):
+            def _cam(X, Y, PATH):
                 X = X.to(self.cfg.rank, non_blocking=True)
                 Y = Y.to(self.cfg.rank, non_blocking=True)
-
                 G = cam(input_tensor=X, eigen_smooth=False)
 
                 for i in range(X.size(0)):
@@ -116,12 +115,11 @@ class CAMPlotter(Plotter):
 
                     # Save figure with a temporary filename
                     import random
-                    fname = f'{random.randint(0, 1000)}'
 
-                    fname = osp.join("cam", self.classes[label], fname)
+                    fname = osp.join("cam", self.classes[label], PATH[i])
                     self.mkfig(fname)
 
-            for X, Y in testloader:
+            for X, Y, PATH in testloader.items():
                     _cam(X, Y)
 
     def show(self, *args, **kwargs):

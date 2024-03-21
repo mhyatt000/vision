@@ -1,8 +1,8 @@
 import os
-import hydra
 import os.path as osp
 from os.path import join
 
+import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -237,7 +237,11 @@ class WBLOT(Dataset):
         if self.cfg.util.machine.device == "cuda":
             return image.pin_memory(), label.pin_memory()
         else:
-            return image, label
+            return {
+                "image": image,
+                "label": label,
+                "path": img_path,
+            }
 
 
 class AugmenterWrapper(torch.utils.data.DataLoader):
@@ -267,5 +271,3 @@ class PinMemoryWrapper(torch.utils.data.DataLoader):
 
     def __iter__(self):
         return ((x.pin_memory(), y.pin_memory()) for x, y in self.loader.__iter__())
-
-
