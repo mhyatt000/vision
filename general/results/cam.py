@@ -119,8 +119,9 @@ class CAMPlotter(Plotter):
                     fname = osp.join("cam", self.classes[label], PATH[i])
                     self.mkfig(fname)
 
-            for X, Y, PATH in testloader.items():
-                    _cam(X, Y)
+            for i in iter(testloader):
+                X, Y, PATH = i.items()
+                _cam(X, Y)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""
