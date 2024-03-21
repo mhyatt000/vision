@@ -50,31 +50,6 @@ def _RKNN(Y, Yh):
     return rknns
 
 
-def make_centers(ax, centers):
-    """plot cls centers"""
-
-    colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
-
-    # compress
-    if len(centers[0]) > 3:
-        centers = F.normalize(centers[:, :3])
-
-    for i, C in enumerate(centers.tolist()):
-        C = [(0, c) for c in C]
-        ax.plot(*C, c=colors[i], label=CLASSES[i], lw=3)
-    ax.legend()
-
-
-def make_sphere(ax):
-    """plot a sphere"""
-
-    r = 1
-    pi, cos, sin = np.pi, np.cos, np.sin
-    phi, theta = np.mgrid[0.0:pi:100j, 0.0 : 2.0 * pi : 100j]
-    x = r * sin(phi) * cos(theta)
-    y = r * sin(phi) * sin(theta)
-    z = r * cos(phi)
-    ax.plot_surface(x, y, z, rstride=1, cstride=1, color="w", alpha=0.3, linewidth=0)
 
 
 def show_tsne(Y, Yh, *args, **kwargs):
