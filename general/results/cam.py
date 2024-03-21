@@ -39,7 +39,7 @@ class CAMPlotter(Plotter):
         local_layers = sum(local_layers, [])
         all_layers = [global_layers + local_layers]
 
-        layer_groups = [global_layers, local_layers, all_layers]
+        self.layer_groups = [global_layers, local_layers, all_layers]
 
         # selects highest value when None
         targets = None  # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
