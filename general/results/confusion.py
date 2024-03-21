@@ -8,14 +8,15 @@ class ConfusionPlotter(Plotter):
         if self.cfg.loss.body == "ce":
             self.confusion, self.acc = self.calc_confusion(Y, Yh)
         else:
+            raise NotImplementedError
             self.confusion, self.acc = arc_confusion(Y, Yh, centers)
 
-    def show(**kwargs):
+    def show(self, **kwargs):
         """builds confusion matrix"""
 
         fname = "confusion.png"
         plt.matshow(self.confusion, cmap=plt.cm.Blues, alpha=0.3)
-        label_matx()
+        self.label_matx()
 
         getname = (
             lambda x: CLASSES[x] if x < len(CLASSES) else f"unknown{x-len(CLASSES)}"
@@ -45,13 +46,13 @@ class ConfusionPlotter(Plotter):
         plt.setp(plt.xticks()[1], rotation=30)
         plt.setp(plt.yticks()[1], rotation=30)
         plt.tight_layout()
-        mkfig(fname, legend=False)
+        self.mkfig(fname, legend=False)
 
         # for thresh in [55,60,65,70,75]:
         # confusion, acc =  arc_confusion_openset(Y, Yh, centers,thresh)
         # _plot_confusion(confusion,acc,f'confusion_openset{thresh}.png')
 
-    def calc_confusion(Y, Yh):
+    def calc_confusion(self, Y, Yh):
         """calculate confusion matrix"""
 
         confusion = torch.zeros((self.cfg.loader.nclasses, self.cfg.loader.nclasses))
@@ -60,7 +61,7 @@ class ConfusionPlotter(Plotter):
             confusion[y, yh] += 1
 
         acc = confusion.diag().sum() / confusion.sum(1).sum()
-        serialize("confusion_from_cross_entropy", confusion)
+        self.serialize("confusion_from_cross_entropy", confusion)
         return confusion, acc
 
     def arc_confusion(Y, Yh, centers):
