@@ -271,3 +271,13 @@ class PinMemoryWrapper(torch.utils.data.DataLoader):
 
     def __iter__(self):
         return ((x.pin_memory(), y.pin_memory()) for x, y in self.loader.__iter__())
+
+
+# @hydra.main(config_path="../../../config", config_name="main")
+def main(cfg):
+
+    w = WBLOT(cfg)
+    print(type(next(iter(w))))
+
+if __name__ == "__main__":
+    main()
