@@ -43,9 +43,7 @@ class CAMPlotter(Plotter):
             all_layers = [global_layers + local_layers]
 
             self.layer_groups = [global_layers, local_layers, all_layers]
-            print(self.layer_groups[0])
-            print(self.layer_groups[1])
-            print(self.layer_groups[2])
+            self.layer_groups = [[model.relu]]
 
         elif self.cfg.model.body == "srnet":
             self.layer_groups = [model.block1, model.block2, model.block3, model.block4]
