@@ -21,11 +21,14 @@ class PlotManager(Plotter):
             "auc": AUCPlotter(cfg, self.classes),
         }
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """Calculate and shows all plots."""
 
-        for p in self.plots:
-            p()
+        for p in cfg.exp.plots:
+            if p in self.plots:
+                p(*args, **kwargs)
+            else:
+                print(f"Plotter of kind {p} not found")
         # self.show_loss()
         # self.show_accuracy()
 
