@@ -41,21 +41,15 @@ class CAMPlotter(Plotter):
         # Construct the CAM object once, and then re-use it on many images:
         cam = GradCAM(model=model, target_layers=layer)
 
-        # We have to specify the target we want to generate
-        # the Class Activation Maps for.
-        # If targets is None, the highest scoring category
-        # will be used for every image in the batch.
-        # Here we use ClassifierOutputTarget, but you can define your own custom targets
-        # That are, for example, combinations of categories, or specific outputs in a non standard model.
-
-        targets = [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
+        # selects highest value when None
+        targets = None # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
 
     def calc(self, X,Y, *args, **kwargs):
 
         # Note: input_tensor can be a batch tensor with several images!
         # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
         grayscale_cam = [
-            cam(input_tensor=x, eigen_smooth=False, targets=[t])[0] for t in targets
+            cam(input_tensor=x, eigen_smooth=False, targets=[t]) for t in targets
         ]
 
         fig, ax = plt.subplots(1, 5)

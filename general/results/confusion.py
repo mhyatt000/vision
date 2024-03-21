@@ -37,8 +37,8 @@ class ConfusionPlotter(Plotter):
                     size="xx-large",
                 )
 
-        places = ([i for i in range(len(self.confusion))],)
-        names = ([getname(i) for i in range(len(self.confusion))],)
+        places = [i for i in range(len(self.confusion))]
+        names = [getname(i) for i in range(len(self.confusion))]
 
         plt.xticks(places, names)
         plt.yticks(place, names)
