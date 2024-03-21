@@ -52,7 +52,9 @@ class Trainer:
         self.loader = self.loaders["train"]
 
         self.clip = lambda: torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
-        self.plot = PlotManager(cfg, classes=self.loader.dataset.classes)
+        
+        # loader dataset is a subset of the dataset class 
+        self.plot = PlotManager(cfg, classes=self.loader.dataset.dataset.classes)
 
         """ what is ema -> exponential moving average """
 
