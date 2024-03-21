@@ -28,7 +28,7 @@ class EmbedPlotter(Plotter):
         # plt.legend(*scatter.legend_elements())
         self.mkfig("embed.png")
 
-    def calc(self):
+    def calc(self, *args, **kwargs):
         """Embeddings are already calculated by the model Tester"""
         pass
 
