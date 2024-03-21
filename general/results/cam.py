@@ -115,7 +115,7 @@ class CAMPlotter(Plotter):
 
                     # Save figure with a temporary filename
                     import random
-                    fname = random.randint(0, 1000)
+                    fname = f'{random.randint(0, 1000)}'
 
                     fname = osp.join("cam", self.classes[label], fname)
                     self.mkfig(fname)
