@@ -59,7 +59,7 @@ class Tester:
             with torch.no_grad():
                 Yh = self.model(X).view((Y.shape[0], -1))
                 Yh = F.normalize(Yh)
-                if cfg.util.machine.dist:
+                if self.cfg.util.machine.dist:
                     Y, Yh = gather(Y, cfg.rank), gather(Yh, cfg.rank)
                 allY.append(Y.cpu())
                 allYh.append(Yh.cpu())
