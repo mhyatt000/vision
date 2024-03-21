@@ -12,9 +12,9 @@ class DPrimePlotter(Plotter):
     def calc(Y, Yh):
         """measures if positive pairs are different from negative pairs"""
 
-        phist = {i: [] for i in range(cfg.LOADER.NCLASSES)}
-        nhist = {i: [] for i in range(cfg.LOADER.NCLASSES)}
-        C = set(range(cfg.LOADER.NCLASSES))
+        phist = {i: [] for i in range(cfg.loader.n_classes)}
+        nhist = {i: [] for i in range(cfg.loader.n_classes)}
+        C = set(range(cfg.loader.n_classes))
 
         Y = Y.view(-1)
 
