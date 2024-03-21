@@ -3,12 +3,13 @@ import statistics as stats
 from os.path import expanduser
 
 import matplotlib.pyplot as plt
+import torch
+import torch.nn.functional as F
 
 from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):
-
     def calc(Y, Yh):
         """measures if positive pairs are different from negative pairs"""
 
@@ -49,7 +50,7 @@ class DPrimePlotter(Plotter):
         serialize("dprime", dprime)
         self.pall, self.nall, self.dprime = pall, nall, dprime
 
-    def show( *args, **kwargs):
+    def show(*args, **kwargs):
         """Shows dprime plot."""
 
         plt.hist(self.pall, label="positive", bins=30, alpha=0.5)

@@ -1,9 +1,12 @@
+import matplotlib.pyplot as plt
 import torch
+import torch.nn.functional as F
+from matplotlib import pyplot as plt
+
 from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
-
     def calc(self, Y, Yh):
         if self.cfg.loss.body == "ce":
             self.confusion, self.acc = self.calc_confusion(Y, Yh)
@@ -55,7 +58,9 @@ class ConfusionPlotter(Plotter):
     def calc_confusion(self, Y, Yh):
         """calculate confusion matrix"""
 
-        confusion = torch.zeros((self.cfg.loader.data.n_classes, self.cfg.loader.data.n_classes))
+        confusion = torch.zeros(
+            (self.cfg.loader.data.n_classes, self.cfg.loader.data.n_classes)
+        )
         Y, Yh = torch.argmax(Y, 1), torch.argmax(Yh, 1)
         for y, yh in zip(Y.view(-1), Yh.view(-1)):
             confusion[y, yh] += 1
@@ -76,7 +81,9 @@ class ConfusionPlotter(Plotter):
         # # Y = torch.argmax(Y, 1) # not needed to argmax em
         Yh = torch.argmin(Yh, 1)
 
-        confusion = torch.zeros((self.cfg.loader.data.n_classes, self.cfg.loader.data.n_classes))
+        confusion = torch.zeros(
+            (self.cfg.loader.data.n_classes, self.cfg.loader.data.n_classes)
+        )
         for y, yh in zip(Y.cpu().view(-1), Yh.cpu().view(-1)):
             confusion[int(y.item()), int(yh.item())] += 1
 
