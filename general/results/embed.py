@@ -6,7 +6,7 @@ from .plotter import Plotter
 
 class EmbedPlotter(Plotter):
 
-    def show(Y, Yh, *args, centers, **kwargs):
+    def show(self, Y, Yh, *args, centers, **kwargs):
         """plots image embeddings"""
 
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -32,7 +32,7 @@ class EmbedPlotter(Plotter):
         """Embeddings are already calculated by the model Tester"""
         pass
 
-    def make_centers(ax, centers):
+    def make_centers(self, ax, centers):
         """plot cls centers"""
 
         colors = plt.cm.viridis(np.linspace(0, 1, cfg.LOADER.NCLASSES))
@@ -47,7 +47,7 @@ class EmbedPlotter(Plotter):
         ax.legend()
 
 
-    def make_sphere(ax):
+    def make_sphere(self, ax):
         """plot a sphere"""
 
         r = 1
