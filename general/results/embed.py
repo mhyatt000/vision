@@ -28,7 +28,7 @@ class EmbedPlotter(Plotter):
         )  # alpha=0.3
         # ax.view_init(0, 180)
 
-        # plt.legend(*scatter.legend_elements())
+        plt.legend(*scatter.legend_elements())
         self.mkfig("embed.png")
 
     def calc(self, *args, **kwargs):

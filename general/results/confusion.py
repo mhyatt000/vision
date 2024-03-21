@@ -7,7 +7,6 @@ from .plotter import Plotter
 
 
 class ConfusionPlotter(Plotter):
-
     def calc(self, Y, Yh):
         if self.cfg.loss.body == "ce":
             self.confusion, self.acc = self.calc_confusion(Y, Yh)
@@ -23,7 +22,9 @@ class ConfusionPlotter(Plotter):
         self.label_matrix()
 
         getname = (
-            lambda x: self.classes[x] if x < len(self.classes) else f"unknown{x-len(self.classes)}"
+            lambda x: self.classes[x]
+            if x < len(self.classes)
+            else f"unknown{x-len(self.classes)}"
         )
         for i in range(self.confusion.shape[0]):
             for j in range(self.confusion.shape[1]):
@@ -36,20 +37,17 @@ class ConfusionPlotter(Plotter):
                     size="xx-large",
                 )
 
-        # plt.title(f"Confusion Matrix")
-        plt.xlabel("Predictions")
-        plt.ylabel("Ground Truth")
-        plt.xticks(
-            [i for i in range(len(self.confusion))],
-            [getname(i) for i in range(len(self.confusion))],
-        )
-        plt.yticks(
-            [i for i in range(len(self.confusion))],
-            [getname(i) for i in range(len(self.confusion))],
-        )
+        places = ([i for i in range(len(self.confusion))],)
+        names = ([getname(i) for i in range(len(self.confusion))],)
+
+        plt.xticks(places, names)
+        plt.yticks(place, names)
         plt.setp(plt.xticks()[1], rotation=30)
         plt.setp(plt.yticks()[1], rotation=30)
-        plt.tight_layout()
+
+        plt.title(f"Confusion Matrix")
+        plt.xlabel("Predictions")
+        plt.ylabel("Ground Truth")
         self.mkfig(fname, legend=False)
 
         # for thresh in [55,60,65,70,75]:

@@ -12,7 +12,6 @@ from general.results import out
 
 
 class Plotter:
-
     def __init__(self, cfg, classes=None):
         self.cfg = cfg
         self.classes = classes if classes is not None else [f"c{i}" for i in range(5)]

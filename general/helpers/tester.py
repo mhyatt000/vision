@@ -105,10 +105,10 @@ class Tester:
         if self.cfg.master:
             self.plot(Y, Yh, **kwargs)
             done = torch.tensor([1], dtype=torch.int)  # 1 indicates completion
-
         else:
             done = torch.tensor([0], dtype=torch.int)
 
-        dist.broadcast(done, src=0)
-        if done.item() == 1: # all nodes wait until master is done
-            pass
+        if self.cfg.util.machine.dist:
+            dist.broadcast(done, src=0)
+            if done.item() == 1: # all nodes wait until master is done
+                pass

@@ -9,6 +9,7 @@ from .confusion import ConfusionPlotter
 from .dprime import DPrimePlotter
 from .embed import EmbedPlotter
 from .plotter import Plotter
+from .cam import CAMPlotter
 
 
 class PlotManager(Plotter):
@@ -23,6 +24,7 @@ class PlotManager(Plotter):
             # "pca": show_pca,
             "embed": EmbedPlotter(cfg, self.classes),
             "dprime": DPrimePlotter(cfg, self.classes),
+            "cam": CAMPlotter(cfg, self.classes),
             # "auc": AUCPlotter(cfg, self.classes),
         }
 
