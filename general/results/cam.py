@@ -90,47 +90,40 @@ class CAMPlotter(Plotter):
                 X = X.to(self.cfg.rank, non_blocking=True)
                 Y = Y.to(self.cfg.rank, non_blocking=True)
 
-                gcam = cam(input_tensor=X, eigen_smooth=False)
-                allgcam.append(gcam)
-                allX.append(X.cpu())
-                allY.append(Y.cpu())
+                G = cam(input_tensor=X, eigen_smooth=False)
+
+                for i in range(allX.size(0)):
+                    image = X[i]
+                    gcam = G[i]
+                    label = torch.argmax(Y[i], dim=0)
+
+                    image_np = np.transpose(image.numpy() / 255, (1, 2, 0))
+                    visualization = show_cam_on_image(image_np, gcam.numpy(), use_rgb=True)
+
+                    # Plotting
+                    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+                    axs[0].imshow(image_np)
+                    axs[0].set_title("Original Image")
+                    axs[1].imshow(visualization)
+                    axs[1].set_title("CAM Visualization")
+                    axs[2].imshow(gcam.numpy(), cmap="jet", alpha=0.5)
+                    axs[2].set_title("CAM Heatmap")
+
+                    for ax in axs:
+                        ax.axis("off")  # Turn off axis
+
+                    # Save figure with a temporary filename
+                    fname = ""
+                    with tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".png", prefix="plot_", dir="./"
+                    ) as tmpfile:
+                        fname = tmpfile.name
+
+                    fname = osp.join("cam", self.classes[label], fname)
+                    self.mkfig(fname)
 
             for X, Y in testloader:
                 _cam(X, Y)
-
-            allY = torch.cat(allY, dim=0)
-            allgcam = torch.cat(allgcam, dim=0)
-            allX = torch.cat(allX, dim=0)
-
-            for i in range(allX.size(0)):
-                image = allX[i]
-                gcam = allgcam[i]
-                label = torch.argmax(allY[i], dim=0)
-
-                image_np = np.transpose(image.numpy() / 255, (1, 2, 0))
-                visualization = show_cam_on_image(image_np, gcam.numpy(), use_rgb=True)
-
-                # Plotting
-                fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-                axs[0].imshow(image_np)
-                axs[0].set_title("Original Image")
-                axs[1].imshow(visualization)
-                axs[1].set_title("CAM Visualization")
-                axs[2].imshow(gcam.numpy(), cmap="jet", alpha=0.5)
-                axs[2].set_title("CAM Heatmap")
-
-                for ax in axs:
-                    ax.axis("off")  # Turn off axis
-
-                # Save figure with a temporary filename
-                fname = ""
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".png", prefix="plot_", dir="./"
-                ) as tmpfile:
-                    fname = tmpfile.name
-
-                fname = osp.join("cam", self.classes[label], fname)
-                self.mkfig(fname)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""
