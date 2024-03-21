@@ -95,9 +95,9 @@ class CAMPlotter(Plotter):
                 for i in range(X.size(0)):
                     image = X[i]
                     gcam = G[i]
-                    label = torch.argmax(Y[i], dim=0)
+                    label = torch.argmax(Y[i].cpu(), dim=0)
 
-                    image_np = np.transpose(image.numpy() / 255, (1, 2, 0))
+                    image_np = np.transpose(image.cpu().numpy() / 255, (1, 2, 0))
                     visualization = show_cam_on_image(image_np, gcam.numpy(), use_rgb=True)
 
                     # Plotting
