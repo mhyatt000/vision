@@ -10,7 +10,6 @@ from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):
-
     def calc(self, Y, Yh):
         """measures if positive pairs are different from negative pairs"""
 
@@ -18,6 +17,7 @@ class DPrimePlotter(Plotter):
         nhist = {i: [] for i in range(self.cfg.loader.data.n_classes)}
         C = set(range(self.cfg.loader.data.n_classes))
 
+        Y = torch.argmax(Y, dim=-1)
         Y = Y.view(-1)
 
         for c in C:
