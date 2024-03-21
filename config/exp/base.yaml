@@ -6,4 +6,4 @@ reverse: false
 partition: false
 multiseed: false
 
-plots: ['confusion', 'embed', 'tsne', 'pca', 'auc', 'dprime', 'rknn', ]
+plots: ['confusion', 'embed', 'tsne', 'pca', 'auc', 'dprime', 'rknn', 'cam']
