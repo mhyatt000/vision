@@ -29,17 +29,23 @@ class CAMPlotter(Plotter):
 
     def mk_layers(self, model):
         # hard coded for now
-        main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
+        
+        if self.cfg.model.body == 'ffc':
+            main_layers = [model.layer1, model.layer2, model.layer3, model.layer4]
 
-        real = lambda x: not isinstance(x, nn.Identity)
-        global_layers = [[y.relu_g for y in x if not real(y)] for x in main_layers]
-        local_layers = [[y.relu_l for y in x if not real(y)] for x in main_layers]
+            real = lambda x: not isinstance(x, nn.Identity)
+            global_layers = [[y.relu_g for y in x if not real(y)] for x in main_layers]
+            local_layers = [[y.relu_l for y in x if not real(y)] for x in main_layers]
 
-        global_layers = sum(global_layers, [])
-        local_layers = sum(local_layers, [])
-        all_layers = [global_layers + local_layers]
+            global_layers = sum(global_layers, [])
+            local_layers = sum(local_layers, [])
+            all_layers = [global_layers + local_layers]
 
-        self.layer_groups = [global_layers, local_layers, all_layers]
+            self.layer_groups = [global_layers, local_layers, all_layers]
+
+        elif self.cfg.model.body == 'srnet':
+            self.layer_groups = [model.block1, model.block2, model.block3, model.block4]
+            self.layer_groups += [self.layer_groups]
 
         # selects highest value when None
         targets = None  # [ClassifierOutputSoftmaxTarget(i) for i in range(5)]
