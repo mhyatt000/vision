@@ -131,7 +131,7 @@ class Trainer:
         X = X.to(self.cfg.rank, non_blocking=True)
         Y = Y.to(self.cfg.rank, non_blocking=True)
 
-        if cfg.model.body == "ffc":
+        if self.cfg.model.body == "ffc":
             output = self.model(X, mode="default")
         else:
             output = self.model(X)
