@@ -25,6 +25,7 @@ class TSNEPlotter(Plotter):
             n_iter=self.cfg.results.tsne.iter,
             perplexity=self.cfg.results.tsne.perplexity,
             n_jobs=-1,
+            verbose=1,
             # metric="cosine",
         )
 
