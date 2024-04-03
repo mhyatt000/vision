@@ -59,7 +59,7 @@ class TSNEPlotter(Plotter):
 
         plt.legend(*scatter.legend_elements())
 
-        name = "_".join([f'{k}={v}' for k,v in cfg.results.tsne.items()])
+        name = "_".join([f'{k}={v}' for k,v in self.cfg.results.tsne.items()])
         self.mkfig(f"tsne_{name}.png")
 
     def nogrid(self, ax):
