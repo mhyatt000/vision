@@ -21,7 +21,7 @@ class TSNEPlotter(Plotter):
     def calc(self, Y, Yh, *args, **kwargs):
         self.tsne = TSNE(
             n_components=self.dim,
-            random_state=cfg.exp.seed,
+            random_state=self.cfg.exp.seed,
             metric="cosine",
             n_iter=5000,
             perplexity=100,
