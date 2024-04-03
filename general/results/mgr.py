@@ -21,7 +21,7 @@ class PlotManager(Plotter):
         self.plots = {
             "confusion": ConfusionPlotter(cfg, self.classes),
             # "rknn": show_RKNN_confusion,
-            "tsne": TSNEPlotter(cfg, self.classes)
+            "tsne": TSNEPlotter(cfg, self.classes),
             # "pca": show_pca,
             "embed": EmbedPlotter(cfg, self.classes),
             "dprime": DPrimePlotter(cfg, self.classes),
