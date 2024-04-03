@@ -22,11 +22,10 @@ class TSNEPlotter(Plotter):
         self.tsne = TSNE(
             n_components=self.dim,
             random_state=self.cfg.exp.seed,
-            metric="cosine",
             n_iter=5000,
             perplexity=100,
-            verbose=1,
-            n_jobs=16,
+            n_jobs=-1,
+            # metric="cosine",
         )
 
         self.Yh = self.tsne.fit_transform(Yh.numpy(), Y.numpy())
@@ -37,7 +36,7 @@ class TSNEPlotter(Plotter):
 
         # use argmax to turn one hot into class labels
         Y = torch.argmax(Y, dim=-1)
-        Y = Y.view(-1).tolist()
+        self.Y = Y.view(-1).tolist()
 
         self.labels = [self.classes[int(y)] for y in Y]
 
@@ -50,7 +49,7 @@ class TSNEPlotter(Plotter):
 
         scatter = ax.scatter(
             *[self.Yh[:, i] for i in range(self.dim)],
-            c=Y,
+            c=self.Y,
             alpha=0.3,
             s=20,
             label=self.labels
