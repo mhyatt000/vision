@@ -59,7 +59,6 @@ class TSNEPlotter(Plotter):
         plt.legend(*scatter.legend_elements())
         self.mkfig("tsne.png")
 
-    @staticmethod
     def nogrid(self):
         # Hide ticks and spines
         ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
