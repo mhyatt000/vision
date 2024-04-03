@@ -86,8 +86,12 @@ class Trainer:
         self.epoch += 1
 
     def calc_accuracy(self, Yh, Y):
-        if self.cfg.loss.body != "CE":
-            self.accs.append(-1)
+        if self.cfg.loss.body != "ce":
+            # find the argmax of the output (Yh) and compare to the target (Y)
+            acc = float(
+                (torch.argmax(Yh, dim=1) == torch.argmax(Y, dim=1)).sum() / Yh.shape[0]
+            )
+            self.accs.append(acc)
             return
         with torch.no_grad():
             acc = float(
