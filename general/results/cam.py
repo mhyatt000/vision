@@ -101,8 +101,6 @@ class CAMPlotter(Plotter):
                     gcam = G[i]
                     label = torch.argmax(Y[i].cpu(), dim=0)
 
-                    print(image.min(), image.max())
-
                     image_np = np.transpose(image.cpu().numpy() , (1, 2, 0))
                     visualization = show_cam_on_image(image_np, gcam, use_rgb=True)
 

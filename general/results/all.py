@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 from sklearn.metrics import RocCurveDisplay, roc_auc_score
 from sklearn.neighbors import RadiusNeighborsClassifier
 
@@ -48,40 +47,6 @@ def _RKNN(Y, Yh):
         except:
             pass
     return rknns
-
-
-
-
-def show_tsne(Y, Yh, *args, **kwargs):
-    """docstring"""
-
-    fig, ax = plt.subplots(figsize=(10, 10))
-    n_components = 3
-    if n_components == 3:
-        ax = fig.add_subplot(projection="3d")
-        make_sphere(ax)
-    tsne = TSNE(
-        n_components=n_components,
-        random_state=cfg.SOLVER.SEED,
-        metric="cosine",
-        n_iter=5000,
-        perplexity=100,
-        verbose=1,
-        n_jobs=16,
-    )
-    Yh = tsne.fit_transform(Yh.numpy(), Y.numpy())
-    if n_components == 3:
-        Yh = F.normalize(torch.Tensor(Yh)).numpy()
-
-    Y = Y.view(-1).tolist()
-    labels = [CLASSES[int(y)] for y in Y]
-
-    scatter = ax.scatter(
-        *[Yh[:, i] for i in range(n_components)], c=Y, alpha=0.3, s=20, label=labels
-    )
-    # ax.view_init(0, 180)
-    plt.legend(*scatter.legend_elements())
-    mkfig("tsne.png")
 
 
 def show_pca(Y, Yh, *args, centers, **kwargs):
