@@ -131,7 +131,7 @@ class SRNet(nn.Module):
             self.block3,
             self.block4,
         )
-        self.dense = nn.Linear(512, cfg.model.odim)
+        self.dense = nn.Linear(t4[-1], cfg.model.odim)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def embed(self, x):
