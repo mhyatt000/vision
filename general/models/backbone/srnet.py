@@ -45,7 +45,7 @@ class T2(nn.Module):
 
         self.seq = nn.Sequential(
             T1(idim, odim),
-            ConvBNA(idim, odim, activation=nn.Identity),
+            ConvBNA(odim, odim, activation=nn.Identity),
         )
 
     def forward(self, x):
@@ -97,29 +97,33 @@ class T4(nn.Module):
 
 
 class SRNet(nn.Module):
-    """This is SRNet model class."""
+    """This is SRNet model class.
+    Default is 
+
+    t1: [64, 16]
+    t2: [16, 16, 16, 16, 16]
+    t3: [16, 64, 128, 256]
+    t4: [512]
+
+    """
 
     def __init__(self, cfg):
         super().__init__()
+        print(cfg.model)
+        t1,t2,t3,t4 = cfg.model.t1, cfg.model.t2, cfg.model.t3, cfg.model.t4
 
         self.block1 = nn.Sequential(
-            T1(3, 64),
-            T1(64, 16),
+            * [T1(3,t1[0])] + [T1(t1[i], t1[i+1]) for i in range(len(t1)-1)]
         )
         self.block2 = nn.Sequential(
-            T2(16, 16),
-            T2(16, 16),
-            T2(16, 16),
-            T2(16, 16),
-            T2(16, 16),
+            * [T2(t1[-1],t2[0])] + [T2(t2[i], t2[i+1]) for i in range(len(t2)-1)]
         )
         self.block3 = nn.Sequential(
-            T3(16, 16),
-            T3(16, 64),
-            T3(64, 128),
-            T3(128, 256),
+            * [T3(t2[-1],t3[0])] + [T3(t3[i], t3[i+1]) for i in range(len(t3)-1)]
         )
-        self.block4 = T4(256, 512)
+        self.block4 = nn.Sequential(
+            * [T4(t3[-1],t4[0])] + [T4(t4[i], t4[i+1]) for i in range(len(t4)-1)]
+        )
 
         self.seq = nn.Sequential(
             self.block1,
@@ -139,7 +143,13 @@ class SRNet(nn.Module):
         return self.softmax(self.dense(x.view(x.size(0), -1)))
 
 
-if __name__ == "__main__":
+import hydra
+@hydra.main(config_path="../../../config", config_name="main")
+def main(cfg):
     image = torch.randn((1, 3, 256, 256))
-    net = SRNet()
+    net = SRNet(cfg)
+    print(net)
     print(net(image).shape)
+
+if __name__ == "__main__":
+    main()

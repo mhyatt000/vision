@@ -25,7 +25,6 @@ class TSNEPlotter(Plotter):
             n_iter=self.cfg.results.tsne.iter,
             perplexity=self.cfg.results.tsne.perplexity,
             n_jobs=-1,
-            verbose=1,
             # metric="cosine",
         )
 
@@ -59,7 +58,7 @@ class TSNEPlotter(Plotter):
 
         plt.legend(*scatter.legend_elements())
 
-        name = "_".join([f'{k}={v}' for k,v in self.cfg.results.tsne.items()])
+        name = "_".join([f'{k}:{v}' for k,v in self.cfg.results.tsne.items()])
         self.mkfig(f"tsne_{name}.png")
 
     def nogrid(self, ax):

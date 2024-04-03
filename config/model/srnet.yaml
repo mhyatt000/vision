@@ -1,4 +1,9 @@
 body: srnet
 odim: 5
 
+t1: [64, 16]
+t2: [16, 16, 16, 16, 16]
+t3: [16, 64, 128, 256]
+t4: [512]
+
 # no other configurations

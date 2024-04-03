@@ -6,12 +6,13 @@ import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchdata.datapipes as DP
 import torchvision
 import torchvision.transforms.functional as F
 from PIL import Image, ImageDraw
-from torch.utils.data import Dataset
-from torchvision import transforms
+from torch.utils.data import DataLoader, Dataset
 from torchvision.io import read_image
+from torchvision.transforms import v2
 from torchvision.utils import make_grid
 
 """ from Mandelli et al. "Forensic Analysis of Synthetic Western Blots"
@@ -112,8 +113,8 @@ options = {
     "JPEG80": jpeg80,
     "JPEG90": jpeg90,
     "JPEG100": jpeg100,
-    "ANY": anyof,
-    "NOTHING": nothing,
+    "any": anyof,
+    "nothing": nothing,
 }
 
 
@@ -134,14 +135,22 @@ def showtens(x,a):
     plt.savefig(f'blot{a}.png')
 """
 
-transform = transforms.Compose(
+flip = v2.Compose(
     [
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
-        transforms.RandomRotation(degrees=(-90, 90)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        v2.ToTensor(),
+        v2.RandomHorizontalFlip(),
+        v2.RandomVerticalFlip(),
+        # v2.RandomRotation(degrees=(-90, 90)),
+    ]
+)
+
+normalize = v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+
+default = v2.Compose(
+    [
+        v2.Compose([v2.ToTensor(), v2.ToDtype(torch.float32, scale=True)]),
+        flip,
+        normalize,
     ]
 )
 
@@ -153,7 +162,7 @@ class WBLOT(Dataset):
         self,
         cfg,
         root="wblot",
-        transform=transform,
+        transform=default,
         target_transform=None,
     ):
         super(WBLOT, self).__init__()
@@ -217,7 +226,9 @@ class WBLOT(Dataset):
             image = cv2.imread(img_path)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         else:
-            image = read_image(img_path).float()
+            image = read_image(img_path)
+
+        out = {"image": torch.Tensor(image)}
 
         # TODO label = torch.Tensor() ... if CE then label = F.one_hot(label)
         if self.cfg.loss.body in ["ARC", "PFC"]:
@@ -234,17 +245,45 @@ class WBLOT(Dataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        if self.cfg.util.machine.device == "cuda":
-            return image.pin_memory(), label.pin_memory()
-        else:
-            return {
-                "image": image,
+        out.update(
+            {
+                "x": image,
                 "label": label,
                 "path": img_path,
             }
+        )
+
+        # if self.cfg.util.machine.device == "cuda":
+        # return image.pin_memory(), label.pin_memory()
+        # else:
+
+        return out
 
 
-class AugmenterWrapper(torch.utils.data.DataLoader):
+from abc import ABC, abstractproperty
+
+from sklearn.model_selection import train_test_split
+
+
+class SplitMixin(ABC):
+    @abstractproperty
+    def cfg(self):
+        pass
+
+    @abstractproperty
+    def data(self):
+        pass
+
+    def split(self):
+        if self.cfg.loader.split:
+            idxs = list(range(len(self.data)))
+            idxa, idxb = train_test_split(
+                idxs, test_size=self.cfg.loader.split, random_state=self.cfg.exp.seed
+            )
+            return {"train": idxa, "test": idxb}
+
+
+class AugmenterWrapper(DataLoader):
     def __init__(self, loader, *args, **kwargs):
         super(AugmenterWrapper, self).__init__()
 
@@ -262,7 +301,7 @@ class AugmenterWrapper(torch.utils.data.DataLoader):
         return ((x.augment(), y) for x, y in self.loader.__iter__())
 
 
-class PinMemoryWrapper(torch.utils.data.DataLoader):
+class PinMemoryWrapper(DataLoader):
     def __init__(self, loader):
         super(PinMemoryWrapper, self).__init__()
 
@@ -273,11 +312,24 @@ class PinMemoryWrapper(torch.utils.data.DataLoader):
         return ((x.pin_memory(), y.pin_memory()) for x, y in self.loader.__iter__())
 
 
-# @hydra.main(config_path="../../../config", config_name="main")
+@hydra.main(config_path="../../../config", config_name="main")
 def main(cfg):
-
+    # torch 1.0
     w = WBLOT(cfg)
-    print(type(next(iter(w))))
+    out = next(iter(w))
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+    plt.suptitle("/".join(out["path"].split("/")[-2:]))
+    for ax, im in zip(axs, ["image", "x"]):
+        ax.imshow(out[im].permute(1, 2, 0).view(256, 256, 3))
+        ax.set_title(im)
+        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+        ax.grid(False)
+
+    plt.tight_layout()
+    plt.show()
+    quit()
+
 
 if __name__ == "__main__":
     main()

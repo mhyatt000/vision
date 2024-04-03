@@ -1,16 +1,16 @@
-from concurrent.futures import ThreadPoolExecutor
 import os
 import os.path as osp
+from concurrent.futures import ThreadPoolExecutor
 
-from PIL import Image
 import albumentations as A
-from albumentations import pytorch as AP
 import cv2
 import matplotlib.pyplot as plt
 # import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+from albumentations import pytorch as AP
+from PIL import Image
 from tqdm import tqdm
 
 jpeg70 = A.ImageCompression(70, 70, p=1.0)
@@ -85,7 +85,9 @@ def spec_np(image):
     shifted_fft = np.fft.fftshift(
         fft_image
     )  # Shift the zero-frequency component to the center of the spectrum
-    magnitude_spectrum = np.abs(shifted_fft)  # Compute the magnitude spectrum (absolute values)
+    magnitude_spectrum = np.abs(
+        shifted_fft
+    )  # Compute the magnitude spectrum (absolute values)
     fft = (
         np.log(1 + magnitude_spectrum).astype(np.float32) ** 4 / 100
     )  # Apply logarithmic transformation for better visualization
@@ -151,7 +153,6 @@ def process_img(path):
 
 
 def process_all(path):
-
     files = os.listdir(path)
     files = [osp.join(path, f) for f in files]  # [:5]
 
@@ -186,19 +187,52 @@ def plot(imgs, names=None, title=""):
     plt.show()
 
 
-def main():
+def plot_collections(collections, names, title):
+    row = len(collections)
+    col = len(collections[0])
 
-    file = "celeba-hq.jpg"
-    # file = "/Users/matthewhyatt/cs/.datasets/western_blots/real/img_00164.png"
-    # file = '/Users/matthewhyatt/cs/.datasets/western_blots/synth/cyclegan/img_00001.png'
-    # file = '/Users/matthewhyatt/cs/.datasets/western_blots/synth/cyclegan/img_00053.png'
+    fig, axs = plt.subplots(row, col, figsize=(3 * row, 3 * col))
+    font = {}  #  {"fontname": "Arial", "fontsize": 48, "fontweight": "bold"}
+
+    for i, c in enumerate(collections): 
+       for j, img in enumerate(c):
+
+            # if len(img.shape) == 3:
+            if j in [1, 2]:
+                axs[i][j].imshow(img, cmap="gray")
+            else:
+                axs[i][j].imshow(img)
+
+            if i == 0: # topmost
+                axs[i][j].set_title(names[j].capitalize())
+            if j == 0: # leftmost
+                axs[i][j].set_ylabel(title[i].capitalize())
+
+    axs = axs.flatten()
+    for ax in axs:
+        # ax.axis("off")
+        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+        ax.grid(False)
+
+    plt.tight_layout()
+    # plt.subplots_adjust(top=0.9)
+    # fig.suptitle(title)
+    plt.show()
+    quit()
+
+
+def main():
+    file = "final_dontdelete/celeba-hq.jpg"
+    # file = "/Users/matthewhyatt/cs/.datasets/wblot/real/img_00164.png"
+    file = '/Users/matthewhyatt/cs/.datasets/wblot/synth/cyclegan/img_00001.png'
+    # file = '/Users/matthewhyatt/cs/.datasets/wblot/synth/cyclegan/img_00053.png'
 
     base = np.array(Image.open(file).convert("L"))
     names = ["jpeg70", "jpeg80", "jpeg90", "jpeg100", "nothing"]
 
     imgs, ffts, highs, blurs = [], [], [], []
-    for i,o in enumerate(options):
-
+    collections = []
+    for i, o in enumerate(options):
         _aug = set_augment(o)
         img = augment(_aug, base)
         imgs.append(img)
@@ -215,11 +249,11 @@ def main():
 
         img = np.array(Image.open(file))
         collection = [img, blurred, high, fft]  # high[0]]
+        collections.append(collection)
 
-        print(fft)
-
-        subtitles = ['original','blur','high pass','fft(high pass)']
-        plot(collection, names=subtitles, title=names[i])
+        subtitles = ["original", "blur", "high pass", "fft(high pass)"]
+        # plot(collection, names=subtitles, title=names[i])
+    plot_collections(collections, names=subtitles, title=names)
 
     quit()
 
@@ -228,7 +262,11 @@ def main():
 
     highs = [base - b for b in blurs]
     highs = [base - b for b in blurs]
-    plot(highs, names, title=f"Degredation of High Pass Filters ( base_img_no_augment - blur )")
+    plot(
+        highs,
+        names,
+        title=f"Degredation of High Pass Filters ( base_img_no_augment - blur )",
+    )
 
     imgs = [x - imgs[-1] for x in imgs]
     plot(imgs, names, title=f"Degredation of Image ( base_img - aug_img )")
