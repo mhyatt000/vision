@@ -22,8 +22,8 @@ class TSNEPlotter(Plotter):
         self.tsne = TSNE(
             n_components=self.dim,
             random_state=self.cfg.exp.seed,
-            n_iter=5000,
-            perplexity=100,
+            n_iter=self.cfg.results.tsne.iter,
+            perplexity=self.cfg.results.tsne.perplexity,
             n_jobs=-1,
             # metric="cosine",
         )
