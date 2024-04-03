@@ -56,4 +56,4 @@ class TSNEPlotter(Plotter):
         )
 
         plt.legend(*scatter.legend_elements())
-        mkfig("tsne.png")
+        self.mkfig("tsne.png")
