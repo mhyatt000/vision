@@ -1,4 +1,4 @@
-from .western_blot import WBLOT
+from .wblot import WBLOT
 # from .kinetics import K700
 # from .kinetics import K400, K6000, K700
 

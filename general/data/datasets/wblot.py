@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from abc import ABC, abstractproperty
 from os.path import join
 
 import hydra
@@ -10,6 +11,7 @@ import torchdata.datapipes as DP
 import torchvision
 import torchvision.transforms.functional as F
 from PIL import Image, ImageDraw
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from torchvision.io import read_image
 from torchvision.transforms import v2
@@ -253,16 +255,10 @@ class WBLOT(Dataset):
             }
         )
 
-        # if self.cfg.util.machine.device == "cuda":
-        # return image.pin_memory(), label.pin_memory()
-        # else:
-
-        return out
-
-
-from abc import ABC, abstractproperty
-
-from sklearn.model_selection import train_test_split
+        if self.cfg.util.machine.device == "cuda":
+            return image.pin_memory(), label.pin_memory()
+        else:
+            return out
 
 
 class SplitMixin(ABC):
