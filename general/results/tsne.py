@@ -54,12 +54,14 @@ class TSNEPlotter(Plotter):
             s=20,
             label=self.labels
         )
-        self.nogrid()
+        self.nogrid(ax)
 
         plt.legend(*scatter.legend_elements())
-        self.mkfig("tsne.png")
 
-    def nogrid(self):
+        name = "_".join([f'{k}={v}' for k,v in cfg.results.tsne.items()])
+        self.mkfig(f"tsne_{name}.png")
+
+    def nogrid(self, ax):
         # Hide ticks and spines
         ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
         ax.spines.values().set_visible(False)
