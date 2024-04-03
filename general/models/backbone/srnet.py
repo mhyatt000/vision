@@ -130,8 +130,12 @@ class SRNet(nn.Module):
         self.dense = nn.Linear(512, cfg.model.odim)
         self.softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, x):
+    def embed(self, x):
         x = self.seq(x)
+        return x
+
+    def forward(self, x):
+        x = self.embed(x)
         return self.softmax(self.dense(x.view(x.size(0), -1)))
 
 

@@ -58,7 +58,7 @@ class Tester:
             Y = Y.to(self.cfg.rank, non_blocking=True)
 
             with torch.no_grad():
-                Yh = self.model(X).view((Y.shape[0], -1))
+                Yh = self.model.embed(X).view((Y.shape[0], -1))
                 Yh = F.normalize(Yh)
                 if self.cfg.util.machine.dist:
                     Y, Yh = gather(Y, cfg.rank), gather(Yh, cfg.rank)
@@ -87,7 +87,6 @@ class Tester:
             "testloader": self.testloader,
             "model": self.model,
         }
-
 
         # Y, Yh = self.embed(self.trainloader)
         # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
