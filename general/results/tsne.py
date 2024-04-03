@@ -63,14 +63,10 @@ class TSNEPlotter(Plotter):
         self.mkfig(f"tsne_{name}.png")
 
     def nogrid(self, ax):
-        # Hide ticks and spines
-        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-        ax.spines.values().set_visible(False)
 
-        # Alternatively, to remove all spines in a more compact loop
+        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
         for spine in ax.spines.values():
             spine.set_visible(False)
 
-        # Turn off the grid
         ax.grid(False)
 
