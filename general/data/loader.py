@@ -23,6 +23,7 @@ def leave_out():
     version = get_exp_version(cfg)
     return (version["LO"] if "LO" in version else None) if version else None
 
+
 """
 def leave_out_collate(data):
     X = [x for x, y in data if not y in leave_out()]
@@ -66,7 +67,7 @@ def build_loaders(cfg):
         raise
         # datasets = [dataset, ds[cfg.loader.dataset]()]
 
-    if cfg.loader.augment.flag:
+    if cfg.loader.augment.flag:  # TODO double check this
         datasets[0].dataset.set_augment(cfg.loader.augment.train)
         datasets[1].dataset.set_augment(cfg.loader.augment.test)
 
@@ -82,7 +83,7 @@ def build_loaders(cfg):
             sampler=sampler,
             shuffle=(sampler == None),
             drop_last=True if split == "train" else False,
-            collate_fn= None, # collate_fn if split == "train" else None,
+            collate_fn=None,  # collate_fn if split == "train" else None,
             # for going fast...
             num_workers=2,  # 4
             pin_memory=True,

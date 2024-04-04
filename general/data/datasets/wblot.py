@@ -254,11 +254,13 @@ class WBLOT(Dataset):
                 "path": img_path,
             }
         )
-
+        return out
+        """
         if self.cfg.util.machine.device == "cuda":
             return image.pin_memory(), label.pin_memory()
         else:
             return out
+        """
 
 
 class SplitMixin(ABC):
