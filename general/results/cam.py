@@ -91,9 +91,12 @@ class CAMPlotter(Plotter):
             cam = GradCAM(model=model, target_layers=layer)
 
             @tqdm.prog(self.cfg, len(testloader), desc="CAM")
-            def _cam(X, Y):
-                X = X.to(self.cfg.rank, non_blocking=True)
-                Y = Y.to(self.cfg.rank, non_blocking=True)
+            def _cam(batch):
+                lambda todev a: a.to(cfg.rank, non_blocking=True)
+
+                x = todev(batch['x'])
+                label = todev(batch['label'])
+
                 G = cam(input_tensor=X, eigen_smooth=False)
 
                 for i in range(X.size(0)):
@@ -104,6 +107,8 @@ class CAMPlotter(Plotter):
                     image_np = np.transpose(image.cpu().numpy() , (1, 2, 0))
                     visualization = show_cam_on_image(image_np, gcam, use_rgb=True)
 
+                    fname = out['path'][i] 
+
                     # Plotting
                     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
                     axs[0].imshow(image_np)
@@ -111,21 +116,17 @@ class CAMPlotter(Plotter):
                     axs[1].imshow(visualization)
                     axs[1].set_title("CAM Visualization")
                     axs[2].imshow(gcam, cmap="jet", alpha=0.5)
-                    axs[2].set_title("CAM Heatmap")
+                    axs[2].set_title(f"CAM Heatmap: {fname}")
 
                     for ax in axs:
                         ax.axis("off")  # Turn off axis
 
-                    # Save figure with a temporary filename
-                    import random
-                    fname = f"{random.randint(0, 100)}"
-
                     fname = osp.join("cam", self.classes[label], fname)
                     self.mkfig(fname)
 
-            for X,Y in testloader:
-                # X, Y, PATH = i.items()
-                _cam(X, Y)
+            for batch in testloader:
+                # batch, PATH = i.items()
+                _cam(batch)
 
     def show(self, *args, **kwargs):
         """images are already plotted in calc because it is memory intensive"""

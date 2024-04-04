@@ -124,7 +124,7 @@ class Trainer:
         else:
             self.scheduler.step()
 
-    def step(self, X, Y):
+    def step(self, batch):
         """training step with adaptive gradient accumulation"""
 
         # @gpu.timer()
@@ -132,22 +132,19 @@ class Trainer:
         # return X , Y
         # X,Y = sendit(X,Y)
 
-        X = X.to(self.cfg.rank, non_blocking=True)
-        Y = Y.to(self.cfg.rank, non_blocking=True)
+        lambda todev a: a.to(cfg.rank, non_blocking=True)
 
-        if self.cfg.model.body == "ffc":
-            output = self.model(X, mode="default")
-        else:
-            output = self.model(X)
-        # embed, output = out_dict.values()
+        x = todev(batch['x'])
+        label = todev(batch['label'])
 
-        # Yh = checkpoint_sequential(self.model, 4, X) # gradient checkpointing
-        loss = self.criterion(output, Y)
+        output = self.model(x)
+        loss = self.criterion(output, label)
         # dist.all_reduce(loss, op=dist.ReduceOp.MAX)
 
-        self.calc_accuracy(output, Y)
-        self.back_pass(loss)
+        self.calc_accuracy(output, label)
 
+        loss /= self.cfg.solver.grad_acc_every
+        self.back_pass(loss)
         self.loss = float(loss.detach())
 
         if self.cfg.solver.scheduler.step_by == "ITER":
@@ -155,7 +152,6 @@ class Trainer:
 
         self.losses.append(self.loss)
         self.lrs.append(self.get_lr())
-        loss /= self.cfg.solver.grad_acc_every
 
         # only update every k steps
         if self.nstep % self.cfg.solver.grad_acc_every:
@@ -196,16 +192,16 @@ class Trainer:
 
         # @torch.autocast(cfg.solver.amp)
         @tqdm.prog(self.cfg, steps_left)
-        def _step(X, Y):
-            self.step(X, Y)
+        def _step(batch):
+            self.step(batch)
             return self.display()
 
         # for epoch in range(self.epoch, cfg.solver.MAX_EPOCH-1):
         while self.nstep < self.cfg.solver.max_iter:
             if self.cfg.util.machine.dist:
                 self.loader.sampler.set_epoch(self.epoch)
-            for X, Y in self.loader:
-                _step(X, Y)
+            for batch in self.loader:
+                _step(batch)
                 self.update_step()
                 if self.stopper(self.losses[-1]):
                     return

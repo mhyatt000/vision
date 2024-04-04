@@ -23,7 +23,7 @@ def leave_out():
     version = get_exp_version(cfg)
     return (version["LO"] if "LO" in version else None) if version else None
 
-
+"""
 def leave_out_collate(data):
     X = [x for x, y in data if not y in leave_out()]
     Y = [y for x, y in data if not y in leave_out()]
@@ -37,6 +37,7 @@ def leave_out_collate(data):
         len(X) == cfg.loader.gpu_batch_size
     ), f"samples are missing... have {len(Y)}, need {missing} for total of {cfg.loader.gpu_batch_size}"
     return torch.stack(X), torch.stack(Y)
+"""
 
 
 def build_loaders(cfg):
@@ -69,7 +70,7 @@ def build_loaders(cfg):
         datasets[0].dataset.set_augment(cfg.loader.augment.train)
         datasets[1].dataset.set_augment(cfg.loader.augment.test)
 
-    collate_fn = leave_out_collate if not leave_out() is None else None
+    # collate_fn = leave_out_collate if not leave_out() is None else None
     loaders = {}
     splits = ["train", "test"]
 
@@ -81,7 +82,7 @@ def build_loaders(cfg):
             sampler=sampler,
             shuffle=(sampler == None),
             drop_last=True if split == "train" else False,
-            collate_fn=collate_fn if split == "train" else None,
+            collate_fn= None, # collate_fn if split == "train" else None,
             # for going fast...
             num_workers=2,  # 4
             pin_memory=True,

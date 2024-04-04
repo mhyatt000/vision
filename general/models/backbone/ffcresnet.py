@@ -343,14 +343,10 @@ class FFCResNet(nn.Module):
         x = x.view(x.size(0), -1)
         return x
 
-    def forward(self, x, mode='default'):
+    def forward(self, x):
         embed = self.embed(x)
         x = self.fc(embed)
-        return {
-            "embed": embed,
-            "output": x,
-        } if mode == 'embed' else x
-
+        return x
 
 def FFCR18(**kwargs):
     model = FFCResNet(BasicBlock, [2, 2, 2, 2], **kwargs)

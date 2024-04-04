@@ -10,7 +10,7 @@ from .plotter import Plotter
 
 
 class DPrimePlotter(Plotter):
-    def calc(self, Y, Yh, *args, **kwargs):
+    def calc(self, Y, embed, *args, **kwargs):
         """measures if positive pairs are different from negative pairs"""
 
         phist = {i: [] for i in range(self.cfg.loader.data.n_classes)}
@@ -21,8 +21,8 @@ class DPrimePlotter(Plotter):
         Y = Y.view(-1)
 
         for c in C:
-            pos = Yh[(Y == c).view(-1)]
-            neg = Yh[(Y != c).view(-1)]
+            pos = embed[(Y == c).view(-1)]
+            neg = embed[(Y != c).view(-1)]
 
             dist = lambda a, b: (a - b).pow(2).sum(-1).sqrt()
             angle = (

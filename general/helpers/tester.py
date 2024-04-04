@@ -49,27 +49,39 @@ class Tester:
         """docstring"""
 
         allY, allYh = [], []
+        allembed= []
 
         # TODO: fix this so its clean in toolbox.tqdm.py
         # decorator was to fix printnode problem but its clunky
         @tqdm.prog(self.cfg, len(testloader), desc="Embed")
-        def _embed(X, Y):
-            X = X.to(self.cfg.rank, non_blocking=True)
-            Y = Y.to(self.cfg.rank, non_blocking=True)
+        def _embed(batch):
+
+            lambda todev a: a.to(cfg.rank, non_blocking=True)
+
+            x = todev(batch['x'])
+            label = todev(batch['label'])
 
             with torch.no_grad():
-                Yh = self.model.embed(X).view((Y.shape[0], -1))
-                Yh = F.normalize(Yh)
-                if self.cfg.util.machine.dist:
-                    Y, Yh = gather(Y, cfg.rank), gather(Yh, cfg.rank)
-                allY.append(Y.cpu())
-                allYh.append(Yh.cpu())
+                Yh = self.model(x).view((label.shape[0], -1))
+                embed = self.model.embed(x).view((label.shape[0], -1))
+                embed = F.normalize(Yh)
 
-        for X, Y in testloader:
-            _embed(X, Y)
+                if self.cfg.util.machine.dist:
+                    label, Yh, embed = gather(label, cfg.rank), gather(Yh, cfg.rank), gather(embed, cfg.rank)
+                allY.append(label.cpu())
+                allYh.append(Yh.cpu())
+                allembed.append(embed.cpu())
+
+        for batch in testloader:
+            _embed(batch)
 
         torch.cuda.empty_cache()
-        return torch.cat(allY), torch.cat(allYh)
+        allout = {
+            "Y": torch.cat(allY),
+            "Yh": torch.cat(allYh),
+            "embed": torch.cat(allembed),
+        }
+        return allout
 
     def get_centers(self):
         """get learned cls centers"""
@@ -91,7 +103,7 @@ class Tester:
         # Y, Yh = self.embed(self.trainloader)
         # rknns = self.plot.calcs["rknn"](Y, Yh)  # rknn centers depend on train data
 
-        Y, Yh = self.embed(self.testloader)
+        allout = self.embed(self.testloader)
 
         """
         if self.cfg.loss.body in ["ARC", "PFC"]:
@@ -106,7 +118,7 @@ class Tester:
         """
 
         if self.cfg.master:
-            self.plot(Y, Yh, **kwargs)
+            self.plot(**allout, **kwargs)
             done = torch.tensor([1], dtype=torch.int)  # 1 indicates completion
         else:
             done = torch.tensor([0], dtype=torch.int)

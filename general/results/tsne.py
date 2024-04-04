@@ -18,7 +18,7 @@ class TSNEPlotter(Plotter):
         self.dim = dim
         # is this init bad practice (brittle)
 
-    def calc(self, Y, Yh, *args, **kwargs):
+    def calc(self, Y, embed, *args, **kwargs):
         self.tsne = TSNE(
             n_components=self.dim,
             random_state=self.cfg.exp.seed,
@@ -28,11 +28,11 @@ class TSNEPlotter(Plotter):
             # metric="cosine",
         )
 
-        self.Yh = self.tsne.fit_transform(Yh.numpy(), Y.numpy())
+        self.embed = self.tsne.fit_transform(embed.numpy(), Y.numpy())
 
         # for sphere plotting
         # if self.dim == 3:
-        # Yh = F.normalize(torch.Tensor(Yh)).numpy()
+        # embed = F.normalize(torch.Tensor(embed)).numpy()
 
         # use argmax to turn one hot into class labels
         Y = torch.argmax(Y, dim=-1)
@@ -48,7 +48,7 @@ class TSNEPlotter(Plotter):
             make_sphere(ax)
 
         scatter = ax.scatter(
-            *[self.Yh[:, i] for i in range(self.dim)],
+            *[self.embed[:, i] for i in range(self.dim)],
             c=self.Y,
             alpha=0.3,
             s=20,

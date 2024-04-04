@@ -1,2 +1,4 @@
 defaults:
   - tsne: base
+
+plots: ['confusion', 'embed', 'tsne', 'pca', 'auc', 'dprime', 'rknn', 'cam']
