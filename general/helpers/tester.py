@@ -56,7 +56,7 @@ class Tester:
         @tqdm.prog(self.cfg, len(testloader), desc="Embed")
         def _embed(batch):
 
-            todev = lambda a: a.to(cfg.rank, non_blocking=True)
+            todev = lambda a: a.to(self.cfg.rank, non_blocking=True)
 
             print([type(b) for b in batch])
             print(type(batch))

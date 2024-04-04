@@ -132,7 +132,7 @@ class Trainer:
         # return X , Y
         # X,Y = sendit(X,Y)
 
-        todev = lambda a: a.to(cfg.rank, non_blocking=True)
+        todev = lambda a: a.to(self.cfg.rank, non_blocking=True)
 
         x = todev(batch['x'])
         label = todev(batch['label'])
