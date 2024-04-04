@@ -58,7 +58,7 @@ class Tester:
 
             todev = lambda a: a.to(cfg.rank, non_blocking=True)
 
-            print(batch)
+            print([type(b) for f in batch])
             print(type(batch))
 
             x = todev(batch['x'])
