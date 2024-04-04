@@ -56,7 +56,7 @@ class Tester:
         @tqdm.prog(self.cfg, len(testloader), desc="Embed")
         def _embed(batch):
 
-            lambda todev a: a.to(cfg.rank, non_blocking=True)
+            todev = lambda a: a.to(cfg.rank, non_blocking=True)
 
             x = todev(batch['x'])
             label = todev(batch['label'])

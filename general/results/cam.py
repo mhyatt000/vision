@@ -92,7 +92,7 @@ class CAMPlotter(Plotter):
 
             @tqdm.prog(self.cfg, len(testloader), desc="CAM")
             def _cam(batch):
-                lambda todev a: a.to(cfg.rank, non_blocking=True)
+                todev = lambda a: a.to(cfg.rank, non_blocking=True)
 
                 x = todev(batch['x'])
                 label = todev(batch['label'])
