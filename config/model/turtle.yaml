@@ -3,7 +3,7 @@ odim: 5
 
 t1: [512, 128]
 t2: [128]
-t3: [16, 16, 8]
+t3: [16]
 t4: [8]
 
 # no other configurations
