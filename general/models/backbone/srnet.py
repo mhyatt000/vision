@@ -131,6 +131,7 @@ class SRNet(nn.Module):
             self.block3,
             self.block4,
         )
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.dense = nn.Linear(t4[-1], cfg.model.odim)
         self.softmax = nn.LogSoftmax(dim=1)
 
@@ -140,6 +141,8 @@ class SRNet(nn.Module):
 
     def forward(self, x):
         x = self.embed(x)
+        x = self.avgpool(x)
+
         return self.softmax(self.dense(x.view(x.size(0), -1)))
 
 
